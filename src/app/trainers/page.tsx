@@ -36,7 +36,7 @@ export default function TrainersPage() {
                   <Box flex={1}>
                     <Typography variant="subtitle1" fontWeight="bold">{trainer.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{trainer.specialization}</Typography>
-                    <Box mt={0.5}><Chip label={trainer.status} size="small" color={statusColor[trainer.status]} /></Box>
+                    <Box sx={{ mt: 0.5 }}><Chip label={trainer.status} size="small" color={statusColor[trainer.status]} /></Box>
                   </Box>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
@@ -60,7 +60,7 @@ export default function TrainersPage() {
                 </Grid>
 
                 {/* Details */}
-                <Box display="flex" flexDirection="column" gap={0.75}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
                   {[
                     ['Phone', trainer.phone],
                     ['Certifications', trainer.certifications],

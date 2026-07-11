@@ -5,12 +5,16 @@ import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
-  DialogActions, Drawer, Tabs, Tab, Divider
+  DialogActions, Stack, alpha,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
 import { mockMembers } from '@/lib/mockData';
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -19,12 +23,12 @@ const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> =
 };
 
 const FILTERS = [
-  { label: 'All', value: 'ALL' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Expiring Soon', value: 'EXPIRING' },
-  { label: 'Expired', value: 'EXPIRED' },
-  { label: 'Payment Pending', value: 'PAYMENT_PENDING' },
-  { label: 'No Trainer', value: 'NO_TRAINER' },
+  { label: 'All Members', value: 'ALL', icon: '👥' },
+  { label: 'Active', value: 'ACTIVE', icon: '✅' },
+  { label: 'Expiring Soon', value: 'EXPIRING', icon: '⏳' },
+  { label: 'Expired', value: 'EXPIRED', icon: '❌' },
+  { label: 'Payment Pending', value: 'PAYMENT_PENDING', icon: '💳' },
+  { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
 
 export default function MembersPage() {
@@ -39,126 +43,202 @@ export default function MembersPage() {
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
     if (activeFilter === 'EXPIRING') matchFilter = m.membershipStatus === 'EXPIRING';
     if (activeFilter === 'EXPIRED') matchFilter = m.membershipStatus === 'EXPIRED';
-    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.paymentStatus === 'PENDING' || m.paymentStatus === 'PARTIALLY_PAID';
+    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.paymentStatus !== 'PAID';
     if (activeFilter === 'NO_TRAINER') matchFilter = !m.trainer;
     return matchSearch && matchFilter;
   });
 
+  const counts = {
+    ALL: mockMembers.length,
+    ACTIVE: mockMembers.filter(m => m.membershipStatus === 'ACTIVE').length,
+    EXPIRING: mockMembers.filter(m => m.membershipStatus === 'EXPIRING').length,
+    EXPIRED: mockMembers.filter(m => m.membershipStatus === 'EXPIRED').length,
+    PAYMENT_PENDING: mockMembers.filter(m => m.paymentStatus !== 'PAID').length,
+    NO_TRAINER: mockMembers.filter(m => !m.trainer).length,
+  };
+
   const columns: GridColDef[] = [
     {
-      field: 'photo',
+      field: '__avatar',
       headerName: '',
-      width: 56,
+      width: 52,
       sortable: false,
+      disableColumnMenu: true,
       renderCell: (params) => (
-        <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.dark', fontSize: '0.8rem', mt: 0.75 }}>
+        <Avatar
+          sx={{
+            width: 34, height: 34,
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            color: '#000', fontSize: '0.7rem', fontWeight: 800,
+            mt: 1.2,
+          }}
+        >
           {params.row.firstName[0]}{params.row.lastName[0]}
         </Avatar>
       ),
     },
-    { field: 'memberId', headerName: 'ID', width: 80 },
     {
       field: 'name',
-      headerName: 'Name',
-      flex: 1,
-      minWidth: 140,
+      headerName: 'Member',
+      flex: 1.2,
+      minWidth: 160,
+      sortable: false,
       renderCell: (params) => (
-        <Box mt={1}>
-          <Typography variant="body2" fontWeight={600}>{params.row.firstName} {params.row.lastName}</Typography>
-          <Typography variant="caption" color="text.secondary">{params.row.phone}</Typography>
+        <Box sx={{ mt: 1 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: '0.83rem', color: '#f0f6fc' }}>
+            {params.row.firstName} {params.row.lastName}
+          </Typography>
+          <Typography sx={{ fontSize: '0.7rem', color: '#7d8590' }}>
+            #{params.row.memberId} · {params.row.phone}
+          </Typography>
         </Box>
       ),
     },
-    { 
-      field: 'planName', 
-      headerName: 'Plan', 
-      width: 150,
-      valueGetter: (_value: any, row: any) => row.memberProfile?.membership?.planName || 'N/A'
+    { field: 'plan', headerName: 'Plan', width: 150, renderCell: p => <Typography sx={{ fontSize: '0.8rem', color: '#f0f6fc' }}>{p.value}</Typography> },
+    { field: 'startDate', headerName: 'Start', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: '#7d8590' }}>{p.value}</Typography> },
+    {
+      field: 'expiryDate',
+      headerName: 'Expiry',
+      width: 100,
+      renderCell: (p) => {
+        const isExpiring = p.row.membershipStatus === 'EXPIRING';
+        return (
+          <Typography sx={{ fontSize: '0.78rem', color: isExpiring ? '#fbbf24' : '#7d8590', fontWeight: isExpiring ? 600 : 400 }}>
+            {p.value}
+          </Typography>
+        );
+      },
     },
-    { field: 'startDate', headerName: 'Start', width: 100 },
-    { field: 'expiryDate', headerName: 'Expiry', width: 100 },
     {
       field: 'trainer',
       headerName: 'Trainer',
       width: 130,
-      renderCell: (params) => params.value || <Typography variant="caption" color="text.secondary">—</Typography>,
+      renderCell: p => p.value
+        ? <Typography sx={{ fontSize: '0.78rem', color: '#f0f6fc' }}>{p.value}</Typography>
+        : <Typography sx={{ fontSize: '0.75rem', color: '#7d8590', fontStyle: 'italic' }}>Unassigned</Typography>,
     },
-    { field: 'lastVisit', headerName: 'Last Visit', width: 100 },
+    { field: 'lastVisit', headerName: 'Last Visit', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: '#7d8590' }}>{p.value}</Typography> },
     {
       field: 'paymentStatus',
       headerName: 'Payment',
       width: 120,
-      renderCell: (params) => (
-        <Chip label={params.value} size="small" color={statusColor[params.value] || 'default'} sx={{ fontSize: '0.7rem' }} />
-      ),
+      renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
     },
     {
       field: 'membershipStatus',
-      headerName: 'Membership',
-      width: 120,
-      renderCell: (params) => (
-        <Chip label={params.value} size="small" color={statusColor[params.value] || 'default'} sx={{ fontSize: '0.7rem' }} />
-      ),
+      headerName: 'Status',
+      width: 110,
+      renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
     },
   ];
 
   return (
     <AppLayout>
-      {/* Page Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      {/* Header */}
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Members</Typography>
-          <Typography variant="body2" color="text.secondary">{mockMembers.length} total members</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc' }}>Members</Typography>
+          <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+            {mockMembers.length} total members across all branches
+          </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
+        <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setAddOpen(true)}>
           Add Member
         </Button>
-      </Box>
+      </Stack>
+
+      {/* Summary strip */}
+      <Grid container spacing={1.5} mb={2.5}>
+        {[
+          { label: 'Active', value: counts.ACTIVE, color: '#10b981', icon: PeopleRoundedIcon },
+          { label: 'Expiring (7d)', value: counts.EXPIRING, color: '#f59e0b', icon: AutorenewRoundedIcon },
+          { label: 'Expired', value: counts.EXPIRED, color: '#f43f5e', icon: PersonOffRoundedIcon },
+          { label: 'Pending Payment', value: counts.PAYMENT_PENDING, color: '#f59e0b', icon: WarningAmberRoundedIcon },
+        ].map(s => (
+          <Grid item xs={6} sm={3} key={s.label}>
+            <Card elevation={0}>
+              <CardContent sx={{ py: '12px !important', px: '16px !important' }}>
+                <Stack direction="row" alignItems="center" gap={1}>
+                  <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: alpha(s.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <s.icon sx={{ fontSize: 16, color: s.color }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#7d8590', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</Typography>
+                    <Typography variant="h6" fontWeight={800} sx={{ color: '#f0f6fc', lineHeight: 1.2, fontSize: '1.2rem' }}>{s.value}</Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* Filters & Search */}
-      <Box display="flex" gap={1.5} mb={2} flexWrap="wrap" alignItems="center">
+      <Stack direction="row" gap={1.5} mb={2} flexWrap="wrap" alignItems="center">
         <TextField
-          placeholder="Search by name, ID, phone..."
+          placeholder="Search name, ID, phone..."
           size="small"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          sx={{ minWidth: 280 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
+          sx={{ width: 260 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRoundedIcon sx={{ fontSize: 18, color: '#7d8590' }} />
+              </InputAdornment>
+            ),
+          }}
         />
-        {FILTERS.map(f => (
-          <Chip
-            key={f.value}
-            label={f.label}
-            clickable
-            color={activeFilter === f.value ? 'primary' : 'default'}
-            variant={activeFilter === f.value ? 'filled' : 'outlined'}
-            onClick={() => setActiveFilter(f.value)}
-            sx={{ fontWeight: 600 }}
-          />
-        ))}
-      </Box>
+        <Stack direction="row" gap={0.75} flexWrap="wrap">
+          {FILTERS.map(f => (
+            <Chip
+              key={f.value}
+              label={`${f.label} ${counts[f.value as keyof typeof counts] > 0 ? `(${counts[f.value as keyof typeof counts]})` : ''}`}
+              clickable
+              size="small"
+              color={activeFilter === f.value ? 'primary' : 'default'}
+              variant={activeFilter === f.value ? 'filled' : 'outlined'}
+              onClick={() => setActiveFilter(f.value)}
+              sx={{ fontWeight: 600, height: 26 }}
+            />
+          ))}
+        </Stack>
+      </Stack>
 
-      {/* Data Grid */}
-      <Card elevation={0} sx={{ height: 560 }}>
+      {/* DataGrid */}
+      <Card elevation={0}>
         <DataGrid
           rows={filtered}
           columns={columns}
-          rowHeight={58}
+          rowHeight={60}
           onRowClick={params => router.push(`/members/${params.row.id}`)}
           pageSizeOptions={[10, 25, 50]}
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          sx={{ border: 0 }}
+          sx={{
+            border: 0,
+            '& .MuiDataGrid-columnHeaders': {
+              bgcolor: 'rgba(255,255,255,0.03)',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            },
+            '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7d8590' },
+            '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center' },
+            '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(16,185,129,0.04)', cursor: 'pointer' },
+            '& .MuiDataGrid-footerContainer': { borderTop: '1px solid rgba(255,255,255,0.06)' },
+          }}
         />
       </Card>
 
       {/* Add Member Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
-        <DialogTitle>Add New Member</DialogTitle>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h6" fontWeight={700}>Add New Member</Typography>
+          <Typography variant="caption" sx={{ color: '#7d8590' }}>Fill in the member details below</Typography>
+        </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
             <Grid item xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
             <Grid item xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
+            <Grid item xs={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
             <Grid item xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
             <Grid item xs={6}>
               <TextField label="Gender" select fullWidth size="small">
@@ -166,17 +246,25 @@ export default function MembersPage() {
               </TextField>
             </Grid>
             <Grid item xs={6}><TextField label="Date of Birth" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid item xs={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
             <Grid item xs={12}>
               <TextField label="Membership Plan" select fullWidth size="small">
                 {['Monthly Basic', 'Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
             <Grid item xs={6}><TextField label="Start Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid item xs={6}><TextField label="Goal" fullWidth size="small" placeholder="e.g. Weight Loss" /></Grid>
+            <Grid item xs={6}>
+              <TextField label="Assigned Trainer" select fullWidth size="small">
+                {['Amit Singh', 'Neha Gupta', 'Ravi Kumar', 'None'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField label="Fitness Goal" fullWidth size="small" placeholder="e.g. Weight Loss, Muscle Gain" />
+            </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setAddOpen(false)}>Cancel</Button>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setAddOpen(false)} variant="outlined">Cancel</Button>
           <Button variant="contained" onClick={() => setAddOpen(false)}>Create Member</Button>
         </DialogActions>
       </Dialog>

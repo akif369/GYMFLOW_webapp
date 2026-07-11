@@ -44,14 +44,14 @@ export default function PtSessionsPage() {
             <Grid item xs={12} sm={6} md={4} key={session.id}>
               <Card elevation={0} sx={{ borderLeft: '3px solid', borderColor: session.status === 'COMPLETED' ? 'success.main' : session.status === 'MISSED' ? 'error.main' : 'primary.main' }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
                     <Typography variant="h5" fontWeight="bold" color="primary">{session.time}</Typography>
                     <Chip label={session.status} size="small" color={statusColor[session.status]} />
                   </Box>
                   <Typography variant="body2" fontWeight="bold">{session.member}</Typography>
                   <Typography variant="caption" color="text.secondary">Trainer: {session.trainer}</Typography>
                   {session.notes && (
-                    <Box mt={1} p={1} sx={{ bgcolor: 'background.default', borderRadius: 1 }}>
+                    <Box sx={{ mt: 1, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
                       <Typography variant="caption" color="text.secondary">{session.notes}</Typography>
                     </Box>
                   )}
@@ -122,7 +122,7 @@ export default function PtSessionsPage() {
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h5" fontWeight="bold">₹{pkg.price.toLocaleString()}</Typography>
                   <Typography variant="caption" color="text.secondary">+ {pkg.gst}% GST</Typography>
-                  <Box mt={2}>
+                  <Box sx={{ mt: 2 }}>
                     <Button variant="outlined" fullWidth>Edit Package</Button>
                   </Box>
                 </CardContent>

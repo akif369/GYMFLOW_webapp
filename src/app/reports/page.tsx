@@ -16,7 +16,7 @@ function ReportCard({ title, subtitle, rows, columns }: any) {
   return (
     <Card elevation={0}>
       <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Box>
             <Typography variant="subtitle1" fontWeight="bold">{title}</Typography>
             {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
@@ -49,7 +49,7 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Reports</Typography>
           <Typography variant="body2" color="text.secondary">Analytics and exportable reports</Typography>

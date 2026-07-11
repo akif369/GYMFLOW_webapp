@@ -52,14 +52,14 @@ export default function StaffPage() {
                       <Typography variant="subtitle2" fontWeight="bold">{staff.name}</Typography>
                       <Typography variant="caption" color="text.secondary">{staff.email} · {staff.phone}</Typography>
                     </Box>
-                    <Box display="flex" flexDirection="column" gap={0.5} alignItems="flex-end">
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-end" }}>
                       <Chip label={staff.role} size="small" color={roleColor[staff.role]} />
                       <Chip label={staff.status} size="small" color={staff.status === 'ACTIVE' ? 'success' : 'default'} />
                     </Box>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Permissions</Typography>
-                    <Box display="flex" flexWrap="wrap" gap={0.5}>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {staff.permissions.map(p => (
                         <Chip key={p} label={p} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
                       ))}
@@ -90,11 +90,11 @@ export default function StaffPage() {
             <Grid item xs={12} md={6} key={r.role}>
               <Card elevation={0}>
                 <CardContent>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                     <Chip label={r.role} color={roleColor[r.role]} />
                     <Typography variant="caption" color="text.secondary">{r.desc}</Typography>
                   </Box>
-                  <Box display="flex" flexWrap="wrap" gap={0.5}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {ALL_PERMISSIONS.map(p => (
                       <Chip
                         key={p}
@@ -129,7 +129,7 @@ export default function StaffPage() {
             </Grid>
             <Grid item xs={12}>
               <Typography variant="caption" color="text.secondary" display="block" mb={1}>Permissions</Typography>
-              <Box display="flex" flexWrap="wrap" gap={0.5}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (
                   <Chip
                     key={p}

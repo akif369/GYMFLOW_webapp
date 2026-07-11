@@ -38,7 +38,7 @@ export default function PaymentsPage() {
           <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
           <Typography variant="body2" color="text.secondary">Manage member payments and invoices</Typography>
         </Box>
-        <Box display="flex" gap={1}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="outlined" startIcon={<ReceiptIcon />} size="small">Generate Invoice</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>Record Payment</Button>
         </Box>
@@ -64,7 +64,7 @@ export default function PaymentsPage() {
       </Grid>
 
       {/* Filters */}
-      <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+      <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
         {['ALL', 'PAID', 'PENDING', 'PARTIALLY_PAID', 'FAILED', 'REFUNDED'].map(f => (
           <Chip
             key={f}
@@ -113,7 +113,7 @@ export default function PaymentsPage() {
                   <Chip label={p.status} size="small" color={statusColor[p.status] || 'default'} />
                 </TableCell>
                 <TableCell>
-                  <Box display="flex" gap={0.5}>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Button size="small" variant="text">Receipt</Button>
                     {p.status === 'PAID' && <Button size="small" variant="text" color="error">Refund</Button>}
                   </Box>

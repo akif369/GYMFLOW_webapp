@@ -46,7 +46,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   return (
     <AppLayout>
       {/* Back + Header */}
-      <Box display="flex" alignItems="center" gap={2} mb={3}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
         <Button startIcon={<AutorenewIcon />} variant="outlined" size="small">Renew</Button>
@@ -90,7 +90,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Contact Details</Typography>
-                <Box display="flex" flexDirection="column" gap={1.5}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {[
                     ['Email', member.email],
                     ['Phone', member.phone],
@@ -113,7 +113,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Emergency Contact</Typography>
-                <Box display="flex" flexDirection="column" gap={1.5}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">Name</Typography>
                     <Typography variant="body2">{member.emergency.name}</Typography>
@@ -192,7 +192,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Membership Actions</Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {['Renew', 'Upgrade', 'Downgrade', 'Freeze', 'Extend', 'Cancel', 'Transfer'].map(action => (
                     <Button key={action} variant="outlined" size="small" fullWidth
                       color={action === 'Cancel' ? 'error' : action === 'Freeze' ? 'warning' : 'primary'}>
@@ -283,7 +283,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.2)' }}>
               <CardContent>
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">Health & Fitness Profile</Typography>
                   <Chip label="Restricted" size="small" color="error" />
                 </Box>
@@ -338,7 +338,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 ))}
               </TableBody>
             </Table>
-            <Box mt={3} p={2} sx={{ bgcolor: 'rgba(16,185,129,0.05)', borderRadius: 2, border: '1px solid rgba(16,185,129,0.1)' }}>
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(16,185,129,0.05)', borderRadius: 2, border: '1px solid rgba(16,185,129,0.1)' }}>
               <Typography variant="caption" color="primary">
                 📉 Weight progress: {mockMeasurements[mockMeasurements.length - 1].weight} kg → {mockMeasurements[0].weight} kg 
                 ({(mockMeasurements[mockMeasurements.length - 1].weight - mockMeasurements[0].weight).toFixed(1)} kg lost in 3 months)
@@ -389,10 +389,10 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Card elevation={0}>
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" mb={3}>Activity Timeline</Typography>
-            <Box display="flex" flexDirection="column" gap={0}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {mockActivityTimeline.map((a, i) => (
                 <Box key={i} display="flex" gap={2} pb={2}>
-                  <Box display="flex" flexDirection="column" alignItems="center">
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {eventIcon[a.icon]}
                     </Box>

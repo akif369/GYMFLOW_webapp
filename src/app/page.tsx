@@ -2,50 +2,102 @@
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  Divider, Table, TableBody, TableCell, TableHead, TableRow, Paper, LinearProgress
+  Divider, Stack, LinearProgress, alpha,
 } from '@mui/material';
-import PeopleIcon from '@mui/icons-material/People';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import WarningIcon from '@mui/icons-material/Warning';
-import PersonOffIcon from '@mui/icons-material/PersonOff';
+import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
+import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
+import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
+import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
+import SportsMartialArtsRoundedIcon from '@mui/icons-material/SportsMartialArtsRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import Link from 'next/link';
 import {
   mockDashboardStats, mockRevenueChart, mockAttendanceChart,
-  mockPeakHours, mockAttendanceLogs, mockPayments
+  mockAttendanceLogs, mockPayments, mockPeakHours,
 } from '@/lib/mockData';
 
-function StatCard({
-  title, value, sub, icon: Icon, color = '#10b981', trend
-}: {
-  title: string; value: string | number; sub?: string; icon: any; color?: string; trend?: string;
-}) {
+// --- Stat Card ---
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  sub?: string;
+  icon: any;
+  color?: string;
+  trend?: number;
+  sparkData?: number[];
+}
+
+function StatCard({ title, value, sub, icon: Icon, color = '#10b981', trend, sparkData }: StatCardProps) {
+  const trendUp = (trend ?? 0) >= 0;
   return (
-    <Card elevation={0} sx={{ height: '100%' }}>
-      <CardContent sx={{ p: 2.5 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>
-              {title}
-            </Typography>
-            <Typography variant="h4" fontWeight="bold" mt={0.5} sx={{ fontSize: '1.8rem' }}>
-              {value}
-            </Typography>
-            {sub && <Typography variant="caption" color="text.secondary">{sub}</Typography>}
+    <Card elevation={0} sx={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
+      {/* Subtle glow */}
+      <Box sx={{
+        position: 'absolute', inset: 0, opacity: 0.03,
+        background: `radial-gradient(circle at top right, ${color}, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />
+      <CardContent sx={{ position: 'relative' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
+          <Box
+            sx={{
+              width: 36, height: 36, borderRadius: 2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              bgcolor: alpha(color, 0.12),
+            }}
+          >
+            <Icon sx={{ fontSize: 19, color }} />
           </Box>
-          <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${color}18` }}>
-            <Icon sx={{ color, fontSize: 22 }} />
-          </Box>
-        </Box>
-        {trend && (
-          <Box mt={1.5}>
-            <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{trend}</Typography>
+          {trend !== undefined && (
+            <Box
+              sx={{
+                display: "flex", alignItems: "center", gap: 0.3,
+                px: 0.75, py: 0.25, borderRadius: 1,
+                bgcolor: alpha(trendUp ? '#22c55e' : '#f43f5e', 0.1),
+              }}
+            >
+              {trendUp
+                ? <ArrowUpwardRoundedIcon sx={{ fontSize: 11, color: '#4ade80' }} />
+                : <ArrowDownwardRoundedIcon sx={{ fontSize: 11, color: '#fb7185' }} />
+              }
+              <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, color: trendUp ? '#4ade80' : '#fb7185' }}>
+                {Math.abs(trend)}%
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+
+        <Typography variant="caption" sx={{ color: '#7d8590', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {title}
+        </Typography>
+        <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc', mt: 0.25, letterSpacing: '-0.5px', fontSize: '1.6rem' }}>
+          {value}
+        </Typography>
+        {sub && (
+          <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{sub}</Typography>
+        )}
+
+        {sparkData && (
+          <Box sx={{ mt: 1.5, mx: -0.5 }}>
+            <SparkLineChart
+              data={sparkData}
+              height={36}
+              colors={[color]}
+              curve="natural"
+              area
+              sx={{ '& .MuiChartsArea-root': { opacity: 0.15 } }}
+            />
           </Box>
         )}
       </CardContent>
@@ -53,220 +105,367 @@ function StatCard({
   );
 }
 
-function MiniBarChart({ data, color = '#10b981' }: { data: { label: string; count: number }[]; color?: string }) {
-  const max = Math.max(...data.map(d => d.count));
+// --- Mini Activity Row ---
+function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: any) {
   return (
-    <Box display="flex" alignItems="flex-end" gap={0.5} height={60}>
-      {data.map((d, i) => (
-        <Box key={i} flex={1} display="flex" flexDirection="column" alignItems="center" gap={0.5}>
-          <Box
-            sx={{
-              width: '100%',
-              bgcolor: color,
-              borderRadius: '3px 3px 0 0',
-              height: `${(d.count / max) * 56}px`,
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
-              '&:hover': { opacity: 1 },
-              minHeight: 4,
-            }}
-          />
-          <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>{d.label}</Typography>
-        </Box>
-      ))}
+    <Box
+      sx={{
+        display: "flex", alignItems: "center", gap: 1.5, py: 1,
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        '&:last-child': { borderBottom: 0 }
+      }}
+    >
+      <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(dotColor || '#10b981', 0.15), color: dotColor || '#34d399', fontSize: '0.72rem', fontWeight: 700 }}>
+        {avatar}
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>{name}</Typography>
+        <Typography variant="caption" noWrap sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{sub}</Typography>
+      </Box>
+      <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+        <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.82rem', color: '#f0f6fc' }}>{right}</Typography>
+        {rightSub && <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.68rem' }}>{rightSub}</Typography>}
+      </Box>
     </Box>
   );
 }
 
-const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-  PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', FAILED: 'error',
-  ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
-  COMPLETED: 'success', UPCOMING: 'default', MISSED: 'error',
+const payStatusColor: Record<string, string> = {
+  PAID: '#4ade80', PENDING: '#fbbf24', PARTIALLY_PAID: '#fbbf24', FAILED: '#fb7185',
 };
 
 export default function Dashboard() {
-  const stats = mockDashboardStats;
+  const s = mockDashboardStats;
+  const revenueData = mockRevenueChart.map(r => r.revenue);
+  const attendanceData = mockAttendanceChart.map(a => a.count);
 
   return (
     <AppLayout>
-      {/* Header Row */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      {/* ─── Page Header ─── */}
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Dashboard</Typography>
-          <Typography variant="body2" color="text.secondary">IronZone Fitness · Today, {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</Typography>
+          <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.5px' }}>
+            Good morning, Sarah 👋
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · IronZone Fitness
+          </Typography>
         </Box>
-        <Box display="flex" gap={1} flexWrap="wrap">
-          <Button variant="contained" size="small" startIcon={<AddIcon />}>Add Member</Button>
-          <Button variant="outlined" size="small" startIcon={<CheckCircleIcon />}>Check In</Button>
-          <Button variant="outlined" size="small" startIcon={<ReceiptIcon />}>Add Payment</Button>
-          <Button variant="outlined" size="small" startIcon={<AutorenewIcon />}>Renew</Button>
-          <Button variant="outlined" size="small" startIcon={<EventAvailableIcon />}>Book PT</Button>
-        </Box>
-      </Box>
+        <Stack direction="row" gap={1} flexWrap="wrap">
+          <Button size="small" variant="contained" startIcon={<AddRoundedIcon sx={{ fontSize: 16 }} />}>
+            Add Member
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 16 }} />}>
+            Check In
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<ReceiptRoundedIcon sx={{ fontSize: 16 }} />}>
+            Add Payment
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<AutorenewRoundedIcon sx={{ fontSize: 16 }} />}>
+            Renew
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<EventAvailableRoundedIcon sx={{ fontSize: 16 }} />}>
+            Book PT
+          </Button>
+        </Stack>
+      </Stack>
 
-      {/* Row 1: Top Stats */}
+      {/* ─── Row 1: Primary Stats ─── */}
       <Grid container spacing={2} mb={2}>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Today's Check-ins" value={stats.todaysCheckins} icon={AccessTimeIcon} trend="↑ 12% from yesterday" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Today's Check-ins"
+            value={s.todaysCheckins}
+            icon={AccessTimeRoundedIcon}
+            color="#10b981"
+            trend={12}
+            sub="vs 42 yesterday"
+            sparkData={[35, 40, 38, 44, 41, 47]}
+          />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Currently Inside" value={stats.currentlyInside} icon={PeopleIcon} color="#06b6d4" sub="Live count" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Currently Inside"
+            value={s.currentlyInside}
+            icon={PeopleRoundedIcon}
+            color="#06b6d4"
+            sub="Live now"
+          />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Today's Revenue" value={`₹${stats.todaysRevenue.toLocaleString()}`} icon={AttachMoneyIcon} color="#22c55e" trend="↑ ₹1,200 vs avg" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Today's Revenue"
+            value={`₹${s.todaysRevenue.toLocaleString()}`}
+            icon={AttachMoneyRoundedIcon}
+            color="#22c55e"
+            trend={8}
+            sub="vs ₹7,300 avg"
+            sparkData={[5200, 6100, 7300, 6800, 7100, 8500]}
+          />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Month Revenue" value={`₹${(stats.monthRevenue / 1000).toFixed(0)}K`} icon={TrendingUpIcon} color="#a78bfa" trend="↑ 8% vs last month" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Month Revenue"
+            value={`₹${(s.monthRevenue / 1000).toFixed(0)}K`}
+            icon={TrendingUpRoundedIcon}
+            color="#8b5cf6"
+            trend={8}
+            sub="vs ₹131K last month"
+            sparkData={[98, 112, 125, 118, 132, 138, 142]}
+          />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Pending Amount" value={`₹${(stats.pendingAmount / 1000).toFixed(1)}K`} icon={WarningIcon} color="#f59e0b" trend="14 members due" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Pending Amount"
+            value={`₹${(s.pendingAmount / 1000).toFixed(1)}K`}
+            icon={WarningAmberRoundedIcon}
+            color="#f59e0b"
+            trend={-3}
+            sub="14 members due"
+          />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Expiring (7d)" value={stats.expiringIn7Days} icon={AutorenewIcon} color="#ef4444" trend="Action required" />
+        <Grid item xs={12} sm={6} md={4} lg={2}>
+          <StatCard
+            title="Expiring in 7d"
+            value={s.expiringIn7Days}
+            icon={AutorenewRoundedIcon}
+            color="#f43f5e"
+            sub="Need action"
+          />
         </Grid>
       </Grid>
 
-      {/* Row 2: Secondary Stats */}
-      <Grid container spacing={2} mb={2}>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Expired Members" value={stats.expiredMemberships} icon={PersonOffIcon} color="#ef4444" />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="New This Month" value={stats.newMembersMonth} icon={AddIcon} color="#22c55e" trend="↑ 5 vs last month" />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Active Members" value={stats.activeMembers} icon={PeopleIcon} color="#10b981" />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Inactive Members" value={stats.inactiveMembers} icon={PersonOffIcon} color="#94a3b8" />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Trainers Working" value={stats.trainersWorking} icon={FitnessCenterIcon} color="#06b6d4" sub="of 3 total" />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard title="Today's PT Sessions" value={stats.todaysPtSessions} icon={EventAvailableIcon} color="#a78bfa" />
-        </Grid>
+      {/* ─── Row 2: Secondary Stats ─── */}
+      <Grid container spacing={2} mb={3}>
+        {[
+          { title: 'Active Members', value: s.activeMembers, icon: PeopleRoundedIcon, color: '#10b981' },
+          { title: 'Inactive', value: s.inactiveMembers, icon: PersonOffRoundedIcon, color: '#7d8590' },
+          { title: 'New This Month', value: s.newMembersMonth, icon: PersonAddRoundedIcon, color: '#22c55e', trend: 5 },
+          { title: 'Expired', value: s.expiredMemberships, icon: PersonOffRoundedIcon, color: '#f43f5e' },
+          { title: 'Trainers Working', value: `${s.trainersWorking}/3`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
+          { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
+        ].map((stat, i) => (
+          <Grid item xs={12} sm={6} md={4} lg={2} key={i}>
+            <Card elevation={0}>
+              <CardContent sx={{ py: '14px !important', px: '16px !important' }}>
+                <Stack direction="row" alignItems="center" gap={1.25}>
+                  <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: alpha(stat.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <stat.icon sx={{ fontSize: 17, color: stat.color }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#7d8590', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {stat.title}
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+                      {stat.value}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
-      {/* Row 3: Charts + Live */}
-      <Grid container spacing={2} mb={2}>
+      {/* ─── Row 3: Charts ─── */}
+      <Grid container spacing={2} mb={3}>
         {/* Revenue Chart */}
-        <Grid item xs={12} md={4}>
-          <Card elevation={0}>
+        <Grid item xs={12} lg={8}>
+          <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="subtitle2" fontWeight="bold" mb={2}>Monthly Revenue</Typography>
-              <MiniBarChart
-                data={mockRevenueChart.map(r => ({ label: r.month, count: r.revenue }))}
-                color="#10b981"
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Revenue Overview</Typography>
+                  <Typography variant="caption" sx={{ color: '#7d8590' }}>Monthly revenue for 2026</Typography>
+                </Box>
+                <Stack direction="row" gap={1}>
+                  <Chip label="2026" size="small" color="primary" />
+                </Stack>
+              </Stack>
+              <LineChart
+                xAxis={[{
+                  scaleType: 'point',
+                  data: mockRevenueChart.map(r => r.month),
+                  tickLabelStyle: { fontSize: 11, fill: '#7d8590' },
+                }]}
+                yAxis={[{
+                  valueFormatter: (v) => `₹${(v / 1000).toFixed(0)}K`,
+                  tickLabelStyle: { fontSize: 11, fill: '#7d8590' },
+                }]}
+                series={[{
+                  data: revenueData,
+                  label: 'Revenue',
+                  color: '#10b981',
+                  curve: 'natural',
+                  area: true,
+                  showMark: false,
+                }]}
+                height={220}
+                sx={{
+                  '& .MuiLineElement-root': { strokeWidth: 2.5 },
+                  '& .MuiAreaElement-root': { fillOpacity: 0.08 },
+                  '& .MuiChartsLegend-root': { display: 'none' },
+                  '& .MuiChartsAxis-line': { stroke: 'rgba(255,255,255,0.06)' },
+                  '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
+                }}
+                margin={{ left: 60, right: 20, top: 16, bottom: 30 }}
+                slotProps={{ legend: { hidden: true } }}
               />
-              <Typography variant="caption" color="text.secondary" mt={1} display="block">
-                Total: ₹{mockRevenueChart.reduce((s, r) => s + r.revenue, 0).toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Attendance Chart */}
-        <Grid item xs={12} md={4}>
-          <Card elevation={0}>
-            <CardContent>
-              <Typography variant="subtitle2" fontWeight="bold" mb={2}>Weekly Attendance</Typography>
-              <MiniBarChart
-                data={mockAttendanceChart.map(a => ({ label: a.day, count: a.count }))}
-                color="#06b6d4"
-              />
-              <Typography variant="caption" color="text.secondary" mt={1} display="block">
-                Peak: Saturday ({mockAttendanceChart.find(a => a.day === 'Sat')?.count} members)
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Peak Hours */}
-        <Grid item xs={12} md={4}>
-          <Card elevation={0}>
+        <Grid item xs={12} lg={4}>
+          <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="subtitle2" fontWeight="bold" mb={2}>Peak Hours Today</Typography>
-              <Box display="flex" flexDirection="column" gap={1}>
-                {mockPeakHours.slice(0, 5).map(h => (
-                  <Box key={h.hour} display="flex" alignItems="center" gap={1.5}>
-                    <Typography variant="caption" sx={{ width: 60, color: 'text.secondary', flexShrink: 0 }}>{h.hour}</Typography>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(h.count / 55) * 100}
-                      sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.06)', '& .MuiLinearProgress-bar': { bgcolor: '#10b981', borderRadius: 3 } }}
-                    />
-                    <Typography variant="caption" sx={{ width: 24, textAlign: 'right', color: 'text.secondary' }}>{h.count}</Typography>
-                  </Box>
-                ))}
-              </Box>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }} mb={0.5}>Peak Hours</Typography>
+              <Typography variant="caption" sx={{ color: '#7d8590' }} mb={2} display="block">Today's gym traffic</Typography>
+              <Stack gap={1.25}>
+                {mockPeakHours.map(h => {
+                  const max = 55;
+                  const pct = Math.round((h.count / max) * 100);
+                  const color = pct > 80 ? '#f43f5e' : pct > 60 ? '#f59e0b' : '#10b981';
+                  return (
+                    <Box key={h.hour}>
+                      <Stack direction="row" justifyContent="space-between" mb={0.4}>
+                        <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{h.hour}</Typography>
+                        <Typography variant="caption" sx={{ color, fontWeight: 700, fontSize: '0.7rem' }}>{h.count}</Typography>
+                      </Stack>
+                      <LinearProgress
+                        variant="determinate"
+                        value={pct}
+                        sx={{
+                          '& .MuiLinearProgress-bar': { bgcolor: color },
+                        }}
+                      />
+                    </Box>
+                  );
+                })}
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Row 4: Recent Activity */}
-      <Grid container spacing={2}>
+      {/* ─── Row 4: Weekly Attendance Chart ─── */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={12} lg={7}>
+          <Card elevation={0}>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Weekly Attendance</Typography>
+                  <Typography variant="caption" sx={{ color: '#7d8590' }}>Members per day this week</Typography>
+                </Box>
+              </Stack>
+              <BarChart
+                xAxis={[{
+                  scaleType: 'band',
+                  data: mockAttendanceChart.map(a => a.day),
+                  tickLabelStyle: { fontSize: 11, fill: '#7d8590' },
+                }]}
+                yAxis={[{
+                  tickLabelStyle: { fontSize: 11, fill: '#7d8590' },
+                }]}
+                series={[{
+                  data: attendanceData,
+                  label: 'Members',
+                  color: '#06b6d4',
+                }]}
+                height={200}
+                margin={{ left: 40, right: 10, top: 12, bottom: 30 }}
+                sx={{
+                  '& .MuiChartsAxis-line': { stroke: 'rgba(255,255,255,0.06)' },
+                  '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
+                  '& .MuiBarElement-root': { rx: 4 },
+                }}
+                slotProps={{ legend: { hidden: true } }}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Recent Check-ins */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={0}>
+        <Grid item xs={12} lg={5}>
+          <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="subtitle2" fontWeight="bold">Recent Check-ins</Typography>
-                <Button size="small" variant="text" color="primary" href="/attendance">View All</Button>
-              </Box>
-              <Box display="flex" flexDirection="column" gap={1}>
-                {mockAttendanceLogs.slice(0, 5).map(log => (
-                  <Box key={log.id} display="flex" alignItems="center" gap={1.5} py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: '0.75rem' }}>
-                      {log.member.split(' ').map(n => n[0]).join('')}
-                    </Avatar>
-                    <Box flex={1}>
-                      <Typography variant="body2" fontWeight="600">{log.member}</Typography>
-                      <Typography variant="caption" color="text.secondary">{log.date} · {log.checkIn}</Typography>
-                    </Box>
-                    <Chip
-                      label={log.checkOut ? log.duration : 'Inside'}
-                      size="small"
-                      color={log.checkOut ? 'default' : 'success'}
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Payments */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={0}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="subtitle2" fontWeight="bold">Recent Payments</Typography>
-                <Button size="small" variant="text" color="primary" href="/payments">View All</Button>
-              </Box>
-              <Box display="flex" flexDirection="column" gap={1}>
-                {mockPayments.slice(0, 5).map(pay => (
-                  <Box key={pay.id} display="flex" alignItems="center" gap={1.5} py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.dark', fontSize: '0.75rem' }}>
-                      {pay.member.split(' ').map(n => n[0]).join('')}
-                    </Avatar>
-                    <Box flex={1}>
-                      <Typography variant="body2" fontWeight="600">{pay.member}</Typography>
-                      <Typography variant="caption" color="text.secondary">{pay.plan} · {pay.method}</Typography>
-                    </Box>
-                    <Box textAlign="right">
-                      <Typography variant="body2" fontWeight="bold">₹{pay.amount.toLocaleString()}</Typography>
-                      <Chip label={pay.status} size="small" color={statusColor[pay.status] || 'default'} sx={{ fontSize: '0.65rem', height: 18 }} />
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Recent Check-ins</Typography>
+                <Button component={Link} href="/attendance" size="small" variant="text" color="primary" sx={{ fontSize: '0.75rem' }}>
+                  View all →
+                </Button>
+              </Stack>
+              {mockAttendanceLogs.slice(0, 5).map(log => (
+                <ActivityRow
+                  key={log.id}
+                  avatar={log.member.split(' ').map((n: string) => n[0]).join('')}
+                  name={log.member}
+                  sub={`${log.date} · Check-in ${log.checkIn}`}
+                  right={log.checkOut ? log.duration : 'Inside'}
+                  rightSub={log.checkOut ? undefined : log.checkIn}
+                  dotColor={log.checkOut ? '#7d8590' : '#10b981'}
+                />
+              ))}
             </CardContent>
           </Card>
         </Grid>
       </Grid>
+
+      {/* ─── Row 5: Recent Payments ─── */}
+      <Card elevation={0}>
+        <CardContent>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Recent Payments</Typography>
+            <Button component={Link} href="/payments" size="small" variant="text" color="primary" sx={{ fontSize: '0.75rem' }}>
+              View all →
+            </Button>
+          </Stack>
+          <Grid container spacing={1.5}>
+            {mockPayments.map(pay => (
+              <Grid item xs={12} md={6} lg={4} key={pay.id}>
+                <Box
+                  sx={{
+                    p: 1.5, borderRadius: 2,
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    bgcolor: 'rgba(255,255,255,0.02)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' },
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" gap={1.5}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa', fontSize: '0.72rem', fontWeight: 700 }}>
+                      {pay.member.split(' ').map((n: string) => n[0]).join('')}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={600} noWrap sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>{pay.member}</Typography>
+                      <Stack direction="row" gap={0.5} alignItems="center">
+                        <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{pay.method}</Typography>
+                        <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>·</Typography>
+                        <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{pay.date}</Typography>
+                      </Stack>
+                    </Box>
+                    <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                      <Typography variant="body2" fontWeight={800} sx={{ color: '#f0f6fc', fontSize: '0.9rem' }}>
+                        ₹{pay.amount.toLocaleString()}
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.65rem', fontWeight: 700,
+                          color: payStatusColor[pay.status] || '#7d8590',
+                        }}
+                      >
+                        {pay.status}
+                      </Box>
+                    </Box>
+                  </Stack>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </CardContent>
+      </Card>
     </AppLayout>
   );
 }

@@ -29,7 +29,7 @@ export default function AttendancePage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Attendance</Typography>
           <Typography variant="body2" color="text.secondary">Live and historical gym attendance</Typography>
@@ -52,22 +52,22 @@ export default function AttendancePage() {
             <Grid item xs={12} sm={6} md={4} key={i}>
               <Card elevation={0} sx={{ border: '1px solid rgba(16,185,129,0.2)' }}>
                 <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Typography variant="subtitle2" fontWeight="bold">{m.name.split(' ').map(n => n[0]).join('')}</Typography>
                     </Box>
-                    <Box flex={1}>
+                    <Box sx={{ flex: 1 }}>
                       <Typography variant="body2" fontWeight="bold">{m.name}</Typography>
                       <Typography variant="caption" color="text.secondary">{m.memberId} · {m.plan}</Typography>
                     </Box>
                     <Chip label="Inside" color="success" size="small" />
                   </Box>
-                  <Box display="flex" justifyContent="space-between" mt={1.5} pt={1.5} sx={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <Box>
                       <Typography variant="caption" color="text.secondary">Check-in</Typography>
                       <Typography variant="body2" fontWeight={600}>{m.checkIn}</Typography>
                     </Box>
-                    <Box textAlign="right">
+                    <Box sx={{ textAlign: "right" }}>
                       <Typography variant="caption" color="text.secondary">Trainer</Typography>
                       <Typography variant="body2">{m.trainer}</Typography>
                     </Box>
@@ -82,7 +82,7 @@ export default function AttendancePage() {
 
       {/* Tab 1: History */}
       <TabPanel value={tab} index={1}>
-        <Box display="flex" gap={2} mb={2}>
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <TextField
             size="small"
             label="Member Name"

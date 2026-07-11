@@ -50,7 +50,7 @@ export default function MembershipsPage() {
                     <Typography variant="subtitle1" fontWeight="bold">{plan.name}</Typography>
                     <Chip label={plan.status} size="small" color="success" />
                   </Box>
-                  <Box display="flex" flexDirection="column" gap={1}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     {[
                       ['Duration', `${plan.duration} days`],
                       ['Price', `₹${plan.price.toLocaleString()}`],
@@ -83,10 +83,10 @@ export default function MembershipsPage() {
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
               Events are immutable records. We never simply change expiry dates.
             </Typography>
-            <Box display="flex" flexDirection="column" gap={0}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {mockMembershipEvents.map((e, i) => (
                 <Box key={e.id} display="flex" gap={2} pb={3}>
-                  <Box display="flex" flexDirection="column" alignItems="center">
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'background.default', border: '2px solid', borderColor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Typography variant="caption" fontWeight="bold">{i + 1}</Typography>
                     </Box>
@@ -95,7 +95,7 @@ export default function MembershipsPage() {
                     )}
                   </Box>
                   <Box>
-                    <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                    <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
                       <Chip label={e.type} size="small" color={eventColor[e.type] || 'default'} />
                       <Typography variant="caption" color="text.secondary">{e.date}</Typography>
                       <Typography variant="caption" color="text.secondary">by {e.actor}</Typography>

@@ -60,7 +60,7 @@ export default function LeadsPage() {
               <Typography variant="caption" fontWeight="bold">{stage}</Typography>
               <Chip label={byStage(stage).length} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
             </Box>
-            <Box display="flex" flexDirection="column" gap={1}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {byStage(stage).map(lead => (
                 <Card key={lead.id} elevation={0} sx={{ bgcolor: 'background.default', cursor: 'pointer' }}>
                   <CardContent sx={{ p: '12px !important' }}>
@@ -109,7 +109,7 @@ export default function LeadsPage() {
                   <TableCell>{lead.createdAt}</TableCell>
                   <TableCell><Typography variant="caption" color="text.secondary">{lead.notes}</Typography></TableCell>
                   <TableCell>
-                    <Box display="flex" gap={0.5}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Button size="small" variant="text">Update</Button>
                       <Button size="small" variant="text" color="success">Convert</Button>
                     </Box>

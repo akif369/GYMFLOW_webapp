@@ -59,7 +59,7 @@ export default function WorkoutsPage() {
                   <TableCell><Chip label={ex.difficulty} size="small" color={difficultyColor[ex.difficulty]} /></TableCell>
                   <TableCell><Chip label={ex.active ? 'Active' : 'Inactive'} size="small" color={ex.active ? 'success' : 'default'} /></TableCell>
                   <TableCell>
-                    <Box display="flex" gap={0.5}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Button size="small" variant="text">Edit</Button>
                       <Button size="small" variant="text" color="error">Disable</Button>
                     </Box>
@@ -82,16 +82,16 @@ export default function WorkoutsPage() {
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' }, transition: 'border-color 0.2s' }}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
-                  <Box display="flex" flexDirection="column" gap={0.75} mt={1.5}>
-                    <Box display="flex" justifyContent="space-between">
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, mt: 1.5 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Exercises</Typography>
                       <Typography variant="caption" fontWeight={600}>{template.exercises}</Typography>
                     </Box>
-                    <Box display="flex" justifyContent="space-between">
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Created by</Typography>
                       <Typography variant="caption" fontWeight={600}>{template.trainer}</Typography>
                     </Box>
-                    <Box display="flex" justifyContent="space-between">
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Members using</Typography>
                       <Typography variant="caption" fontWeight={600}>{template.members}</Typography>
                     </Box>

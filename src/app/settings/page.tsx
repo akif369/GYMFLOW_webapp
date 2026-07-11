@@ -28,7 +28,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight="bold">Settings</Typography>
         <Typography variant="body2" color="text.secondary">Configure your gym management system</Typography>
       </Box>
@@ -85,7 +85,7 @@ export default function SettingsPage() {
             <SettingRow label="Capacity" desc="Maximum members allowed simultaneously">
               <TextField size="small" type="number" defaultValue="80" sx={{ width: 100 }} />
             </SettingRow>
-            <Box mt={2}>
+            <Box sx={{ mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />}>Save Branch Settings</Button>
             </Box>
           </CardContent>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
                 <MenuItem value="RFID">RFID</MenuItem>
               </TextField>
             </SettingRow>
-            <Box mt={2}><Button variant="contained" startIcon={<SaveIcon />}>Save</Button></Box>
+            <Box sx={{ mt: 2 }}><Button variant="contained" startIcon={<SaveIcon />}>Save</Button></Box>
           </CardContent>
         </Card>
       </TabPanel>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
             <SettingRow label="Printer" desc="Receipt printer integration">
               <FormControlLabel control={<Switch />} label="" />
             </SettingRow>
-            <Box mt={3} p={2} sx={{ bgcolor: 'rgba(255,255,255,0.03)', borderRadius: 2 }}>
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(255,255,255,0.03)', borderRadius: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 Hardware integration requires additional setup. Contact GymFlow support for configuration assistance.
               </Typography>
