@@ -62,9 +62,10 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <Stack
-      direction={{ xs: 'column', lg: 'row' }}}
+      direction={{ xs: 'column', lg: 'row' }}
       gap={2}
-     sx={{ alignItems: { xs: 'flex-start', lg: 'center' , justifyContent: 'space-between' }}>
+      sx={{ alignItems: { xs: 'flex-start', lg: 'center' }, justifyContent: 'space-between' }}
+    >
       <Box>
         {eyebrow && (
           <Typography
@@ -109,8 +110,9 @@ export function PageHeader({
       {actions && (
         <Stack
           direction="row"
-          gap={1}}
-         sx={{ justifyContent: { xs: 'flex-start', lg: 'flex-end' , flexWrap: 'wrap' }}>
+          gap={1}
+          sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}
+        >
           {actions}
         </Stack>
       )}
@@ -129,12 +131,14 @@ export function SectionCard({
     <Card elevation={0} sx={{ height: '100%' }}>
       <CardContent sx={{ p: 0 }}>
         <Stack
-          direction={{ xs: 'column', sm: 'row' }}}
+          direction={{ xs: 'column', sm: 'row' }}
           gap={1.5}
           sx={{
             px: { xs: 2, md: 2.5 },
             py: 2.25,
-            borderBottom: (theme) = sx={{ alignItems: { xs: 'flex-start', sm: 'center' , justifyContent: 'space-between' }}> `1px solid ${theme.palette.divider}`,
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
           }}
         >
           <Box>
@@ -254,9 +258,9 @@ export function MetricCard({
 export function PageToolbar({ title, description, actions }: PageToolbarProps) {
   return (
     <Stack
-      direction={{ xs: 'column', md: 'row' }}}
+      direction={{ xs: 'column', md: 'row' }}
       gap={2}
-      sx={{ mb: 3, alignItems: { xs: 'flex-start', md: 'center' , justifyContent: 'space-between' }}
+      sx={{ mb: 3, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between' }}
     >
       <Box>
         <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>
