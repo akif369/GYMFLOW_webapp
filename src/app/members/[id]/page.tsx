@@ -60,7 +60,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             {member.firstName[0]}{member.lastName[0]}
           </Avatar>
           <Box flex={1}>
-            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+            <Box display="flex" gap={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
               <Typography variant="h5" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberId} size="small" variant="outlined" />
               <Chip label={member.membershipStatus} size="small" color={membershipStatusColor[member.membershipStatus]} />
@@ -86,7 +86,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 0: Overview */}
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Contact Details</Typography>
@@ -109,7 +109,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Emergency Contact</Typography>
@@ -133,7 +133,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Current Membership</Typography>
@@ -145,7 +145,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   ['Assigned Trainer', member.trainer || 'Unassigned'],
                   ['Last Visit', member.lastVisit],
                 ].map(([k, v]) => (
-                  <Box key={k} display="flex" justifyContent="space-between" py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Box key={k} display="flex" py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
                     <Typography variant="caption" fontWeight={600}>{v}</Typography>
                   </Box>
@@ -159,7 +159,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 1: Membership */}
       <TabPanel value={tab} index={1}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={8}>
+          <Grid xs={12} md={8}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Membership History</Typography>
@@ -188,7 +188,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" mb={2}>Membership Actions</Typography>
@@ -243,7 +243,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={3}>
         <Card elevation={0}>
           <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="subtitle2" fontWeight="bold">Payment History</Typography>
               <Button variant="outlined" size="small" startIcon={<PaymentIcon />}>Add Payment</Button>
             </Box>
@@ -280,7 +280,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 4: Fitness */}
       <TabPanel value={tab} index={4}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.2)' }}>
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
@@ -312,7 +312,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={5}>
         <Card elevation={0}>
           <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="subtitle2" fontWeight="bold">Body Measurements History</Typography>
               <Button variant="outlined" size="small">Add Assessment</Button>
             </Box>

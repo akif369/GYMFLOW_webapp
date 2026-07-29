@@ -135,7 +135,7 @@ export default function MembersPage() {
   return (
     <AppLayout>
       {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
+      <Stack direction="row" mb={3} gap={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Box>
           <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc' }}>Members</Typography>
           <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
@@ -155,10 +155,10 @@ export default function MembersPage() {
           { label: 'Expired', value: counts.EXPIRED, color: '#f43f5e', icon: PersonOffRoundedIcon },
           { label: 'Pending Payment', value: counts.PAYMENT_PENDING, color: '#f59e0b', icon: WarningAmberRoundedIcon },
         ].map(s => (
-          <Grid item xs={6} sm={3} key={s.label}>
+          <Grid xs={6} sm={3} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ py: '12px !important', px: '16px !important' }}>
-                <Stack direction="row" alignItems="center" gap={1}>
+                <Stack direction="row" gap={1} sx={{ alignItems: 'center' }}>
                   <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: alpha(s.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <s.icon sx={{ fontSize: 16, color: s.color }} />
                   </Box>
@@ -174,7 +174,7 @@ export default function MembersPage() {
       </Grid>
 
       {/* Filters & Search */}
-      <Stack direction="row" gap={1.5} mb={2} flexWrap="wrap" alignItems="center">
+      <Stack direction="row" gap={1.5} mb={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
           placeholder="Search name, ID, phone..."
           size="small"
@@ -189,7 +189,7 @@ export default function MembersPage() {
             ),
           }}
         />
-        <Stack direction="row" gap={0.75} flexWrap="wrap">
+        <Stack direction="row" gap={0.75} sx={{ flexWrap: 'wrap' }}>
           {FILTERS.map(f => (
             <Chip
               key={f.value}
@@ -236,29 +236,29 @@ export default function MembersPage() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Gender" select fullWidth size="small">
                 {['Male', 'Female', 'Other'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={6}><TextField label="Date of Birth" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid item xs={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
-            <Grid item xs={12}>
+            <Grid xs={6}><TextField label="Date of Birth" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid xs={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
+            <Grid xs={12}>
               <TextField label="Membership Plan" select fullWidth size="small">
                 {['Monthly Basic', 'Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={6}><TextField label="Start Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}><TextField label="Start Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid xs={6}>
               <TextField label="Assigned Trainer" select fullWidth size="small">
                 {['Amit Singh', 'Neha Gupta', 'Ravi Kumar', 'None'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField label="Fitness Goal" fullWidth size="small" placeholder="e.g. Weight Loss, Muscle Gain" />
             </Grid>
           </Grid>

@@ -23,7 +23,7 @@ export default function MembershipsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Membership Management</Typography>
           <Typography variant="body2" color="text.secondary">Plans, events, and membership operations</Typography>
@@ -43,10 +43,10 @@ export default function MembershipsPage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {mockMembershipPlans.map(plan => (
-            <Grid item xs={12} sm={6} md={4} key={plan.id}>
+            <Grid xs={12} sm={6} md={4} key={plan.id}>
               <Card elevation={0} sx={{ height: '100%' }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                  <Box display="flex" mb={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <Typography variant="subtitle1" fontWeight="bold">{plan.name}</Typography>
                     <Chip label={plan.status} size="small" color="success" />
                   </Box>
@@ -58,7 +58,7 @@ export default function MembershipsPage() {
                       ['Joining Fee', plan.joiningFee > 0 ? `₹${plan.joiningFee}` : 'None'],
                       ['PT Sessions', plan.ptSessions],
                     ].map(([k, v]) => (
-                      <Box key={k} display="flex" justifyContent="space-between" py={0.5} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Box key={k} display="flex" py={0.5} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
                         <Typography variant="caption" color="text.secondary">{k}</Typography>
                         <Typography variant="caption" fontWeight={600}>{v}</Typography>
                       </Box>
@@ -124,7 +124,7 @@ export default function MembershipsPage() {
             { op: 'Cancel', desc: 'Cancel and record reason', color: 'error' },
             { op: 'Transfer', desc: 'Transfer to another branch or member', color: 'secondary' },
           ].map(({ op, desc, color }) => (
-            <Grid item xs={12} sm={6} md={4} key={op}>
+            <Grid xs={12} sm={6} md={4} key={op}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main', border: '1px solid' } }}>
                 <CardContent>
                   <Chip label={op} color={color as any} size="small" sx={{ mb: 1 }} />
@@ -142,13 +142,13 @@ export default function MembershipsPage() {
         <DialogTitle>Create Membership Plan</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField label="Plan Name" fullWidth size="small" placeholder="e.g. Monthly Pro" /></Grid>
-            <Grid item xs={6}><TextField label="Duration (days)" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="Price (₹)" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="GST (%)" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="Joining Fee (₹)" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="PT Sessions Included" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={12}><TextField label="Plan Name" fullWidth size="small" placeholder="e.g. Monthly Pro" /></Grid>
+            <Grid xs={6}><TextField label="Duration (days)" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="Price (₹)" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="GST (%)" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="Joining Fee (₹)" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="PT Sessions Included" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Status" select fullWidth size="small">
                 <MenuItem value="ACTIVE">Active</MenuItem>
                 <MenuItem value="INACTIVE">Inactive</MenuItem>

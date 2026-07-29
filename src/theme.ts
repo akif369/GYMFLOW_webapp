@@ -9,11 +9,11 @@ const BRAND = {
   purple: '#8b5cf6',
   amber: '#f59e0b',
   rose: '#f43f5e',
-  bg: '#080c10',
-  surface: '#0d1117',
-  surfaceElevated: '#161b22',
-  border: 'rgba(255,255,255,0.07)',
-  borderStrong: 'rgba(255,255,255,0.12)',
+  bg: '#000000',
+  surface: '#0a0a0a',
+  surfaceElevated: '#141414',
+  border: 'rgba(255,255,255,0.08)',
+  borderStrong: 'rgba(255,255,255,0.16)',
 };
 
 export const theme = createTheme({
@@ -43,7 +43,7 @@ export const theme = createTheme({
     body2: { fontSize: '0.8rem', color: '#7d8590' },
     caption: { fontSize: '0.72rem', color: '#7d8590' },
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 16 },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -58,31 +58,34 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          borderRadius: 8,
-          fontWeight: 600,
-          fontSize: '0.8125rem',
+          borderRadius: 16,
+          fontWeight: 700,
+          fontSize: '0.88rem',
           lineHeight: 1.5,
+          minHeight: 44,
         },
         contained: {
+          color: '#000',
           boxShadow: 'none',
-          '&:hover': { boxShadow: `0 0 20px ${alpha(BRAND.green, 0.3)}` },
+          '&:hover': { boxShadow: `0 0 20px ${alpha(BRAND.green, 0.3)}`, backgroundColor: BRAND.greenLight },
         },
         outlined: {
-          borderColor: BRAND.border,
-          '&:hover': { borderColor: BRAND.green, backgroundColor: alpha(BRAND.green, 0.06) },
+          borderColor: BRAND.borderStrong,
+          color: '#fff',
+          '&:hover': { borderColor: BRAND.green, backgroundColor: alpha(BRAND.green, 0.08) },
         },
-        sizeLarge: { padding: '10px 22px', fontSize: '0.9rem' },
-        sizeSmall: { padding: '4px 10px', fontSize: '0.75rem' },
+        sizeLarge: { padding: '12px 24px', fontSize: '0.96rem' },
+        sizeSmall: { padding: '6px 14px', fontSize: '0.78rem', minHeight: 34 },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 32,
           backgroundImage: 'none',
           border: `1px solid ${BRAND.border}`,
           backgroundColor: BRAND.surface,
-          transition: 'border-color 0.2s, box-shadow 0.2s',
+          boxShadow: 'none',
         },
       },
     },
@@ -173,9 +176,10 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-            '& fieldset': { borderColor: BRAND.border },
-            '&:hover fieldset': { borderColor: BRAND.borderStrong },
+            borderRadius: 12,
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            '& fieldset': { borderColor: BRAND.borderStrong },
+            '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.24)' },
             '&.Mui-focused fieldset': { borderColor: BRAND.green },
           },
         },
@@ -187,7 +191,7 @@ export const theme = createTheme({
           backgroundColor: BRAND.surfaceElevated,
           backgroundImage: 'none',
           border: `1px solid ${BRAND.border}`,
-          borderRadius: 14,
+          borderRadius: 24,
         },
       },
     },

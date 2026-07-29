@@ -26,7 +26,7 @@ export default function LeadsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Leads & CRM</Typography>
           <Typography variant="body2" color="text.secondary">{leads.length} total leads · {byStage('Joined').length} converted</Typography>
@@ -40,7 +40,7 @@ export default function LeadsPage() {
           <Typography variant="subtitle2" fontWeight="bold" mb={2}>Lead Sources</Typography>
           <Grid container spacing={1}>
             {bySource.filter(s => s.count > 0).map(s => (
-              <Grid item key={s.source}>
+              <Grid key={s.source}>
                 <Box textAlign="center" p={2} sx={{ bgcolor: 'background.default', borderRadius: 2, minWidth: 80 }}>
                   <Typography variant="h5" fontWeight="bold" color="primary">{s.count}</Typography>
                   <Typography variant="caption" color="text.secondary">{s.source}</Typography>
@@ -56,7 +56,7 @@ export default function LeadsPage() {
       <Box display="flex" gap={2} mb={3} sx={{ overflowX: 'auto', pb: 1 }}>
         {PIPELINE_STAGES.map(stage => (
           <Box key={stage} sx={{ minWidth: 200, flexShrink: 0 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} px={1}>
+            <Box display="flex" mb={1} px={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="caption" fontWeight="bold">{stage}</Typography>
               <Chip label={byStage(stage).length} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
             </Box>
@@ -66,7 +66,7 @@ export default function LeadsPage() {
                   <CardContent sx={{ p: '12px !important' }}>
                     <Typography variant="body2" fontWeight="bold">{lead.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{lead.phone}</Typography>
-                    <Box display="flex" justifyContent="space-between" mt={1}>
+                    <Box display="flex" mt={1} sx={{ justifyContent: 'space-between' }}>
                       <Chip label={lead.source} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 18 }} />
                       <Typography variant="caption" color="text.secondary">{lead.createdAt}</Typography>
                     </Box>
@@ -126,19 +126,19 @@ export default function LeadsPage() {
         <DialogTitle>Add New Lead</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField label="Full Name" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Phone Number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={12}><TextField label="Full Name" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Phone Number" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Lead Source" select fullWidth size="small">
                 {SOURCES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField label="Status" select fullWidth size="small">
                 {PIPELINE_STAGES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}><TextField label="Notes" fullWidth size="small" multiline rows={2} /></Grid>
+            <Grid xs={12}><TextField label="Notes" fullWidth size="small" multiline rows={2} /></Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

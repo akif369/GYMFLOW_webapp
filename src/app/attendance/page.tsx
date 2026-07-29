@@ -49,7 +49,7 @@ export default function AttendancePage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {CURRENTLY_INSIDE.map((m, i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
+            <Grid xs={12} sm={6} md={4} key={i}>
               <Card elevation={0} sx={{ border: '1px solid rgba(16,185,129,0.2)' }}>
                 <CardContent>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -138,7 +138,7 @@ export default function AttendancePage() {
             { hour: '6–7 PM', count: 52, pct: 95 }, { hour: '7–8 PM', count: 48, pct: 87 },
             { hour: '8–9 PM', count: 30, pct: 55 },
           ].map(h => (
-            <Grid item xs={12} sm={6} md={4} key={h.hour}>
+            <Grid xs={12} sm={6} md={4} key={h.hour}>
               <Card elevation={0}>
                 <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box>
@@ -160,13 +160,13 @@ export default function AttendancePage() {
         <DialogTitle>Manual Check-in</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField label="Member Name or ID" fullWidth size="small" placeholder="Search member..." />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField label="Check-in Time" type="time" fullWidth size="small" InputLabelProps={{ shrink: true }} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField label="Branch" select fullWidth size="small">
                 <MenuItem value="koramangala">Koramangala</MenuItem>
               </TextField>

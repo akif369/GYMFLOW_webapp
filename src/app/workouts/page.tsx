@@ -21,7 +21,7 @@ export default function WorkoutsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Workout Management</Typography>
           <Typography variant="body2" color="text.secondary">Exercise library, templates, and workout plans</Typography>
@@ -73,12 +73,12 @@ export default function WorkoutsPage() {
 
       {/* Tab 1: Workout Templates */}
       <TabPanel value={tab} index={1}>
-        <Box display="flex" justifyContent="flex-end" mb={2}>
+        <Box display="flex" mb={2} sx={{ justifyContent: 'flex-end' }}>
           <Button variant="outlined" startIcon={<AddIcon />} size="small">New Template</Button>
         </Box>
         <Grid container spacing={2}>
           {mockWorkoutTemplates.map(template => (
-            <Grid item xs={12} sm={6} md={3} key={template.id}>
+            <Grid xs={12} sm={6} md={3} key={template.id}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' }, transition: 'border-color 0.2s' }}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
@@ -112,20 +112,20 @@ export default function WorkoutsPage() {
         <DialogTitle>Add Exercise to Library</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField label="Exercise Name" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={12}><TextField label="Exercise Name" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Muscle Group" select fullWidth size="small">
                 {['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Full Body'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={6}><TextField label="Equipment" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}><TextField label="Equipment" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Difficulty" select fullWidth size="small">
                 {['Beginner', 'Intermediate', 'Advanced'].map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}><TextField label="Instructions" fullWidth size="small" multiline rows={3} /></Grid>
-            <Grid item xs={12}><TextField label="Video/Image URL" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Instructions" fullWidth size="small" multiline rows={3} /></Grid>
+            <Grid xs={12}><TextField label="Video/Image URL" fullWidth size="small" /></Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

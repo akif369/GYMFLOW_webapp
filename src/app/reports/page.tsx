@@ -86,7 +86,7 @@ export default function ReportsPage() {
             { label: 'Pending', value: `₹${mockPayments.filter(p => p.status === 'PENDING').reduce((s, p) => s + p.amount, 0).toLocaleString()}` },
             { label: 'Transactions', value: mockPayments.length },
           ].map(s => (
-            <Grid item xs={4} key={s.label}>
+            <Grid xs={4} key={s.label}>
               <Card elevation={0}><CardContent>
                 <Typography variant="caption" color="text.secondary">{s.label}</Typography>
                 <Typography variant="h5" fontWeight="bold" mt={0.5}>{s.value}</Typography>

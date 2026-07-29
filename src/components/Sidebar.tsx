@@ -144,15 +144,12 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
                       <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
                         {item.icon}
                       </ListItemIcon>
-                      <ListItemText
-                        primary={item.name}
-                        primaryTypographyProps={{
+                      <ListItemText primary={<Typography sx={{
                           fontSize: '0.82rem',
                           fontWeight: active ? 600 : 500,
                           color: 'inherit',
                           lineHeight: 1.4,
-                        }}
-                      />
+                        }}>{item.name}</Typography>} />
                       {(item as any).badge && (
                         <Box
                           sx={{
@@ -191,7 +188,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
             <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
               <SettingsRoundedIcon sx={{ fontSize: 18 }} />
             </ListItemIcon>
-            <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500, color: 'inherit' }} />
+            <ListItemText primary={<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'inherit' }}>Settings</Typography>} />
           </ListItemButton>
         </ListItem>
       </Box>

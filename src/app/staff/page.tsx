@@ -24,7 +24,7 @@ export default function StaffPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Staff & Permissions</Typography>
           <Typography variant="body2" color="text.secondary">{mockStaff.length} staff members</Typography>
@@ -43,10 +43,10 @@ export default function StaffPage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {mockStaff.map(staff => (
-            <Grid item xs={12} md={6} key={staff.id}>
+            <Grid xs={12} md={6} key={staff.id}>
               <Card elevation={0}>
                 <CardContent>
-                  <Box display="flex" gap={2} alignItems="center" mb={2}>
+                  <Box display="flex" gap={2} mb={2} sx={{ alignItems: 'center' }}>
                     <Avatar sx={{ bgcolor: 'primary.dark' }}>{staff.name.split(' ').map(n => n[0]).join('')}</Avatar>
                     <Box flex={1}>
                       <Typography variant="subtitle2" fontWeight="bold">{staff.name}</Typography>
@@ -87,7 +87,7 @@ export default function StaffPage() {
             { role: 'RECEPTIONIST', perms: ['member.create', 'payment.create', 'attendance.create'], desc: 'Daily operations only' },
             { role: 'TRAINER', perms: ['attendance.create'], desc: 'View own sessions only' },
           ].map(r => (
-            <Grid item xs={12} md={6} key={r.role}>
+            <Grid xs={12} md={6} key={r.role}>
               <Card elevation={0}>
                 <CardContent>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
@@ -118,16 +118,16 @@ export default function StaffPage() {
         <DialogTitle>Add Staff Member</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid item xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
-            <Grid item xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid item xs={12}>
+            <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
+            <Grid xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
+            <Grid xs={12}>
               <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => setSelectedRole(e.target.value)}>
                 {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <Typography variant="caption" color="text.secondary" display="block" mb={1}>Permissions</Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (

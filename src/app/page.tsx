@@ -49,7 +49,7 @@ function StatCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spa
         pointerEvents: 'none',
       }} />
       <CardContent sx={{ position: 'relative' }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
+        <Stack direction="row" mb={1.5} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <Box
             sx={{
               width: 36, height: 36, borderRadius: 2,
@@ -142,7 +142,7 @@ export default function Dashboard() {
   return (
     <AppLayout>
       {/* ─── Page Header ─── */}
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3} flexWrap="wrap" gap={2}>
+      <Stack direction="row" mb={3} gap={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Box>
           <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.5px' }}>
             Good morning, Sarah 👋
@@ -151,7 +151,7 @@ export default function Dashboard() {
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · IronZone Fitness
           </Typography>
         </Box>
-        <Stack direction="row" gap={1} flexWrap="wrap">
+        <Stack direction="row" gap={1} sx={{ flexWrap: 'wrap' }}>
           <Button size="small" variant="contained" startIcon={<AddRoundedIcon sx={{ fontSize: 16 }} />}>
             Add Member
           </Button>
@@ -172,7 +172,7 @@ export default function Dashboard() {
 
       {/* ─── Row 1: Primary Stats ─── */}
       <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Today's Check-ins"
             value={s.todaysCheckins}
@@ -183,7 +183,7 @@ export default function Dashboard() {
             sparkData={[35, 40, 38, 44, 41, 47]}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Currently Inside"
             value={s.currentlyInside}
@@ -192,7 +192,7 @@ export default function Dashboard() {
             sub="Live now"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Today's Revenue"
             value={`₹${s.todaysRevenue.toLocaleString()}`}
@@ -203,7 +203,7 @@ export default function Dashboard() {
             sparkData={[5200, 6100, 7300, 6800, 7100, 8500]}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Month Revenue"
             value={`₹${(s.monthRevenue / 1000).toFixed(0)}K`}
@@ -214,7 +214,7 @@ export default function Dashboard() {
             sparkData={[98, 112, 125, 118, 132, 138, 142]}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Pending Amount"
             value={`₹${(s.pendingAmount / 1000).toFixed(1)}K`}
@@ -224,7 +224,7 @@ export default function Dashboard() {
             sub="14 members due"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
+        <Grid xs={12} sm={6} md={4} lg={2}>
           <StatCard
             title="Expiring in 7d"
             value={s.expiringIn7Days}
@@ -245,10 +245,10 @@ export default function Dashboard() {
           { title: 'Trainers Working', value: `${s.trainersWorking}/3`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
         ].map((stat, i) => (
-          <Grid item xs={12} sm={6} md={4} lg={2} key={i}>
+          <Grid xs={12} sm={6} md={4} lg={2} key={i}>
             <Card elevation={0}>
               <CardContent sx={{ py: '14px !important', px: '16px !important' }}>
-                <Stack direction="row" alignItems="center" gap={1.25}>
+                <Stack direction="row" gap={1.25} sx={{ alignItems: 'center' }}>
                   <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: alpha(stat.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <stat.icon sx={{ fontSize: 17, color: stat.color }} />
                   </Box>
@@ -270,10 +270,10 @@ export default function Dashboard() {
       {/* ─── Row 3: Charts ─── */}
       <Grid container spacing={2} mb={3}>
         {/* Revenue Chart */}
-        <Grid item xs={12} lg={8}>
+        <Grid xs={12} lg={8}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+              <Stack direction="row" mb={0.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Revenue Overview</Typography>
                   <Typography variant="caption" sx={{ color: '#7d8590' }}>Monthly revenue for 2026</Typography>
@@ -316,7 +316,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Peak Hours */}
-        <Grid item xs={12} lg={4}>
+        <Grid xs={12} lg={4}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }} mb={0.5}>Peak Hours</Typography>
@@ -328,7 +328,7 @@ export default function Dashboard() {
                   const color = pct > 80 ? '#f43f5e' : pct > 60 ? '#f59e0b' : '#10b981';
                   return (
                     <Box key={h.hour}>
-                      <Stack direction="row" justifyContent="space-between" mb={0.4}>
+                      <Stack direction="row" mb={0.4} sx={{ justifyContent: 'space-between' }}>
                         <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{h.hour}</Typography>
                         <Typography variant="caption" sx={{ color, fontWeight: 700, fontSize: '0.7rem' }}>{h.count}</Typography>
                       </Stack>
@@ -350,10 +350,10 @@ export default function Dashboard() {
 
       {/* ─── Row 4: Weekly Attendance Chart ─── */}
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} lg={7}>
+        <Grid xs={12} lg={7}>
           <Card elevation={0}>
             <CardContent>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+              <Stack direction="row" mb={0.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Weekly Attendance</Typography>
                   <Typography variant="caption" sx={{ color: '#7d8590' }}>Members per day this week</Typography>
@@ -387,10 +387,10 @@ export default function Dashboard() {
         </Grid>
 
         {/* Recent Check-ins */}
-        <Grid item xs={12} lg={5}>
+        <Grid xs={12} lg={5}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+              <Stack direction="row" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Recent Check-ins</Typography>
                 <Button component={Link} href="/attendance" size="small" variant="text" color="primary" sx={{ fontSize: '0.75rem' }}>
                   View all →
@@ -415,7 +415,7 @@ export default function Dashboard() {
       {/* ─── Row 5: Recent Payments ─── */}
       <Card elevation={0}>
         <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Stack direction="row" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f0f6fc' }}>Recent Payments</Typography>
             <Button component={Link} href="/payments" size="small" variant="text" color="primary" sx={{ fontSize: '0.75rem' }}>
               View all →
@@ -423,7 +423,7 @@ export default function Dashboard() {
           </Stack>
           <Grid container spacing={1.5}>
             {mockPayments.map(pay => (
-              <Grid item xs={12} md={6} lg={4} key={pay.id}>
+              <Grid xs={12} md={6} lg={4} key={pay.id}>
                 <Box
                   sx={{
                     p: 1.5, borderRadius: 2,
@@ -433,13 +433,13 @@ export default function Dashboard() {
                     transition: 'all 0.15s',
                   }}
                 >
-                  <Stack direction="row" alignItems="center" gap={1.5}>
+                  <Stack direction="row" gap={1.5} sx={{ alignItems: 'center' }}>
                     <Avatar sx={{ width: 34, height: 34, bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa', fontSize: '0.72rem', fontWeight: 700 }}>
                       {pay.member.split(' ').map((n: string) => n[0]).join('')}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" fontWeight={600} noWrap sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>{pay.member}</Typography>
-                      <Stack direction="row" gap={0.5} alignItems="center">
+                      <Stack direction="row" gap={0.5} sx={{ alignItems: 'center' }}>
                         <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{pay.method}</Typography>
                         <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>·</Typography>
                         <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{pay.date}</Typography>

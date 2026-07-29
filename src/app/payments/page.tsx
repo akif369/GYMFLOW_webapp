@@ -33,7 +33,7 @@ export default function PaymentsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
           <Typography variant="body2" color="text.secondary">Manage member payments and invoices</Typography>
@@ -52,7 +52,7 @@ export default function PaymentsPage() {
           { label: 'Total Transactions', value: mockPayments.length, color: '#06b6d4' },
           { label: 'Refunds', value: '₹0', color: '#ef4444' },
         ].map(s => (
-          <Grid item xs={6} md={3} key={s.label}>
+          <Grid xs={6} md={3} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{s.label}</Typography>
@@ -129,21 +129,21 @@ export default function PaymentsPage() {
         <DialogTitle>Record Payment</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
-            <Grid item xs={6}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
+            <Grid xs={6}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
+            <Grid xs={6}>
               <TextField label="Payment Method" select fullWidth size="small">
                 {['Cash', 'UPI', 'Card', 'Online'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}><TextField label="UPI/Card Reference ID" fullWidth size="small" placeholder="Optional" /></Grid>
-            <Grid item xs={6}><TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid item xs={6}>
+            <Grid xs={12}><TextField label="UPI/Card Reference ID" fullWidth size="small" placeholder="Optional" /></Grid>
+            <Grid xs={6}><TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid xs={6}>
               <TextField label="Plan" select fullWidth size="small">
                 {['Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField label="Apply Discount (%)" type="number" fullWidth size="small" />
             </Grid>
           </Grid>

@@ -13,7 +13,7 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
 
 function SettingRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
   return (
-    <Box display="flex" justifyContent="space-between" alignItems="center" py={2} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <Box display="flex" py={2} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'space-between' }}>
       <Box flex={1} mr={2}>
         <Typography variant="body2" fontWeight={600}>{label}</Typography>
         {desc && <Typography variant="caption" color="text.secondary">{desc}</Typography>}
@@ -50,17 +50,17 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" mb={3}>Gym Profile</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}><TextField label="Gym Name" defaultValue="IronZone Fitness" fullWidth size="small" /></Grid>
-              <Grid item xs={12} md={6}><TextField label="Owner Name" defaultValue="Rajan Sharma" fullWidth size="small" /></Grid>
-              <Grid item xs={12} md={6}><TextField label="Email" defaultValue="admin@ironzone.com" fullWidth size="small" /></Grid>
-              <Grid item xs={12} md={6}><TextField label="Phone" defaultValue="+91 98765 43210" fullWidth size="small" /></Grid>
-              <Grid item xs={12}><TextField label="Address" defaultValue="42, 5th Main, Koramangala, Bangalore - 560095" fullWidth size="small" multiline rows={2} /></Grid>
-              <Grid item xs={6}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
-              <Grid item xs={6}><TextField label="Currency" select defaultValue="INR" fullWidth size="small">
+              <Grid xs={12} md={6}><TextField label="Gym Name" defaultValue="IronZone Fitness" fullWidth size="small" /></Grid>
+              <Grid xs={12} md={6}><TextField label="Owner Name" defaultValue="Rajan Sharma" fullWidth size="small" /></Grid>
+              <Grid xs={12} md={6}><TextField label="Email" defaultValue="admin@ironzone.com" fullWidth size="small" /></Grid>
+              <Grid xs={12} md={6}><TextField label="Phone" defaultValue="+91 98765 43210" fullWidth size="small" /></Grid>
+              <Grid xs={12}><TextField label="Address" defaultValue="42, 5th Main, Koramangala, Bangalore - 560095" fullWidth size="small" multiline rows={2} /></Grid>
+              <Grid xs={6}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
+              <Grid xs={6}><TextField label="Currency" select defaultValue="INR" fullWidth size="small">
                 <MenuItem value="INR">INR (₹)</MenuItem>
                 <MenuItem value="USD">USD ($)</MenuItem>
               </TextField></Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Button variant="contained" startIcon={<SaveIcon />}>Save Changes</Button>
               </Grid>
             </Grid>
@@ -125,16 +125,16 @@ export default function SettingsPage() {
             <Typography variant="subtitle2" fontWeight="bold" mb={1}>Tax & GST Configuration</Typography>
             <Alert severity="info" sx={{ mb: 3 }}>India GST (18%) applies to gym services. Configure below.</Alert>
             <Grid container spacing={2}>
-              <Grid item xs={6}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
-              <Grid item xs={6}><TextField label="Default GST Rate (%)" type="number" defaultValue="18" fullWidth size="small" /></Grid>
-              <Grid item xs={6}><TextField label="CGST (%)" type="number" defaultValue="9" fullWidth size="small" /></Grid>
-              <Grid item xs={6}><TextField label="SGST (%)" type="number" defaultValue="9" fullWidth size="small" /></Grid>
-              <Grid item xs={12}>
+              <Grid xs={6}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
+              <Grid xs={6}><TextField label="Default GST Rate (%)" type="number" defaultValue="18" fullWidth size="small" /></Grid>
+              <Grid xs={6}><TextField label="CGST (%)" type="number" defaultValue="9" fullWidth size="small" /></Grid>
+              <Grid xs={6}><TextField label="SGST (%)" type="number" defaultValue="9" fullWidth size="small" /></Grid>
+              <Grid xs={12}>
                 <SettingRow label="Show GST Breakdown on Invoices" desc="">
                   <FormControlLabel control={<Switch defaultChecked />} label="" />
                 </SettingRow>
               </Grid>
-              <Grid item xs={12}><Button variant="contained" startIcon={<SaveIcon />}>Save Tax Settings</Button></Grid>
+              <Grid xs={12}><Button variant="contained" startIcon={<SaveIcon />}>Save Tax Settings</Button></Grid>
             </Grid>
           </CardContent>
         </Card>
@@ -146,10 +146,10 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" mb={3}>Invoice Settings</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}><TextField label="Invoice Prefix" defaultValue="INV-GYM-" fullWidth size="small" /></Grid>
-              <Grid item xs={6}><TextField label="Starting Number" type="number" defaultValue="1001" fullWidth size="small" /></Grid>
-              <Grid item xs={12}><TextField label="Footer Note" defaultValue="Thank you for choosing IronZone Fitness! Contact us at admin@ironzone.com" fullWidth size="small" multiline rows={2} /></Grid>
-              <Grid item xs={12}>
+              <Grid xs={6}><TextField label="Invoice Prefix" defaultValue="INV-GYM-" fullWidth size="small" /></Grid>
+              <Grid xs={6}><TextField label="Starting Number" type="number" defaultValue="1001" fullWidth size="small" /></Grid>
+              <Grid xs={12}><TextField label="Footer Note" defaultValue="Thank you for choosing IronZone Fitness! Contact us at admin@ironzone.com" fullWidth size="small" multiline rows={2} /></Grid>
+              <Grid xs={12}>
                 <SettingRow label="Include Logo on Invoice" desc="">
                   <FormControlLabel control={<Switch defaultChecked />} label="" />
                 </SettingRow>
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   <FormControlLabel control={<Switch defaultChecked />} label="" />
                 </SettingRow>
               </Grid>
-              <Grid item xs={12}><Button variant="contained" startIcon={<SaveIcon />}>Save Invoice Settings</Button></Grid>
+              <Grid xs={12}><Button variant="contained" startIcon={<SaveIcon />}>Save Invoice Settings</Button></Grid>
             </Grid>
           </CardContent>
         </Card>
