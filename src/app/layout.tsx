@@ -1,8 +1,5 @@
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
 import ThemeRegistry from '@/components/ThemeRegistry';
-
-const outfit = Outfit({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'GymFlow Admin',
@@ -16,7 +13,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={outfit.className} style={{ margin: 0, padding: 0 }}>
+      <head>
+        {/* Load Outfit font via standard link tag — avoids build-time network requirement */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body suppressHydrationWarning style={{ margin: 0, padding: 0, fontFamily: "'Outfit', 'Inter', 'Roboto', sans-serif" }}>
         <ThemeRegistry>
           {children}
         </ThemeRegistry>

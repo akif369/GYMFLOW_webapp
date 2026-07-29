@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar 
         mobileOpen={mobileOpen} 
         onClose={() => setMobileOpen(false)} 
-        drawerWidth={236} 
+        drawerWidth={220} 
       />
       <Box
         sx={{
@@ -33,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           component="main"
           sx={{
             flexGrow: 1,
-            p: { xs: 2, md: 3, lg: 4 },
+            p: { xs: 1.5, md: 2.5 },
             overflow: 'auto',
             minHeight: 0,
           }}

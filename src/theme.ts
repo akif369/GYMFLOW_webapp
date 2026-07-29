@@ -43,7 +43,7 @@ export const theme = createTheme({
     body2: { fontSize: '0.8rem', color: '#7d8590' },
     caption: { fontSize: '0.72rem', color: '#7d8590' },
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 12 },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -62,7 +62,7 @@ export const theme = createTheme({
           fontWeight: 700,
           fontSize: '0.88rem',
           lineHeight: 1.5,
-          minHeight: 44,
+          minHeight: 36,
         },
         contained: {
           color: '#000',
@@ -74,14 +74,14 @@ export const theme = createTheme({
           color: '#fff',
           '&:hover': { borderColor: BRAND.green, backgroundColor: alpha(BRAND.green, 0.08) },
         },
-        sizeLarge: { padding: '12px 24px', fontSize: '0.96rem' },
-        sizeSmall: { padding: '6px 14px', fontSize: '0.78rem', minHeight: 34 },
+        sizeLarge: { padding: '10px 22px', fontSize: '0.9rem' },
+        sizeSmall: { padding: '5px 12px', fontSize: '0.76rem', minHeight: 30 },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
+          borderRadius: 14,
           backgroundImage: 'none',
           border: `1px solid ${BRAND.border}`,
           backgroundColor: BRAND.surface,
@@ -92,8 +92,8 @@ export const theme = createTheme({
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: '20px',
-          '&:last-child': { paddingBottom: '20px' },
+          padding: '16px',
+          '&:last-child': { paddingBottom: '16px' },
         },
       },
     },
