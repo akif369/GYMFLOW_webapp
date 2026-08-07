@@ -14,7 +14,9 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const statusColor: Record<string, any> = {
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const statusColor: Record<string, ChipColor> = {
   PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning',
   FAILED: 'error', REFUNDED: 'default', CANCELLED: 'default', PROCESSING: 'info',
 };
@@ -33,7 +35,7 @@ export default function PaymentsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
           <Typography variant="body2" color="text.secondary">Manage member payments and invoices</Typography>
@@ -45,7 +47,7 @@ export default function PaymentsPage() {
       </Box>
 
       {/* Summary Cards */}
-      <Grid container spacing={2} mb={3}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
           { label: 'Total Collected', value: `₹${totalRevenue.toLocaleString()}`, color: '#10b981' },
           { label: 'Pending Amount', value: `₹${totalPending.toLocaleString()}`, color: '#f59e0b' },
@@ -56,7 +58,7 @@ export default function PaymentsPage() {
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{s.label}</Typography>
-                <Typography variant="h5" fontWeight="bold" mt={0.5} sx={{ color: s.color }}>{s.value}</Typography>
+                <Typography variant="h5" fontWeight="bold" sx={{ mt: 0.5, color: s.color }}>{s.value}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -128,7 +130,7 @@ export default function PaymentsPage() {
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Record Payment</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
             <Grid xs={6}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
             <Grid xs={6}>

@@ -13,7 +13,9 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const eventColor: Record<string, any> = {
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const eventColor: Record<string, ChipColor> = {
   CREATED: 'info', RENEWED: 'success', FROZEN: 'warning', RESUMED: 'default', EXTENDED: 'primary', CANCELLED: 'error',
 };
 
@@ -23,7 +25,7 @@ export default function MembershipsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Membership Management</Typography>
           <Typography variant="body2" color="text.secondary">Plans, events, and membership operations</Typography>
@@ -46,7 +48,7 @@ export default function MembershipsPage() {
             <Grid xs={12} sm={6} md={4} key={plan.id}>
               <Card elevation={0} sx={{ height: '100%' }}>
                 <CardContent>
-                  <Box display="flex" mb={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', mb: 2, alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <Typography variant="subtitle1" fontWeight="bold">{plan.name}</Typography>
                     <Chip label={plan.status} size="small" color="success" />
                   </Box>
@@ -64,7 +66,7 @@ export default function MembershipsPage() {
                       </Box>
                     ))}
                   </Box>
-                  <Box display="flex" gap={1} mt={2}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     <Button size="small" variant="outlined" fullWidth>Edit</Button>
                     <Button size="small" variant="outlined" color="error" fullWidth>Disable</Button>
                   </Box>
@@ -79,13 +81,13 @@ export default function MembershipsPage() {
       <TabPanel value={tab} index={1}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={2}>All Membership Events</Typography>
-            <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>All Membership Events</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
               Events are immutable records. We never simply change expiry dates.
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {mockMembershipEvents.map((e, i) => (
-                <Box key={e.id} display="flex" gap={2} pb={3}>
+                <Box key={e.id} sx={{ display: 'flex', gap: 2, pb: 3 }}>
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'background.default', border: '2px solid', borderColor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Typography variant="caption" fontWeight="bold">{i + 1}</Typography>
@@ -100,7 +102,7 @@ export default function MembershipsPage() {
                       <Typography variant="caption" color="text.secondary">{e.date}</Typography>
                       <Typography variant="caption" color="text.secondary">by {e.actor}</Typography>
                     </Box>
-                    <Typography variant="body2" mt={0.5}>{e.notes}</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{e.notes}</Typography>
                   </Box>
                 </Box>
               ))}
@@ -127,7 +129,7 @@ export default function MembershipsPage() {
             <Grid xs={12} sm={6} md={4} key={op}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main', border: '1px solid' } }}>
                 <CardContent>
-                  <Chip label={op} color={color as any} size="small" sx={{ mb: 1 }} />
+                  <Chip label={op} color={color as ChipColor} size="small" sx={{ mb: 1 }} />
                   <Typography variant="body2" color="text.secondary">{desc}</Typography>
                   <Button size="small" variant="text" sx={{ mt: 1, p: 0 }}>Open →</Button>
                 </CardContent>
@@ -141,7 +143,7 @@ export default function MembershipsPage() {
       <Dialog open={planOpen} onClose={() => setPlanOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Create Membership Plan</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={12}><TextField label="Plan Name" fullWidth size="small" placeholder="e.g. Monthly Pro" /></Grid>
             <Grid xs={6}><TextField label="Duration (days)" type="number" fullWidth size="small" /></Grid>
             <Grid xs={6}><TextField label="Price (₹)" type="number" fullWidth size="small" /></Grid>

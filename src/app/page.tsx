@@ -1,9 +1,9 @@
 'use client';
-import React from 'react';
+import React, { type ElementType } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  Divider, Stack, LinearProgress, alpha, IconButton,
+  Stack, LinearProgress, alpha,
 } from '@mui/material';
 import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -34,7 +34,7 @@ interface KpiCardProps {
   title: string;
   value: string | number;
   sub?: string;
-  icon: any;
+  icon: ElementType;
   color?: string;
   trend?: number;
   sparkData?: number[];
@@ -61,7 +61,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
 
       <CardContent sx={{ p: '14px !important', pb: '12px !important' }}>
         {/* Icon row */}
-        <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} mb={1.25}>
+        <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.25 }}>
           <Box sx={{
             width: 34, height: 34, borderRadius: 1.5,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -120,7 +120,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
             <SparkLineChart
               data={sparkData}
               height={28}
-              colors={[color]}
+              color={color}
               curve="natural"
               area
               sx={{ '& .MuiChartsArea-root': { opacity: 0.1 } }}
@@ -133,11 +133,19 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
 }
 
 // ─── Mini Stat ────────────────────────────────────────────────────────────────
-function MiniStat({ title, value, icon: Icon, color, trend }: any) {
+interface MiniStatProps {
+  title: string;
+  value: string | number;
+  icon: ElementType;
+  color: string;
+  trend?: number;
+}
+
+function MiniStat({ title, value, icon: Icon, color, trend }: MiniStatProps) {
   return (
     <Card elevation={0} sx={{ height: '100%' }}>
       <CardContent sx={{ p: '12px !important' }}>
-        <Stack direction="row" gap={1.25} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
           <Box sx={{
             width: 30, height: 30, borderRadius: 1.25, flexShrink: 0,
             bgcolor: alpha(color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -148,7 +156,7 @@ function MiniStat({ title, value, icon: Icon, color, trend }: any) {
             <Typography sx={{ fontSize: '0.59rem', color: '#7d8590', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>
               {title}
             </Typography>
-            <Stack direction="row" sx={{ alignItems: 'baseline' }} gap={0.5} mt={0.25}>
+            <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5, mt: 0.25 }}>
               <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1 }}>
                 {value}
               </Typography>
@@ -166,7 +174,16 @@ function MiniStat({ title, value, icon: Icon, color, trend }: any) {
 }
 
 // ─── Activity Row ─────────────────────────────────────────────────────────────
-function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: any) {
+interface ActivityRowProps {
+  avatar: string;
+  name: string;
+  sub: string;
+  right: string;
+  rightSub?: string;
+  dotColor?: string;
+}
+
+function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: ActivityRowProps) {
   const isInside = !rightSub;
   return (
     <Box sx={{
@@ -206,7 +223,7 @@ function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: any) {
 // ─── Card Header ──────────────────────────────────────────────────────────────
 function CardHeader({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
   return (
-    <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} mb={1.75}>
+    <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.75 }}>
       <Box>
         <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.88rem', letterSpacing: '-0.01em' }}>
           {title}
@@ -250,7 +267,7 @@ export default function Dashboard() {
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={0.75} sx={{ flexShrink: 0 }}>
+        <Stack direction="row" sx={{ flexShrink: 0, gap: 0.75 }}>
           <Button size="small" variant="contained" color="primary"
             startIcon={<AddRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontWeight: 700, fontSize: '0.76rem', px: 1.5, py: 0.6 }}
@@ -277,18 +294,18 @@ export default function Dashboard() {
         bgcolor: alpha('#10b981', 0.04),
         display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap',
       }}>
-        <Stack direction="row" gap={0.75} sx={{ alignItems: 'center', flexShrink: 0 }}>
+        <Stack direction="row" sx={{ alignItems: 'center', flexShrink: 0, gap: 0.75 }}>
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#10b981', boxShadow: '0 0 6px #10b981' }} />
           <Typography sx={{ color: '#34d399', fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.08em' }}>LIVE</Typography>
         </Stack>
         <Box sx={{ width: 1, height: 14, bgcolor: 'rgba(255,255,255,0.1)' }} />
-        <Stack direction="row" gap={2} sx={{ flexWrap: 'wrap' }}>
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2 }}>
           {[
             { label: 'Inside Now', val: `${s.currentlyInside} members` },
             { label: "Today's Check-ins", val: `${s.todaysCheckins} total` },
             { label: 'PT Sessions', val: `${s.todaysPtSessions} scheduled` },
           ].map(item => (
-            <Stack key={item.label} direction="row" gap={0.5} sx={{ alignItems: 'center' }}>
+            <Stack key={item.label} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
               <Typography sx={{ color: '#5d6470', fontSize: '0.68rem' }}>{item.label}:</Typography>
               <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.72rem' }}>{item.val}</Typography>
             </Stack>
@@ -297,7 +314,7 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 1: Primary KPIs ─────────────────────────────────────────── */}
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
         {[
           { title: "Today's Check-ins", value: s.todaysCheckins, icon: AccessTimeRoundedIcon, color: '#10b981', trend: 12, sub: 'vs 42 yesterday', sparkData: [35,40,38,44,41,47] },
@@ -307,7 +324,7 @@ export default function Dashboard() {
           { title: 'Pending Amount', value: `₹${(s.pendingAmount/1000).toFixed(1)}K`, icon: WarningAmberRoundedIcon, color: '#f59e0b', trend: -3, sub: '14 members due' },
           { title: 'Expiring in 7d', value: s.expiringIn7Days, icon: AutorenewRoundedIcon, color: '#f43f5e', sub: 'Need action' },
         ].map((card, i) => (
-          <Grid xs={6} sm={4} md={4} lg={2} key={i}>
+          <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
             <KpiCard {...card} />
           </Grid>
         ))}
@@ -315,7 +332,7 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 2: Secondary Stats ───────────────────────────────────────── */}
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
         {[
           { title: 'Inactive', value: s.inactiveMembers, icon: PersonOffRoundedIcon, color: '#6b7280' },
@@ -325,7 +342,7 @@ export default function Dashboard() {
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
           { title: 'New Leads', value: 5, icon: TrendingUpRoundedIcon, color: '#f59e0b', trend: 12 },
         ].map((stat, i) => (
-          <Grid xs={6} sm={4} md={4} lg={2} key={i}>
+          <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
             <MiniStat {...stat} />
           </Grid>
         ))}
@@ -333,18 +350,18 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 3: Revenue Chart + Peak Hours ───────────────────────────── */}
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
         {/* Revenue Chart */}
-        <Grid xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
               <CardHeader
                 title="Revenue Overview"
                 sub="Monthly revenue for 2026"
                 action={
-                  <Stack direction="row" gap={0.75} sx={{ alignItems: 'center' }}>
-                    <Stack direction="row" gap={2}>
+                  <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
+                    <Stack direction="row" sx={{ gap: 2 }}>
                       {[
                         { label: 'This Month', value: `₹${(s.monthRevenue/1000).toFixed(0)}K`, color: '#10b981' },
                         { label: 'Growth', value: '+8%', color: '#4ade80' },
@@ -366,7 +383,7 @@ export default function Dashboard() {
                   tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
                 }]}
                 yAxis={[{
-                  valueFormatter: (v) => `₹${(v/1000).toFixed(0)}K`,
+                  valueFormatter: (v: number) => `₹${(v/1000).toFixed(0)}K`,
                   tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
                 }]}
                 series={[{
@@ -386,24 +403,24 @@ export default function Dashboard() {
                   '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
                 }}
                 margin={{ left: 54, right: 16, top: 8, bottom: 26 }}
-                slotProps={{ legend: { hidden: true } }}
+                hideLegend
               />
             </CardContent>
           </Card>
         </Grid>
 
         {/* Peak Hours */}
-        <Grid xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
               <CardHeader title="Peak Hours" sub="Today's gym traffic" />
-              <Stack gap={1.25}>
+              <Stack sx={{ gap: 1.25 }}>
                 {mockPeakHours.map(h => {
                   const pct = Math.round((h.count / 55) * 100);
                   const color = pct > 80 ? '#f43f5e' : pct > 60 ? '#f59e0b' : '#10b981';
                   return (
                     <Box key={h.hour}>
-                      <Stack direction="row" mb={0.4} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.4 }}>
                         <Typography sx={{ color: '#7d8590', fontSize: '0.68rem' }}>{h.hour}</Typography>
                         <Typography sx={{ color, fontWeight: 700, fontSize: '0.68rem' }}>{h.count}</Typography>
                       </Stack>
@@ -427,9 +444,9 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 4: Attendance + Check-ins ───────────────────────────────── */}
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
-        <Grid xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card elevation={0}>
             <CardContent>
               <CardHeader
@@ -452,13 +469,13 @@ export default function Dashboard() {
                   '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
                   '& .MuiBarElement-root': { rx: 3 },
                 }}
-                slotProps={{ legend: { hidden: true } }}
+                hideLegend
               />
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
               <CardHeader
@@ -501,7 +518,7 @@ export default function Dashboard() {
           />
           <Grid container spacing={1.5}>
             {mockPayments.map(pay => (
-              <Grid xs={12} sm={6} lg={4} key={pay.id}>
+              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={pay.id}>
                 <Box sx={{
                   p: 1.5, borderRadius: 2,
                   border: '1px solid rgba(255,255,255,0.06)',
@@ -509,7 +526,7 @@ export default function Dashboard() {
                   transition: 'all 0.15s',
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', transform: 'translateY(-1px)' },
                 }}>
-                  <Stack direction="row" gap={1.25} sx={{ alignItems: 'center' }}>
+                  <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
                     <Avatar sx={{
                       width: 32, height: 32, flexShrink: 0,
                       bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa',

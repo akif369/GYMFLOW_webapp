@@ -13,7 +13,9 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const roleColor: Record<string, any> = { OWNER: 'error', MANAGER: 'warning', RECEPTIONIST: 'info', TRAINER: 'success' };
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const roleColor: Record<string, ChipColor> = { OWNER: 'error', MANAGER: 'warning', RECEPTIONIST: 'info', TRAINER: 'success' };
 
 export default function StaffPage() {
   const [tab, setTab] = useState(0);
@@ -24,7 +26,7 @@ export default function StaffPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Staff & Permissions</Typography>
           <Typography variant="body2" color="text.secondary">{mockStaff.length} staff members</Typography>
@@ -46,7 +48,7 @@ export default function StaffPage() {
             <Grid xs={12} md={6} key={staff.id}>
               <Card elevation={0}>
                 <CardContent>
-                  <Box display="flex" gap={2} mb={2} sx={{ alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                     <Avatar sx={{ bgcolor: 'primary.dark' }}>{staff.name.split(' ').map(n => n[0]).join('')}</Avatar>
                     <Box flex={1}>
                       <Typography variant="subtitle2" fontWeight="bold">{staff.name}</Typography>
@@ -58,14 +60,14 @@ export default function StaffPage() {
                     </Box>
                   </Box>
                   <Box>
-                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Permissions</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>Permissions</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {staff.permissions.map(p => (
                         <Chip key={p} label={p} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
                       ))}
                     </Box>
                   </Box>
-                  <Box display="flex" gap={1} mt={2}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     <Button size="small" variant="outlined" fullWidth>Edit Permissions</Button>
                     <Button size="small" variant="outlined" color={staff.status === 'ACTIVE' ? 'error' : 'success'} fullWidth>
                       {staff.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
@@ -117,7 +119,7 @@ export default function StaffPage() {
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Add Staff Member</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
             <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
             <Grid xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
@@ -128,7 +130,7 @@ export default function StaffPage() {
               </TextField>
             </Grid>
             <Grid xs={12}>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1}>Permissions</Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Permissions</Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (
                   <Chip

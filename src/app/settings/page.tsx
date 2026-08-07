@@ -48,7 +48,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={0}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={3}>Gym Profile</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Gym Profile</Typography>
             <Grid container spacing={2}>
               <Grid xs={12} md={6}><TextField label="Gym Name" defaultValue="IronZone Fitness" fullWidth size="small" /></Grid>
               <Grid xs={12} md={6}><TextField label="Owner Name" defaultValue="Rajan Sharma" fullWidth size="small" /></Grid>
@@ -72,7 +72,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={1}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={3}>Branch Settings</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Branch Settings</Typography>
             <SettingRow label="Branch Name" desc="Display name for this branch">
               <TextField size="small" defaultValue="Koramangala" sx={{ width: 200 }} />
             </SettingRow>
@@ -96,7 +96,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={2}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={3}>Attendance Settings</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Attendance Settings</Typography>
             <SettingRow label="Auto Check-out" desc="Automatically check out members after N hours">
               <FormControlLabel control={<Switch defaultChecked />} label="" />
             </SettingRow>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={3}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={1}>Tax & GST Configuration</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>Tax & GST Configuration</Typography>
             <Alert severity="info" sx={{ mb: 3 }}>India GST (18%) applies to gym services. Configure below.</Alert>
             <Grid container spacing={2}>
               <Grid xs={6}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
@@ -144,7 +144,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={4}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={3}>Invoice Settings</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Invoice Settings</Typography>
             <Grid container spacing={2}>
               <Grid xs={6}><TextField label="Invoice Prefix" defaultValue="INV-GYM-" fullWidth size="small" /></Grid>
               <Grid xs={6}><TextField label="Starting Number" type="number" defaultValue="1001" fullWidth size="small" /></Grid>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={5}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={1}>Hardware & Device Management</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>Hardware & Device Management</Typography>
             <Alert severity="info" sx={{ mb: 3 }}>QR scanner and RFID reader integrations can be configured here.</Alert>
             <SettingRow label="QR Code Scanner" desc="Enable QR-based check-in (requires physical scanner)">
               <FormControlLabel control={<Switch />} label="" />

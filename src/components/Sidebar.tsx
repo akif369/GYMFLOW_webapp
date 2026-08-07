@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -20,7 +21,19 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-const navSections = [
+interface NavItem {
+  name: string;
+  icon: ReactNode;
+  href: string;
+  badge?: string;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
     label: 'Overview',
     items: [
@@ -150,7 +163,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
                           color: 'inherit',
                           lineHeight: 1.4,
                         }}>{item.name}</Typography>} />
-                      {(item as any).badge && (
+                      {item.badge && (
                         <Box
                           sx={{
                             minWidth: 18, height: 18, borderRadius: 1,
@@ -160,7 +173,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
                             px: 0.5,
                           }}
                         >
-                          {(item as any).badge}
+                          {item.badge}
                         </Box>
                       )}
                     </ListItemButton>

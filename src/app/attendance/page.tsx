@@ -159,7 +159,7 @@ export default function AttendancePage() {
       <Dialog open={checkInOpen} onClose={() => setCheckInOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Manual Check-in</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={12}>
               <TextField label="Member Name or ID" fullWidth size="small" placeholder="Search member..." />
             </Grid>

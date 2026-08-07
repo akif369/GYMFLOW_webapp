@@ -13,7 +13,9 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const statusColor: Record<string, any> = { COMPLETED: 'success', UPCOMING: 'default', MISSED: 'error', CANCELLED: 'warning' };
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const statusColor: Record<string, ChipColor> = { COMPLETED: 'success', UPCOMING: 'default', MISSED: 'error', CANCELLED: 'warning' };
 
 export default function PtSessionsPage() {
   const [tab, setTab] = useState(0);
@@ -21,7 +23,7 @@ export default function PtSessionsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Personal Training</Typography>
           <Typography variant="body2" color="text.secondary">PT packages, schedules, and session tracking</Typography>
@@ -55,7 +57,7 @@ export default function PtSessionsPage() {
                       <Typography variant="caption" color="text.secondary">{session.notes}</Typography>
                     </Box>
                   )}
-                  <Box display="flex" gap={1} mt={2}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     {session.status === 'UPCOMING' && <Button size="small" variant="contained" fullWidth>Mark Done</Button>}
                     {session.status === 'UPCOMING' && <Button size="small" variant="outlined" color="error" fullWidth>Cancel</Button>}
                   </Box>
@@ -133,7 +135,7 @@ export default function PtSessionsPage() {
             <Card elevation={0} sx={{ border: '1px dashed rgba(255,255,255,0.15)', cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }}>
               <CardContent sx={{ textAlign: 'center', py: 4 }}>
                 <AddIcon sx={{ fontSize: 36, color: 'text.secondary' }} />
-                <Typography variant="body1" color="text.secondary" mt={1}>Add Package</Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>Add Package</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -144,7 +146,7 @@ export default function PtSessionsPage() {
       <Dialog open={bookOpen} onClose={() => setBookOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Book PT Session</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
             <Grid xs={12}>
               <TextField label="Trainer" select fullWidth size="small">

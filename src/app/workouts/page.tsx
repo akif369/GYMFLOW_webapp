@@ -13,7 +13,9 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const difficultyColor: Record<string, any> = { Beginner: 'success', Intermediate: 'warning', Advanced: 'error' };
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const difficultyColor: Record<string, ChipColor> = { Beginner: 'success', Intermediate: 'warning', Advanced: 'error' };
 
 export default function WorkoutsPage() {
   const [tab, setTab] = useState(0);
@@ -21,7 +23,7 @@ export default function WorkoutsPage() {
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Workout Management</Typography>
           <Typography variant="body2" color="text.secondary">Exercise library, templates, and workout plans</Typography>
@@ -73,7 +75,7 @@ export default function WorkoutsPage() {
 
       {/* Tab 1: Workout Templates */}
       <TabPanel value={tab} index={1}>
-        <Box display="flex" mb={2} sx={{ justifyContent: 'flex-end' }}>
+        <Box sx={{ display: 'flex', mb: 2, justifyContent: 'flex-end' }}>
           <Button variant="outlined" startIcon={<AddIcon />} size="small">New Template</Button>
         </Box>
         <Grid container spacing={2}>
@@ -96,7 +98,7 @@ export default function WorkoutsPage() {
                       <Typography variant="caption" fontWeight={600}>{template.members}</Typography>
                     </Box>
                   </Box>
-                  <Box display="flex" gap={1} mt={2}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     <Button size="small" variant="outlined" fullWidth>View</Button>
                     <Button size="small" variant="outlined" fullWidth>Edit</Button>
                   </Box>
@@ -111,7 +113,7 @@ export default function WorkoutsPage() {
       <Dialog open={addExOpen} onClose={() => setAddExOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Add Exercise to Library</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid xs={12}><TextField label="Exercise Name" fullWidth size="small" /></Grid>
             <Grid xs={6}>
               <TextField label="Muscle Group" select fullWidth size="small">

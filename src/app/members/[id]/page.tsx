@@ -1,5 +1,5 @@
 'use client';
-import { use, useState } from 'react';
+import { use, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -20,10 +20,12 @@ function TabPanel({ children, value, index }: TabPanelProps) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const membershipStatusColor: Record<string, any> = { ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error' };
-const payStatusColor: Record<string, any> = { PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', FAILED: 'error' };
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
-const eventIcon: Record<string, any> = {
+const membershipStatusColor: Record<string, ChipColor> = { ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error' };
+const payStatusColor: Record<string, ChipColor> = { PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', FAILED: 'error' };
+
+const eventIcon: Record<string, ReactNode> = {
   CheckCircle: <CheckCircleIcon sx={{ fontSize: 14 }} />,
   Payment: <PaymentIcon sx={{ fontSize: 14 }} />,
   Autorenew: <AutorenewIcon sx={{ fontSize: 14 }} />,
@@ -60,13 +62,13 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             {member.firstName[0]}{member.lastName[0]}
           </Avatar>
           <Box flex={1}>
-            <Box display="flex" gap={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
               <Typography variant="h5" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberId} size="small" variant="outlined" />
               <Chip label={member.membershipStatus} size="small" color={membershipStatusColor[member.membershipStatus]} />
               <Chip label={member.paymentStatus} size="small" color={payStatusColor[member.paymentStatus]} />
             </Box>
-            <Typography variant="body2" color="text.secondary" mt={0.5}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {member.email} · {member.phone} · {member.gender}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -89,7 +91,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" mb={2}>Contact Details</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Contact Details</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {[
                     ['Email', member.email],
@@ -112,7 +114,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" mb={2}>Emergency Contact</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Emergency Contact</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">Name</Typography>
@@ -128,7 +130,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   </Box>
                 </Box>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" fontWeight="bold" mb={1.5}>Goals</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>Goals</Typography>
                 <Chip label={member.goal} color="primary" variant="outlined" size="small" />
               </CardContent>
             </Card>
@@ -136,7 +138,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" mb={2}>Current Membership</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Current Membership</Typography>
                 {[
                   ['Plan', member.plan],
                   ['Start', member.startDate],
@@ -162,7 +164,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid xs={12} md={8}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" mb={2}>Membership History</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership History</Typography>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -191,7 +193,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid xs={12} md={4}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" mb={2}>Membership Actions</Typography>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership Actions</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {['Renew', 'Upgrade', 'Downgrade', 'Freeze', 'Extend', 'Cancel', 'Transfer'].map(action => (
                     <Button key={action} variant="outlined" size="small" fullWidth
@@ -210,7 +212,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={2}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={2}>Attendance History</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Attendance History</Typography>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -243,7 +245,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={3}>
         <Card elevation={0}>
           <CardContent>
-            <Box display="flex" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', mb: 2, alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="subtitle2" fontWeight="bold">Payment History</Typography>
               <Button variant="outlined" size="small" startIcon={<PaymentIcon />}>Add Payment</Button>
             </Box>
@@ -287,7 +289,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <Typography variant="subtitle2" fontWeight="bold">Health & Fitness Profile</Typography>
                   <Chip label="Restricted" size="small" color="error" />
                 </Box>
-                <Typography variant="caption" color="error.main" display="block" mb={2}>
+                <Typography variant="caption" color="error.main" display="block" sx={{ mb: 2 }}>
                   ⚠ Access to this section is logged. Sensitive health information.
                 </Typography>
                 {[
@@ -299,7 +301,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 ].map(([k, v]) => (
                   <Box key={k} py={1} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
-                    <Typography variant="body2" mt={0.25}>{v}</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.25 }}>{v}</Typography>
                   </Box>
                 ))}
               </CardContent>
@@ -312,7 +314,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={5}>
         <Card elevation={0}>
           <CardContent>
-            <Box display="flex" mb={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', mb: 2, alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="subtitle2" fontWeight="bold">Body Measurements History</Typography>
               <Button variant="outlined" size="small">Add Assessment</Button>
             </Box>
@@ -352,7 +354,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={6}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={2}>PT Sessions</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>PT Sessions</Typography>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -388,10 +390,10 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={7}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" mb={3}>Activity Timeline</Typography>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Activity Timeline</Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {mockActivityTimeline.map((a, i) => (
-                <Box key={i} display="flex" gap={2} pb={2}>
+                <Box key={i} sx={{ display: 'flex', gap: 2, pb: 2 }}>
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {eventIcon[a.icon]}
@@ -402,7 +404,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   </Box>
                   <Box pb={2}>
                     <Typography variant="caption" color="text.secondary">{a.date}</Typography>
-                    <Typography variant="body2" fontWeight={500} mt={0.25}>{a.event}</Typography>
+                    <Typography variant="body2" fontWeight={500} sx={{ mt: 0.25 }}>{a.event}</Typography>
                   </Box>
                 </Box>
               ))}

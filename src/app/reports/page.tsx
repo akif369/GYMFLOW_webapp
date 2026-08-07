@@ -12,7 +12,19 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-function ReportCard({ title, subtitle, rows, columns }: any) {
+type ReportCell = string | number | { chip: true; label: string; color: string };
+type ReportRow = Record<string, ReportCell>;
+
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+interface ReportCardProps {
+  title: string;
+  subtitle?: string;
+  rows: ReportRow[];
+  columns: string[];
+}
+
+function ReportCard({ title, subtitle, rows, columns }: ReportCardProps) {
   return (
     <Card elevation={0}>
       <CardContent>
@@ -28,11 +40,11 @@ function ReportCard({ title, subtitle, rows, columns }: any) {
             <TableRow>{columns.map((c: string) => <TableCell key={c}>{c}</TableCell>)}</TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row: any, i: number) => (
+            {rows.map((row, i) => (
               <TableRow key={i}>
-                {Object.values(row).map((v: any, j: number) => (
+                {Object.values(row).map((v, j) => (
                   <TableCell key={j}>
-                    {typeof v === 'object' && v?.chip ? <Chip label={v.label} size="small" color={v.color} /> : v}
+                    {typeof v === 'object' && v.chip ? <Chip label={v.label} size="small" color={v.color as ChipColor} /> : v}
                   </TableCell>
                 ))}
               </TableRow>
@@ -80,7 +92,7 @@ export default function ReportsPage() {
 
       {/* Revenue Report */}
       <TabPanel value={tab} index={1}>
-        <Grid container spacing={2} mb={3}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
             { label: 'Total Revenue', value: `₹${mockPayments.filter(p => p.status === 'PAID').reduce((s, p) => s + p.amount, 0).toLocaleString()}` },
             { label: 'Pending', value: `₹${mockPayments.filter(p => p.status === 'PENDING').reduce((s, p) => s + p.amount, 0).toLocaleString()}` },
@@ -89,7 +101,7 @@ export default function ReportsPage() {
             <Grid xs={4} key={s.label}>
               <Card elevation={0}><CardContent>
                 <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                <Typography variant="h5" fontWeight="bold" mt={0.5}>{s.value}</Typography>
+                <Typography variant="h5" fontWeight="bold" sx={{ mt: 0.5 }}>{s.value}</Typography>
               </CardContent></Card>
             </Grid>
           ))}
