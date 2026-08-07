@@ -10,7 +10,6 @@ import {
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -135,9 +134,9 @@ export default function MembersPage() {
   return (
     <AppLayout>
       {/* Header */}
-      <Stack direction="row" mb={3} gap={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+      <Stack direction="row" sx={{ mb: 3, gap: 2, alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Box>
-          <Typography variant="h5" fontWeight={800} sx={{ color: '#f0f6fc' }}>Members</Typography>
+          <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>Members</Typography>
           <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
             {mockMembers.length} total members across all branches
           </Typography>
@@ -148,23 +147,23 @@ export default function MembersPage() {
       </Stack>
 
       {/* Summary strip */}
-      <Grid container spacing={1.5} mb={2.5}>
+      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
         {[
           { label: 'Active', value: counts.ACTIVE, color: '#10b981', icon: PeopleRoundedIcon },
           { label: 'Expiring (7d)', value: counts.EXPIRING, color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, color: '#f43f5e', icon: PersonOffRoundedIcon },
           { label: 'Pending Payment', value: counts.PAYMENT_PENDING, color: '#f59e0b', icon: WarningAmberRoundedIcon },
         ].map(s => (
-          <Grid xs={6} sm={3} key={s.label}>
+          <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ py: '12px !important', px: '16px !important' }}>
-                <Stack direction="row" gap={1} sx={{ alignItems: 'center' }}>
+                <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
                   <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: alpha(s.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <s.icon sx={{ fontSize: 16, color: s.color }} />
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: '0.65rem', color: '#7d8590', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</Typography>
-                    <Typography variant="h6" fontWeight={800} sx={{ color: '#f0f6fc', lineHeight: 1.2, fontSize: '1.2rem' }}>{s.value}</Typography>
+                    <Typography variant="h6" sx={{ color: '#f0f6fc', lineHeight: 1.2, fontSize: '1.2rem', fontWeight: 800 }}>{s.value}</Typography>
                   </Box>
                 </Stack>
               </CardContent>
@@ -174,22 +173,24 @@ export default function MembersPage() {
       </Grid>
 
       {/* Filters & Search */}
-      <Stack direction="row" gap={1.5} mb={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+      <Stack direction="row" sx={{ gap: 1.5, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
           placeholder="Search name, ID, phone..."
           size="small"
           value={search}
           onChange={e => setSearch(e.target.value)}
           sx={{ width: 260 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon sx={{ fontSize: 18, color: '#7d8590' }} />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRoundedIcon sx={{ fontSize: 18, color: '#7d8590' }} />
+                </InputAdornment>
+              ),
+            },
           }}
         />
-        <Stack direction="row" gap={0.75} sx={{ flexWrap: 'wrap' }}>
+        <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap' }}>
           {FILTERS.map(f => (
             <Chip
               key={f.value}
@@ -231,34 +232,50 @@ export default function MembersPage() {
       {/* Add Member Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
-          <Typography variant="h6" fontWeight={700}>Add New Member</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Add New Member</Typography>
           <Typography variant="caption" sx={{ color: '#7d8590' }}>Fill in the member details below</Typography>
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
-            <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid xs={6}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid size={6}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid size={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
+            <Grid size={6}>
               <TextField label="Gender" select fullWidth size="small">
                 {['Male', 'Female', 'Other'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={6}><TextField label="Date of Birth" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid xs={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
-            <Grid xs={12}>
+            <Grid size={6}>
+              <TextField
+                label="Date of Birth"
+                type="date"
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
+            <Grid size={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
+            <Grid size={12}>
               <TextField label="Membership Plan" select fullWidth size="small">
                 {['Monthly Basic', 'Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={6}><TextField label="Start Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid xs={6}>
+            <Grid size={6}>
+              <TextField
+                label="Start Date"
+                type="date"
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
+            <Grid size={6}>
               <TextField label="Assigned Trainer" select fullWidth size="small">
                 {['Amit Singh', 'Neha Gupta', 'Ravi Kumar', 'None'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={12}>
               <TextField label="Fitness Goal" fullWidth size="small" placeholder="e.g. Weight Loss, Muscle Gain" />
             </Grid>
           </Grid>

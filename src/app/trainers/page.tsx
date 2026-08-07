@@ -8,16 +8,20 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { mockTrainers } from '@/lib/mockData';
 
-const statusColor: Record<string, any> = { ACTIVE: 'success', ON_LEAVE: 'warning', INACTIVE: 'error' };
+const statusColor: Record<string, 'success' | 'warning' | 'error'> = {
+  ACTIVE: 'success',
+  ON_LEAVE: 'warning',
+  INACTIVE: 'error',
+};
 
 export default function TrainersPage() {
   const [addOpen, setAddOpen] = useState(false);
 
   return (
     <AppLayout>
-      <Box display="flex" mb={3} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Trainer Management</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Trainer Management</Typography>
           <Typography variant="body2" color="text.secondary">{mockTrainers.length} trainers registered</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>Add Trainer</Button>
@@ -25,16 +29,16 @@ export default function TrainersPage() {
 
       <Grid container spacing={2}>
         {mockTrainers.map(trainer => (
-          <Grid xs={12} md={6} lg={4} key={trainer.id}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={trainer.id}>
             <Card elevation={0} sx={{ height: '100%' }}>
               <CardContent>
                 {/* Header */}
-                <Box display="flex" gap={2} mb={2} sx={{ alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                   <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.dark', fontSize: '1.2rem' }}>
                     {trainer.name.split(' ').map(n => n[0]).join('')}
                   </Avatar>
-                  <Box flex={1}>
-                    <Typography variant="subtitle1" fontWeight="bold">{trainer.name}</Typography>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{trainer.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{trainer.specialization}</Typography>
                     <Box sx={{ mt: 0.5 }}><Chip label={trainer.status} size="small" color={statusColor[trainer.status]} /></Box>
                   </Box>
@@ -42,7 +46,7 @@ export default function TrainersPage() {
                 <Divider sx={{ mb: 2 }} />
 
                 {/* Stats */}
-                <Grid container spacing={1} mb={2}>
+                <Grid container spacing={1} sx={{ mb: 2 }}>
                   {[
                     ['Members', trainer.membersAssigned],
                     ['PT Clients', trainer.ptClients],
@@ -50,9 +54,9 @@ export default function TrainersPage() {
                     ['Completed', trainer.sessionsCompleted],
                     ['Cancelled', trainer.sessionsCancelled],
                   ].map(([k, v]) => (
-                    <Grid xs={4} key={k}>
-                      <Box textAlign="center" p={1} sx={{ bgcolor: 'background.default', borderRadius: 1 }}>
-                        <Typography variant="h6" fontWeight="bold">{v}</Typography>
+                    <Grid size={4} key={k}>
+                      <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{v}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{k}</Typography>
                       </Box>
                     </Grid>
@@ -67,14 +71,14 @@ export default function TrainersPage() {
                     ['Shift', trainer.shift],
                     ['Joined', trainer.joiningDate],
                   ].map(([k, v]) => (
-                    <Box key={k} display="flex" sx={{ justifyContent: 'space-between' }}>
+                    <Box key={k} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="caption" color="text.secondary">{k}</Typography>
-                      <Typography variant="caption" fontWeight={500}>{v}</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 500 }}>{v}</Typography>
                     </Box>
                   ))}
                 </Box>
 
-                <Box display="flex" gap={1} mt={2}>
+                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                   <Button size="small" variant="outlined" fullWidth>View Profile</Button>
                   <Button size="small" variant="outlined" fullWidth>Assign Members</Button>
                 </Box>
@@ -88,20 +92,28 @@ export default function TrainersPage() {
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Add Trainer</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} mt={0.5}>
-            <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Specialization" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Certifications" fullWidth size="small" /></Grid>
-            <Grid xs={6}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid size={6}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid size={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Email" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Specialization" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Certifications" fullWidth size="small" /></Grid>
+            <Grid size={6}>
               <TextField label="Shift" select fullWidth size="small">
                 <MenuItem value="morning">Morning (6AM - 2PM)</MenuItem>
                 <MenuItem value="evening">Evening (2PM - 10PM)</MenuItem>
               </TextField>
             </Grid>
-            <Grid xs={6}><TextField label="Joining Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid size={6}>
+              <TextField
+                label="Joining Date"
+                type="date"
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

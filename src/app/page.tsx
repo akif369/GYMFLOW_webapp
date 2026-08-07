@@ -237,7 +237,7 @@ export default function Dashboard() {
       {/* ─── Page Header ─────────────────────────────────────────────────── */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 2.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}
       >
         <Box>
           <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '1.35rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
@@ -250,7 +250,7 @@ export default function Dashboard() {
           </Typography>
         </Box>
 
-        <Stack direction="row" gap={0.75} sx={{ flexShrink: 0 }}>
+        <Stack direction="row" spacing={0.75} sx={{ flexShrink: 0 }}>
           <Button size="small" variant="contained" color="primary"
             startIcon={<AddRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontWeight: 700, fontSize: '0.76rem', px: 1.5, py: 0.6 }}
@@ -272,7 +272,7 @@ export default function Dashboard() {
 
       {/* ─── Live Strip ───────────────────────────────────────────────────── */}
       <Box sx={{
-        mb: 2, px: 2, py: 1,
+        mb: 3, px: 2, py: 1,
         borderRadius: 2, border: '1px solid rgba(16,185,129,0.2)',
         bgcolor: alpha('#10b981', 0.04),
         display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap',
@@ -297,7 +297,8 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 1: Primary KPIs ─────────────────────────────────────────── */}
-      <Grid container spacing={1.5} mb={1.5}>
+      <Box mb={3}>
+      <Grid container spacing={2}>
         {[
           { title: "Today's Check-ins", value: s.todaysCheckins, icon: AccessTimeRoundedIcon, color: '#10b981', trend: 12, sub: 'vs 42 yesterday', sparkData: [35,40,38,44,41,47] },
           { title: "Today's Revenue", value: `₹${s.todaysRevenue.toLocaleString()}`, icon: AttachMoneyRoundedIcon, color: '#22c55e', trend: 8, sub: 'vs ₹7,300 avg', sparkData: [5200,6100,7300,6800,7100,8500] },
@@ -311,9 +312,11 @@ export default function Dashboard() {
           </Grid>
         ))}
       </Grid>
+      </Box>
 
       {/* ─── Row 2: Secondary Stats ───────────────────────────────────────── */}
-      <Grid container spacing={1.5} mb={2}>
+      <Box mb={3}>
+      <Grid container spacing={2}>
         {[
           { title: 'Inactive', value: s.inactiveMembers, icon: PersonOffRoundedIcon, color: '#6b7280' },
           { title: 'New This Month', value: s.newMembersMonth, icon: PersonAddRoundedIcon, color: '#22c55e', trend: 5 },
@@ -327,9 +330,11 @@ export default function Dashboard() {
           </Grid>
         ))}
       </Grid>
+      </Box>
 
       {/* ─── Row 3: Revenue Chart + Peak Hours ───────────────────────────── */}
-      <Grid container spacing={1.5} mb={1.5}>
+      <Box mb={3}>
+      <Grid container spacing={2}>
         {/* Revenue Chart */}
         <Grid xs={12} lg={8}>
           <Card elevation={0} sx={{ height: '100%' }}>
@@ -419,9 +424,11 @@ export default function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+      </Box>
 
       {/* ─── Row 4: Attendance + Check-ins ───────────────────────────────── */}
-      <Grid container spacing={1.5} mb={1.5}>
+      <Box mb={3}>
+      <Grid container spacing={2}>
         <Grid xs={12} md={7}>
           <Card elevation={0}>
             <CardContent>
@@ -478,6 +485,7 @@ export default function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+      </Box>
 
       {/* ─── Row 5: Recent Payments ───────────────────────────────────────── */}
       <Card elevation={0}>
@@ -491,7 +499,7 @@ export default function Dashboard() {
               >View all</Button>
             }
           />
-          <Grid container spacing={1.25}>
+          <Grid container spacing={1.5}>
             {mockPayments.map(pay => (
               <Grid xs={12} sm={6} lg={4} key={pay.id}>
                 <Box sx={{
