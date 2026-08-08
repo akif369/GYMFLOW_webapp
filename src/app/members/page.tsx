@@ -5,7 +5,8 @@ import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
-  DialogActions, Stack, alpha,
+  DialogActions, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
+  Tooltip,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -14,6 +15,10 @@ import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { mockMembers } from '@/lib/mockData';
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -39,6 +44,34 @@ export default function MembersPage() {
     return filter && FILTERS.some(option => option.value === filter) ? filter : 'ALL';
   });
   const [addOpen, setAddOpen] = useState(false);
+  const [actionAnchor, setActionAnchor] = useState<null | HTMLElement>(null);
+  const [actionMemberId, setActionMemberId] = useState<string | null>(null);
+
+  const openActions = (event: React.MouseEvent<HTMLElement>, memberId: string) => {
+    event.stopPropagation();
+    setActionAnchor(event.currentTarget);
+    setActionMemberId(memberId);
+  };
+
+  const closeActions = () => {
+    setActionAnchor(null);
+    setActionMemberId(null);
+  };
+
+  const runMemberAction = (action: 'view' | 'renew' | 'attendance' | 'payment') => {
+    if (!actionMemberId) return;
+    const member = mockMembers.find(item => item.id === actionMemberId);
+    closeActions();
+    if (!member) return;
+
+    if (action === 'view' || action === 'renew') {
+      router.push(`/members/${member.id}${action === 'renew' ? '?action=renew' : ''}`);
+    } else if (action === 'attendance') {
+      router.push(`/attendance?member=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}`);
+    } else {
+      router.push(`/payments?memberId=${member.id}`);
+    }
+  };
 
   const filtered = mockMembers.filter(m => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
@@ -133,6 +166,26 @@ export default function MembersPage() {
       width: 110,
       renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
     },
+    {
+      field: 'actions',
+      headerName: '',
+      width: 58,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: params => (
+        <Tooltip title="Member actions">
+          <IconButton
+            size="small"
+            aria-label={`Actions for ${params.row.firstName} ${params.row.lastName}`}
+            onClick={event => openActions(event, params.row.id)}
+            sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc', bgcolor: 'rgba(255,255,255,0.08)' } }}
+          >
+            <MoreVertRoundedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
@@ -153,13 +206,26 @@ export default function MembersPage() {
       {/* Summary strip */}
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
         {[
-          { label: 'Active', value: counts.ACTIVE, color: '#10b981', icon: PeopleRoundedIcon },
-          { label: 'Expiring (7d)', value: counts.EXPIRING, color: '#f59e0b', icon: AutorenewRoundedIcon },
-          { label: 'Expired', value: counts.EXPIRED, color: '#f43f5e', icon: PersonOffRoundedIcon },
-          { label: 'Pending Payment', value: counts.PAYMENT_PENDING, color: '#f59e0b', icon: WarningAmberRoundedIcon },
+          { label: 'Active', value: counts.ACTIVE, filter: 'ACTIVE', color: '#10b981', icon: PeopleRoundedIcon },
+          { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
+          { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
+          { label: 'Pending Payment', value: counts.PAYMENT_PENDING, filter: 'PAYMENT_PENDING', color: '#f59e0b', icon: WarningAmberRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
-            <Card elevation={0}>
+            <Card
+              elevation={0}
+              onClick={() => setActiveFilter(s.filter)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setActiveFilter(s.filter);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Show ${s.label} members`}
+              sx={{ cursor: 'pointer', transition: 'border-color 0.2s, transform 0.18s', '&:hover': { borderColor: alpha(s.color, 0.55), transform: 'translateY(-2px)' } }}
+            >
               <CardContent sx={{ py: '12px !important', px: '16px !important' }}>
                 <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
                   <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: alpha(s.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -232,6 +298,30 @@ export default function MembersPage() {
           }}
         />
       </Card>
+
+      <Menu
+        anchorEl={actionAnchor}
+        open={Boolean(actionAnchor)}
+        onClose={closeActions}
+        slotProps={{ paper: { sx: { minWidth: 220, bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.08)' } } }}
+      >
+        <MenuItem onClick={() => runMemberAction('view')}>
+          <ListItemIcon><VisibilityRoundedIcon fontSize="small" sx={{ color: '#a78bfa' }} /></ListItemIcon>
+          <ListItemText primary="View profile" secondary="Open full member details" />
+        </MenuItem>
+        <MenuItem onClick={() => runMemberAction('renew')}>
+          <ListItemIcon><AutorenewRoundedIcon fontSize="small" sx={{ color: '#10b981' }} /></ListItemIcon>
+          <ListItemText primary="Renew plan" secondary="Review membership options" />
+        </MenuItem>
+        <MenuItem onClick={() => runMemberAction('attendance')}>
+          <ListItemIcon><HowToRegRoundedIcon fontSize="small" sx={{ color: '#06b6d4' }} /></ListItemIcon>
+          <ListItemText primary="Mark attendance" secondary="Open manual check-in" />
+        </MenuItem>
+        <MenuItem onClick={() => runMemberAction('payment')}>
+          <ListItemIcon><PaymentsRoundedIcon fontSize="small" sx={{ color: '#f59e0b' }} /></ListItemIcon>
+          <ListItemText primary="Record payment" secondary="Open payment entry" />
+        </MenuItem>
+      </Menu>
 
       {/* Add Member Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>

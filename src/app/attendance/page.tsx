@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
   Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
@@ -20,10 +21,12 @@ const CURRENTLY_INSIDE = [
 ];
 
 export default function AttendancePage() {
+  const searchParams = useSearchParams();
+  const memberParam = searchParams.get('member') ?? '';
   const [tab, setTab] = useState(0);
   const [dateFilter, setDateFilter] = useState('today');
-  const [checkInOpen, setCheckInOpen] = useState(false);
-  const [memberSearch, setMemberSearch] = useState('');
+  const [checkInOpen, setCheckInOpen] = useState(() => Boolean(memberParam));
+  const [memberSearch, setMemberSearch] = useState(memberParam);
 
   const allLogs = mockAttendanceLogs;
 
@@ -161,7 +164,7 @@ export default function AttendancePage() {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={12}>
-              <TextField label="Member Name or ID" fullWidth size="small" placeholder="Search member..." />
+              <TextField label="Member Name or ID" fullWidth size="small" placeholder="Search member..." defaultValue={memberSearch} />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Check-in Time" type="time" fullWidth size="small" InputLabelProps={{ shrink: true }} />

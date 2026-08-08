@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
   Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
@@ -22,8 +23,11 @@ const statusColor: Record<string, ChipColor> = {
 };
 
 export default function PaymentsPage() {
+  const searchParams = useSearchParams();
+  const memberIdParam = searchParams.get('memberId') ?? '';
+  const memberName = mockPayments.find(payment => payment.memberId === memberIdParam)?.member ?? '';
   const [tab, setTab] = useState(0);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(() => Boolean(memberIdParam));
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const filtered = mockPayments.filter(p =>
@@ -131,7 +135,7 @@ export default function PaymentsPage() {
         <DialogTitle>Record Payment</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
+            <Grid size={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." defaultValue={memberName} /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Payment Method" select fullWidth size="small">
