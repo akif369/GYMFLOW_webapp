@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -32,8 +32,12 @@ const FILTERS = [
 
 export default function MembersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeFilter, setActiveFilter] = useState(() => {
+    const filter = searchParams.get('filter');
+    return filter && FILTERS.some(option => option.value === filter) ? filter : 'ALL';
+  });
   const [addOpen, setAddOpen] = useState(false);
 
   const filtered = mockMembers.filter(m => {

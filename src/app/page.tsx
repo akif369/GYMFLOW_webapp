@@ -1,5 +1,6 @@
 'use client';
 import React, { type ElementType } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -39,19 +40,32 @@ interface KpiCardProps {
   color?: string;
   trend?: number;
   sparkData?: number[];
+  onClick?: () => void;
+  actionLabel?: string;
 }
 
-function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, sparkData }: KpiCardProps) {
+function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, sparkData, onClick, actionLabel }: KpiCardProps) {
   const trendUp = (trend ?? 0) >= 0;
   return (
     <Card
       elevation={0}
+      onClick={onClick}
+      onKeyDown={event => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? 'link' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={actionLabel}
       sx={{
         height: '100%',
         position: 'relative',
         overflow: 'hidden',
         transition: 'border-color 0.2s, transform 0.18s',
-        '&:hover': { borderColor: alpha(color, 0.45), transform: 'translateY(-2px)' },
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': { borderColor: alpha(color, 0.45), transform: onClick ? 'translateY(-2px)' : 'none' },
       }}
     >
       {/* Top accent bar */}
@@ -140,11 +154,31 @@ interface MiniStatProps {
   icon: ElementType;
   color: string;
   trend?: number;
+  onClick?: () => void;
+  actionLabel?: string;
 }
 
-function MiniStat({ title, value, icon: Icon, color, trend }: MiniStatProps) {
+function MiniStat({ title, value, icon: Icon, color, trend, onClick, actionLabel }: MiniStatProps) {
   return (
-    <Card elevation={0} sx={{ height: '100%' }}>
+    <Card
+      elevation={0}
+      onClick={onClick}
+      onKeyDown={event => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? 'link' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={actionLabel}
+      sx={{
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: onClick ? 'border-color 0.2s, transform 0.18s' : undefined,
+        '&:hover': onClick ? { borderColor: alpha(color, 0.45), transform: 'translateY(-2px)' } : undefined,
+      }}
+    >
       <CardContent sx={{ p: '12px !important' }}>
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
           <Box sx={{
@@ -275,6 +309,21 @@ export default function Dashboard() {
   const s = mockDashboardStats;
   const revenueData = mockRevenueChart.map(r => r.revenue);
   const attendanceData = mockAttendanceChart.map(a => a.count);
+  const router = useRouter();
+  const cardLinks: Record<string, string> = {
+    "Today's Check-ins": '/attendance',
+    "Today's Revenue": '/payments',
+    'Month Revenue': '/reports',
+    'Active Members': '/members?filter=ACTIVE',
+    'Pending Amount': '/members?filter=PAYMENT_PENDING',
+    'Expiring in 7d': '/members?filter=EXPIRING',
+    Inactive: '/members',
+    'New This Month': '/members',
+    Expired: '/members?filter=EXPIRED',
+    'Trainers Working': '/trainers',
+    "Today's PT": '/pt-sessions',
+    'New Leads': '/leads',
+  };
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const [expandedCards, setExpandedCards] = React.useState({
@@ -366,7 +415,11 @@ export default function Dashboard() {
           { title: 'Expiring in 7d', value: s.expiringIn7Days, icon: AutorenewRoundedIcon, color: '#f43f5e', sub: 'Need action' },
         ].map((card, i) => (
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
-            <KpiCard {...card} />
+            <KpiCard
+              {...card}
+              onClick={() => router.push(cardLinks[card.title])}
+              actionLabel={`View ${card.title}`}
+            />
           </Grid>
         ))}
       </Grid>
@@ -384,7 +437,11 @@ export default function Dashboard() {
           { title: 'New Leads', value: 5, icon: TrendingUpRoundedIcon, color: '#f59e0b', trend: 12 },
         ].map((stat, i) => (
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
-            <MiniStat {...stat} />
+            <MiniStat
+              {...stat}
+              onClick={() => router.push(cardLinks[stat.title])}
+              actionLabel={`View ${stat.title}`}
+            />
           </Grid>
         ))}
       </Grid>

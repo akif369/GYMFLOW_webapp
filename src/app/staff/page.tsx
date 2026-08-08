@@ -28,7 +28,7 @@ export default function StaffPage() {
     <AppLayout>
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Staff & Permissions</Typography>
+          <Typography variant="h5" sx={{fontWeight:"bold"}}>Staff & Permissions</Typography>
           <Typography variant="body2" color="text.secondary">{mockStaff.length} staff members</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>Add Staff</Button>
@@ -50,8 +50,8 @@ export default function StaffPage() {
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                     <Avatar sx={{ bgcolor: 'primary.dark' }}>{staff.name.split(' ').map(n => n[0]).join('')}</Avatar>
-                    <Box flex={1}>
-                      <Typography variant="subtitle2" fontWeight="bold">{staff.name}</Typography>
+                    <Box sx={{flex:1}}>
+                      <Typography variant="subtitle2" sx={{fontWidth:"bold"}} >{staff.name}</Typography>
                       <Typography variant="caption" color="text.secondary">{staff.email} · {staff.phone}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-end" }}>
@@ -60,7 +60,7 @@ export default function StaffPage() {
                     </Box>
                   </Box>
                   <Box>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>Permissions</Typography>
+                    <Typography variant="caption" color="text.secondary"  sx={{ mb: 0.5,display:"block" }}>Permissions</Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {staff.permissions.map(p => (
                         <Chip key={p} label={p} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
@@ -116,7 +116,7 @@ export default function StaffPage() {
       </TabPanel>
 
       {/* Add Staff Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Add Staff Member</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -130,7 +130,7 @@ export default function StaffPage() {
               </TextField>
             </Grid>
             <Grid size={12}>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Permissions</Typography>
+              <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (
                   <Chip
