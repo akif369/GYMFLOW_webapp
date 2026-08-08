@@ -1,5 +1,9 @@
 'use client';
+<<<<<<< Updated upstream
 import { Suspense, useState } from 'react';
+=======
+import { useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+>>>>>>> Stashed changes
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -45,17 +49,67 @@ function MembersPageContent() {
   });
   const [addOpen, setAddOpen] = useState(false);
   const [actionAnchor, setActionAnchor] = useState<null | HTMLElement>(null);
+  const [actionPosition, setActionPosition] = useState<{ top: number; left: number } | null>(null);
   const [actionMemberId, setActionMemberId] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
-  const openActions = (event: React.MouseEvent<HTMLElement>, memberId: string) => {
+  const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
     event.stopPropagation();
     setActionAnchor(event.currentTarget);
+    setActionPosition(null);
     setActionMemberId(memberId);
   };
 
   const closeActions = () => {
     setActionAnchor(null);
+    setActionPosition(null);
     setActionMemberId(null);
+    longPressTriggered.current = false;
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleRowPointerDown = (event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    const target = event.target as HTMLElement;
+    if (target.closest('[aria-label^="Actions for"]')) return;
+
+    const row = target.closest<HTMLElement>('[role="row"][data-id]');
+    const memberId = row?.dataset.id;
+    if (!row || !memberId) return;
+
+    const position = { top: event.clientY, left: event.clientX };
+
+    cancelLongPress();
+    longPressTimer.current = setTimeout(() => {
+      longPressTimer.current = null;
+      longPressTriggered.current = true;
+      setActionAnchor(null);
+      setActionPosition(position);
+      setActionMemberId(memberId);
+    }, 550);
+  };
+
+  const handleRowContextMenu = (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    cancelLongPress();
+
+    const target = event.target as HTMLElement;
+    const row = target.closest<HTMLElement>('[role="row"][data-id]');
+    const memberId = row?.dataset.id;
+    if (!memberId) return;
+
+    longPressTriggered.current = true;
+    setActionAnchor(null);
+    setActionPosition({ top: event.clientY, left: event.clientX });
+    setActionMemberId(memberId);
   };
 
   const runMemberAction = (action: 'view' | 'renew' | 'attendance' | 'payment') => {
@@ -278,11 +332,29 @@ function MembersPageContent() {
 
       {/* DataGrid */}
       <Card elevation={0}>
-        <DataGrid
+        <Box
+          onContextMenuCapture={handleRowContextMenu}
+          onPointerDownCapture={handleRowPointerDown}
+          onPointerUpCapture={cancelLongPress}
+          onPointerMoveCapture={cancelLongPress}
+          onPointerCancelCapture={cancelLongPress}
+          sx={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            touchAction: 'pan-y',
+          }}
+        >
+          <DataGrid
           rows={filtered}
           columns={columns}
           rowHeight={60}
-          onRowClick={params => router.push(`/members/${params.row.id}`)}
+          onRowClick={params => {
+            if (longPressTriggered.current) {
+              longPressTriggered.current = false;
+              return;
+            }
+            router.push(`/members/${params.row.id}`);
+          }}
           pageSizeOptions={[10, 25, 50]}
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           sx={{
@@ -296,12 +368,15 @@ function MembersPageContent() {
             '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(16,185,129,0.04)', cursor: 'pointer' },
             '& .MuiDataGrid-footerContainer': { borderTop: '1px solid rgba(255,255,255,0.06)' },
           }}
-        />
+          />
+        </Box>
       </Card>
 
       <Menu
         anchorEl={actionAnchor}
-        open={Boolean(actionAnchor)}
+        anchorReference={actionPosition ? 'anchorPosition' : 'anchorEl'}
+        anchorPosition={actionPosition || undefined}
+        open={Boolean(actionAnchor || actionPosition)}
         onClose={closeActions}
         slotProps={{ paper: { sx: { minWidth: 220, bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.08)' } } }}
       >
