@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -35,7 +35,7 @@ const FILTERS = [
   { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
 
-export default function MembersPage() {
+function MembersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
@@ -380,5 +380,26 @@ export default function MembersPage() {
         </DialogActions>
       </Dialog>
     </AppLayout>
+  );
+}
+
+function MembersPageFallback() {
+  return (
+    <AppLayout>
+      <Box sx={{ py: 3 }}>
+        <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>Members</Typography>
+        <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+          Loading member directory...
+        </Typography>
+      </Box>
+    </AppLayout>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={<MembersPageFallback />}>
+      <MembersPageContent />
+    </Suspense>
   );
 }

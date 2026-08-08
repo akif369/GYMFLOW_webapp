@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -20,7 +20,7 @@ const CURRENTLY_INSIDE = [
   { name: 'Meera Singh', memberId: 'GYM012', plan: 'Monthly Pro', checkIn: '06:00', trainer: 'Neha Gupta' },
 ];
 
-export default function AttendancePage() {
+function AttendancePageContent() {
   const searchParams = useSearchParams();
   const memberParam = searchParams.get('member') ?? '';
   const [tab, setTab] = useState(0);
@@ -182,5 +182,24 @@ export default function AttendancePage() {
         </DialogActions>
       </Dialog>
     </AppLayout>
+  );
+}
+
+function AttendancePageFallback() {
+  return (
+    <AppLayout>
+      <Box sx={{ py: 3 }}>
+        <Typography variant="h5" fontWeight="bold">Attendance</Typography>
+        <Typography variant="body2" color="text.secondary">Loading attendance...</Typography>
+      </Box>
+    </AppLayout>
+  );
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={<AttendancePageFallback />}>
+      <AttendancePageContent />
+    </Suspense>
   );
 }

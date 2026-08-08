@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -22,7 +22,7 @@ const statusColor: Record<string, ChipColor> = {
   FAILED: 'error', REFUNDED: 'default', CANCELLED: 'default', PROCESSING: 'info',
 };
 
-export default function PaymentsPage() {
+function PaymentsPageContent() {
   const searchParams = useSearchParams();
   const memberIdParam = searchParams.get('memberId') ?? '';
   const memberName = mockPayments.find(payment => payment.memberId === memberIdParam)?.member ?? '';
@@ -160,5 +160,24 @@ export default function PaymentsPage() {
         </DialogActions>
       </Dialog>
     </AppLayout>
+  );
+}
+
+function PaymentsPageFallback() {
+  return (
+    <AppLayout>
+      <Box sx={{ py: 3 }}>
+        <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
+        <Typography variant="body2" color="text.secondary">Loading payments...</Typography>
+      </Box>
+    </AppLayout>
+  );
+}
+
+export default function PaymentsPage() {
+  return (
+    <Suspense fallback={<PaymentsPageFallback />}>
+      <PaymentsPageContent />
+    </Suspense>
   );
 }
