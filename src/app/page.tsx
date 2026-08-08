@@ -3,7 +3,7 @@ import React, { type ElementType } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  Stack, LinearProgress, alpha,
+  Stack, LinearProgress, alpha, IconButton, useMediaQuery, useTheme,
 } from '@mui/material';
 import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -23,6 +23,7 @@ import SportsMartialArtsRoundedIcon from '@mui/icons-material/SportsMartialArtsR
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
 import {
   mockDashboardStats, mockRevenueChart, mockAttendanceChart,
@@ -221,16 +222,43 @@ function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: ActivityR
 }
 
 // ─── Card Header ──────────────────────────────────────────────────────────────
-function CardHeader({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
+interface CardHeaderProps {
+  title: string;
+  sub?: string;
+  action?: React.ReactNode;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}
+
+function CardHeader({ title, sub, action, collapsible, collapsed, onToggle }: CardHeaderProps) {
   return (
-    <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.75 }}>
+    <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.75, gap: 1 }}>
       <Box>
         <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.88rem', letterSpacing: '-0.01em' }}>
           {title}
         </Typography>
         {sub && <Typography sx={{ color: '#7d8590', fontSize: '0.68rem', mt: 0.2 }}>{sub}</Typography>}
       </Box>
-      {action}
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+        {action}
+        {collapsible && (
+          <IconButton
+            aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${title}`}
+            onClick={onToggle}
+            size="small"
+            sx={{
+              display: { xs: 'inline-flex', sm: 'none' },
+              color: '#7d8590',
+              p: 0.5,
+              transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <ExpandMoreRoundedIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Stack>
     </Stack>
   );
 }
@@ -247,6 +275,19 @@ export default function Dashboard() {
   const s = mockDashboardStats;
   const revenueData = mockRevenueChart.map(r => r.revenue);
   const attendanceData = mockAttendanceChart.map(a => a.count);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
+  const [expandedCards, setExpandedCards] = React.useState({
+    revenue: false,
+    peakHours: false,
+    attendance: false,
+  });
+
+  const toggleCard = (card: keyof typeof expandedCards) => {
+    setExpandedCards(previous => ({ ...previous, [card]: !previous[card] }));
+  };
+
+  const isCollapsed = (card: keyof typeof expandedCards) => isMobile && !expandedCards[card];
 
   return (
     <AppLayout>
@@ -359,6 +400,9 @@ export default function Dashboard() {
               <CardHeader
                 title="Revenue Overview"
                 sub="Monthly revenue for 2026"
+                collapsible
+                collapsed={isCollapsed('revenue')}
+                onToggle={() => toggleCard('revenue')}
                 action={
                   <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
                     <Stack direction="row" sx={{ gap: 2 }}>
@@ -376,7 +420,7 @@ export default function Dashboard() {
                   </Stack>
                 }
               />
-              <LineChart
+              {!isCollapsed('revenue') && <LineChart
                 xAxis={[{
                   scaleType: 'point',
                   data: mockRevenueChart.map(r => r.month),
@@ -404,7 +448,7 @@ export default function Dashboard() {
                 }}
                 margin={{ left: 54, right: 16, top: 8, bottom: 26 }}
                 hideLegend
-              />
+              />}
             </CardContent>
           </Card>
         </Grid>
@@ -413,8 +457,14 @@ export default function Dashboard() {
         <Grid size={{ xs: 12, lg: 4 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent>
-              <CardHeader title="Peak Hours" sub="Today's gym traffic" />
-              <Stack sx={{ gap: 1.25 }}>
+              <CardHeader
+                title="Peak Hours"
+                sub="Today's gym traffic"
+                collapsible
+                collapsed={isCollapsed('peakHours')}
+                onToggle={() => toggleCard('peakHours')}
+              />
+              {!isCollapsed('peakHours') && <Stack sx={{ gap: 1.25 }}>
                 {mockPeakHours.map(h => {
                   const pct = Math.round((h.count / 55) * 100);
                   const color = pct > 80 ? '#f43f5e' : pct > 60 ? '#f59e0b' : '#10b981';
@@ -436,7 +486,7 @@ export default function Dashboard() {
                     </Box>
                   );
                 })}
-              </Stack>
+              </Stack>}
             </CardContent>
           </Card>
         </Grid>
@@ -452,9 +502,12 @@ export default function Dashboard() {
               <CardHeader
                 title="Weekly Attendance"
                 sub="Members per day this week"
+                collapsible
+                collapsed={isCollapsed('attendance')}
+                onToggle={() => toggleCard('attendance')}
                 action={<Chip label="This Week" size="small" color="secondary" sx={{ fontSize: '0.6rem' }} />}
               />
-              <BarChart
+              {!isCollapsed('attendance') && <BarChart
                 xAxis={[{
                   scaleType: 'band',
                   data: mockAttendanceChart.map(a => a.day),
@@ -470,7 +523,7 @@ export default function Dashboard() {
                   '& .MuiBarElement-root': { rx: 3 },
                 }}
                 hideLegend
-              />
+              />}
             </CardContent>
           </Card>
         </Grid>
