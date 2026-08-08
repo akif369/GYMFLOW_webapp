@@ -1,9 +1,5 @@
 'use client';
-<<<<<<< Updated upstream
-import { Suspense, useState } from 'react';
-=======
-import { useRef, useState, type MouseEvent, type PointerEvent } from 'react';
->>>>>>> Stashed changes
+import { Suspense, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
