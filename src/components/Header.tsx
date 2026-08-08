@@ -55,7 +55,8 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             borderRadius: 2,
             px: 1.5,
             py: 0.6,
-            width: 320,
+            width: { xs: '100%', md: 320 },
+            maxWidth: { xs: 'none', md: 320 },
             border: '1px solid rgba(255,255,255,0.07)',
             transition: 'all 0.2s',
             '&:focus-within': {
@@ -70,7 +71,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             placeholder="Search members, payments..."
             sx={{ flex: 1, color: '#f0f6fc', fontSize: '0.82rem' }}
           />
-          <Box sx={{ bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1, px: 0.6, py: 0.1 }}>
+          <Box sx={{ display: { xs: 'none', sm: 'block' }, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1, px: 0.6, py: 0.1 }}>
             <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#7d8590' }}>⌘K</Typography>
           </Box>
         </Box>
@@ -113,6 +114,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             label="Koramangala"
             size="small"
             sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
               bgcolor: 'rgba(255,255,255,0.06)',
               color: '#7d8590',
               fontSize: '0.72rem',
@@ -142,7 +144,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               SO
             </Avatar>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
+              <Typography variant="caption" sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2, fontWeight: 700 }}>
                 Sarah Owner
               </Typography>
               <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
@@ -159,18 +161,22 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         anchorEl={notifAnchor}
         open={Boolean(notifAnchor)}
         onClose={() => setNotifAnchor(null)}
-        PaperProps={{
-          sx: {
-            width: 320, bgcolor: '#161b22',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 2, mt: 1,
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: 'calc(100vw - 32px)', sm: 320 },
+              bgcolor: '#161b22',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 2,
+              mt: 1,
+            },
           },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#f0f6fc' }}>Notifications</Typography>
+          <Typography variant="subtitle2" sx={{ color: '#f0f6fc', fontWeight: 700 }}>Notifications</Typography>
         </Box>
         <Divider />
         {NOTIFICATIONS.map((n, i) => (

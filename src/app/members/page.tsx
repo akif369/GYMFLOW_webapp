@@ -237,16 +237,16 @@ export default function MembersPage() {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid size={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Gender" select fullWidth size="small">
                 {['Male', 'Female', 'Other'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Date of Birth"
                 type="date"
@@ -261,7 +261,7 @@ export default function MembersPage() {
                 {['Monthly Basic', 'Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Start Date"
                 type="date"
@@ -270,7 +270,7 @@ export default function MembersPage() {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Assigned Trainer" select fullWidth size="small">
                 {['Amit Singh', 'Neha Gupta', 'Ravi Kumar', 'None'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
               </TextField>

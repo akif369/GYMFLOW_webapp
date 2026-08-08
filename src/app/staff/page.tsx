@@ -26,7 +26,7 @@ export default function StaffPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Staff & Permissions</Typography>
           <Typography variant="body2" color="text.secondary">{mockStaff.length} staff members</Typography>
@@ -35,7 +35,7 @@ export default function StaffPage() {
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           <Tab label="Staff Members" />
           <Tab label="Roles & Permissions" />
         </Tabs>
@@ -45,7 +45,7 @@ export default function StaffPage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {mockStaff.map(staff => (
-            <Grid xs={12} md={6} key={staff.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={staff.id}>
               <Card elevation={0}>
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -89,7 +89,7 @@ export default function StaffPage() {
             { role: 'RECEPTIONIST', perms: ['member.create', 'payment.create', 'attendance.create'], desc: 'Daily operations only' },
             { role: 'TRAINER', perms: ['attendance.create'], desc: 'View own sessions only' },
           ].map(r => (
-            <Grid xs={12} md={6} key={r.role}>
+            <Grid size={{ xs: 12, md: 6 }} key={r.role}>
               <Card elevation={0}>
                 <CardContent>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
@@ -120,16 +120,16 @@ export default function StaffPage() {
         <DialogTitle>Add Staff Member</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid xs={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid xs={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Email" fullWidth size="small" /></Grid>
-            <Grid xs={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Email" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
+            <Grid size={12}>
               <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => setSelectedRole(e.target.value)}>
                 {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={12}>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Permissions</Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (

@@ -35,14 +35,14 @@ export default function PaymentsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
           <Typography variant="body2" color="text.secondary">Manage member payments and invoices</Typography>
         </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="outlined" startIcon={<ReceiptIcon />} size="small">Generate Invoice</Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>Record Payment</Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button variant="outlined" startIcon={<ReceiptIcon />} size="small" fullWidth sx={{ width: { xs: '100%', sm: 'auto' } }}>Generate Invoice</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)} fullWidth sx={{ width: { xs: '100%', sm: 'auto' } }}>Record Payment</Button>
         </Box>
       </Box>
 
@@ -54,7 +54,7 @@ export default function PaymentsPage() {
           { label: 'Total Transactions', value: mockPayments.length, color: '#06b6d4' },
           { label: 'Refunds', value: '₹0', color: '#ef4444' },
         ].map(s => (
-          <Grid xs={6} md={3} key={s.label}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{s.label}</Typography>
@@ -131,21 +131,21 @@ export default function PaymentsPage() {
         <DialogTitle>Record Payment</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
-            <Grid xs={6}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
-            <Grid xs={6}>
+            <Grid size={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Amount (₹)" type="number" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Payment Method" select fullWidth size="small">
                 {['Cash', 'UPI', 'Card', 'Online'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={12}><TextField label="UPI/Card Reference ID" fullWidth size="small" placeholder="Optional" /></Grid>
-            <Grid xs={6}><TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid xs={6}>
+            <Grid size={12}><TextField label="UPI/Card Reference ID" fullWidth size="small" placeholder="Optional" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Date" type="date" fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Plan" select fullWidth size="small">
                 {['Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={12}>
               <TextField label="Apply Discount (%)" type="number" fullWidth size="small" />
             </Grid>
           </Grid>

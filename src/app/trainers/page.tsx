@@ -19,7 +19,7 @@ export default function TrainersPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Trainer Management</Typography>
           <Typography variant="body2" color="text.secondary">{mockTrainers.length} trainers registered</Typography>
@@ -93,19 +93,19 @@ export default function TrainersPage() {
         <DialogTitle>Add Trainer</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={6}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid size={6}><TextField label="Last Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Email" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Specialization" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Certifications" fullWidth size="small" /></Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Shift" select fullWidth size="small">
                 <MenuItem value="morning">Morning (6AM - 2PM)</MenuItem>
                 <MenuItem value="evening">Evening (2PM - 10PM)</MenuItem>
               </TextField>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Joining Date"
                 type="date"

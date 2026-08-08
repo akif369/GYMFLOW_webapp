@@ -28,7 +28,7 @@ function ReportCard({ title, subtitle, rows, columns }: ReportCardProps) {
   return (
     <Card elevation={0}>
       <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
           <Box>
             <Typography variant="subtitle1" fontWeight="bold">{title}</Typography>
             {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
@@ -61,7 +61,7 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Reports</Typography>
           <Typography variant="body2" color="text.secondary">Analytics and exportable reports</Typography>
@@ -69,7 +69,7 @@ export default function ReportsPage() {
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable">
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           <Tab label="Attendance" />
           <Tab label="Revenue" />
           <Tab label="Memberships" />
@@ -98,7 +98,7 @@ export default function ReportsPage() {
             { label: 'Pending', value: `₹${mockPayments.filter(p => p.status === 'PENDING').reduce((s, p) => s + p.amount, 0).toLocaleString()}` },
             { label: 'Transactions', value: mockPayments.length },
           ].map(s => (
-            <Grid xs={4} key={s.label}>
+            <Grid size={{ xs: 12, sm: 4 }} key={s.label}>
               <Card elevation={0}><CardContent>
                 <Typography variant="caption" color="text.secondary">{s.label}</Typography>
                 <Typography variant="h5" fontWeight="bold" sx={{ mt: 0.5 }}>{s.value}</Typography>

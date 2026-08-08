@@ -23,7 +23,7 @@ export default function PtSessionsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Personal Training</Typography>
           <Typography variant="body2" color="text.secondary">PT packages, schedules, and session tracking</Typography>
@@ -32,7 +32,7 @@ export default function PtSessionsPage() {
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           <Tab label="Today's Schedule" />
           <Tab label="All Sessions" />
           <Tab label="Packages" />
@@ -43,7 +43,7 @@ export default function PtSessionsPage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {mockPtSessions.filter(s => s.date === '2026-07-10').map(session => (
-            <Grid xs={12} sm={6} md={4} key={session.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={session.id}>
               <Card elevation={0} sx={{ borderLeft: '3px solid', borderColor: session.status === 'COMPLETED' ? 'success.main' : session.status === 'MISSED' ? 'error.main' : 'primary.main' }}>
                 <CardContent>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
@@ -66,7 +66,7 @@ export default function PtSessionsPage() {
             </Grid>
           ))}
           {mockPtSessions.filter(s => s.status === 'MISSED' && s.date !== '2026-07-10').length > 0 && (
-            <Grid xs={12}>
+            <Grid size={12}>
               <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.3)', bgcolor: 'rgba(239,68,68,0.04)' }}>
                 <CardContent>
                   <Typography variant="subtitle2" color="error">⚠ Missed Sessions</Typography>
@@ -116,7 +116,7 @@ export default function PtSessionsPage() {
       <TabPanel value={tab} index={2}>
         <Grid container spacing={2}>
           {mockPtPackages.map(pkg => (
-            <Grid xs={12} sm={4} key={pkg.id}>
+            <Grid size={{ xs: 12, sm: 4 }} key={pkg.id}>
               <Card elevation={0}>
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h3" fontWeight="bold" color="primary">{pkg.sessions}</Typography>
@@ -131,7 +131,7 @@ export default function PtSessionsPage() {
               </Card>
             </Grid>
           ))}
-          <Grid xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Card elevation={0} sx={{ border: '1px dashed rgba(255,255,255,0.15)', cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }}>
               <CardContent sx={{ textAlign: 'center', py: 4 }}>
                 <AddIcon sx={{ fontSize: 36, color: 'text.secondary' }} />
@@ -147,15 +147,15 @@ export default function PtSessionsPage() {
         <DialogTitle>Book PT Session</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid xs={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
-            <Grid xs={12}>
+            <Grid size={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
+            <Grid size={12}>
               <TextField label="Trainer" select fullWidth size="small">
                 {['Amit Singh', 'Neha Gupta', 'Ravi Kumar'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={6}><TextField label="Date" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid xs={6}><TextField label="Time" type="time" fullWidth size="small" InputLabelProps={{ shrink: true }} /></Grid>
-            <Grid xs={12}><TextField label="Notes" fullWidth size="small" multiline rows={2} /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Date" type="date" fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Time" type="time" fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} /></Grid>
+            <Grid size={12}><TextField label="Notes" fullWidth size="small" multiline rows={2} /></Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

@@ -48,7 +48,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   return (
     <AppLayout>
       {/* Back + Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
         <Button startIcon={<AutorenewIcon />} variant="outlined" size="small">Renew</Button>
@@ -88,7 +88,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 0: Overview */}
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
-          <Grid xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Contact Details</Typography>
@@ -111,7 +111,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Emergency Contact</Typography>
@@ -135,7 +135,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Current Membership</Typography>
@@ -161,7 +161,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 1: Membership */}
       <TabPanel value={tab} index={1}>
         <Grid container spacing={2}>
-          <Grid xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership History</Typography>
@@ -190,7 +190,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership Actions</Typography>
@@ -282,7 +282,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 4: Fitness */}
       <TabPanel value={tab} index={4}>
         <Grid container spacing={2}>
-          <Grid xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.2)' }}>
               <CardContent>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>

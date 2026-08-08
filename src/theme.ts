@@ -162,6 +162,18 @@ export const theme = createTheme({
         root: { '& .MuiTableCell-head': { backgroundColor: BRAND.surfaceElevated, fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7d8590' } },
       },
     },
+    MuiTable: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            display: 'block',
+            width: 'max-content',
+            minWidth: '100%',
+            overflowX: 'auto',
+          },
+        },
+      },
+    },
     MuiTableCell: {
       styleOverrides: {
         root: { borderBottom: `1px solid ${BRAND.border}`, padding: '10px 16px', fontSize: '0.82rem' },
@@ -192,6 +204,18 @@ export const theme = createTheme({
           backgroundImage: 'none',
           border: `1px solid ${BRAND.border}`,
           borderRadius: 24,
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            flexDirection: 'column-reverse',
+            alignItems: 'stretch',
+            gap: 8,
+            '& > *': { width: '100%' },
+          },
         },
       },
     },

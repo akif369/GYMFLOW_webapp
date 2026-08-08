@@ -133,9 +133,10 @@ export default function MembershipsPage() {
         sx={{
           display: 'flex',
           mb: 3,
-          alignItems: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
           justifyContent: 'space-between',
           gap: 2,
+          flexDirection: { xs: 'column', sm: 'row' },
         }}
       >
         <Box>
@@ -152,6 +153,8 @@ export default function MembershipsPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setPlanOpen(true)}
+          fullWidth
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Create Plan
         </Button>
@@ -165,7 +168,20 @@ export default function MembershipsPage() {
           mb: 3,
         }}
       >
-        <Tabs value={tab} onChange={handleTabChange}>
+        <Tabs
+          value={tab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            minHeight: 48,
+            '& .MuiTab-root': {
+              minWidth: { xs: 120, sm: 140 },
+              px: { xs: 1.5, sm: 2 },
+            },
+          }}
+        >
           <Tab label="Plans" />
           <Tab label="Event History" />
           <Tab label="Operations" />
@@ -295,7 +311,7 @@ export default function MembershipsPage() {
 
       <TabPanel value={tab} index={1}>
         <Card elevation={0}>
-          <CardContent>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Typography
               variant="subtitle2"
               sx={{
@@ -331,6 +347,7 @@ export default function MembershipsPage() {
                     display: 'flex',
                     gap: 2,
                     pb: 3,
+                    minWidth: 0,
                   }}
                 >
                   {/* Timeline */}
@@ -378,7 +395,7 @@ export default function MembershipsPage() {
                   </Box>
 
                   {/* Event information */}
-                  <Box>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -413,7 +430,7 @@ export default function MembershipsPage() {
 
                     <Typography
                       variant="body2"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 0.5, overflowWrap: 'anywhere' }}
                     >
                       {event.notes}
                     </Typography>
@@ -494,7 +511,7 @@ export default function MembershipsPage() {
       >
         <DialogTitle>Create Membership Plan</DialogTitle>
 
-        <DialogContent>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           <Grid
             container
             spacing={2}
@@ -509,7 +526,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Duration (days)"
                 type="number"
@@ -518,7 +535,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Price (₹)"
                 type="number"
@@ -527,7 +544,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="GST (%)"
                 type="number"
@@ -536,7 +553,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Joining Fee (₹)"
                 type="number"
@@ -545,7 +562,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="PT Sessions Included"
                 type="number"
@@ -554,7 +571,7 @@ export default function MembershipsPage() {
               />
             </Grid>
 
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Status"
                 select
@@ -574,7 +591,14 @@ export default function MembershipsPage() {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            gap: 1,
+            flexDirection: { xs: 'column-reverse', sm: 'row' },
+            '& > *': { width: { xs: '100%', sm: 'auto' } },
+          }}
+        >
           <Button onClick={() => setPlanOpen(false)}>
             Cancel
           </Button>

@@ -23,7 +23,7 @@ export default function WorkoutsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold">Workout Management</Typography>
           <Typography variant="body2" color="text.secondary">Exercise library, templates, and workout plans</Typography>
@@ -32,7 +32,7 @@ export default function WorkoutsPage() {
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           <Tab label="Exercise Library" />
           <Tab label="Workout Templates" />
         </Tabs>
@@ -75,12 +75,12 @@ export default function WorkoutsPage() {
 
       {/* Tab 1: Workout Templates */}
       <TabPanel value={tab} index={1}>
-        <Box sx={{ display: 'flex', mb: 2, justifyContent: 'flex-end' }}>
-          <Button variant="outlined" startIcon={<AddIcon />} size="small">New Template</Button>
+        <Box sx={{ display: 'flex', mb: 2, justifyContent: { xs: 'stretch', sm: 'flex-end' } }}>
+          <Button variant="outlined" startIcon={<AddIcon />} size="small" fullWidth sx={{ width: { xs: '100%', sm: 'auto' } }}>New Template</Button>
         </Box>
         <Grid container spacing={2}>
           {mockWorkoutTemplates.map(template => (
-            <Grid xs={12} sm={6} md={3} key={template.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={template.id}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' }, transition: 'border-color 0.2s' }}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
@@ -114,20 +114,20 @@ export default function WorkoutsPage() {
         <DialogTitle>Add Exercise to Library</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid xs={12}><TextField label="Exercise Name" fullWidth size="small" /></Grid>
-            <Grid xs={6}>
+            <Grid size={12}><TextField label="Exercise Name" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Muscle Group" select fullWidth size="small">
                 {['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Full Body'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={6}><TextField label="Equipment" fullWidth size="small" /></Grid>
-            <Grid xs={6}>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Equipment" fullWidth size="small" /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Difficulty" select fullWidth size="small">
                 {['Beginner', 'Intermediate', 'Advanced'].map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid xs={12}><TextField label="Instructions" fullWidth size="small" multiline rows={3} /></Grid>
-            <Grid xs={12}><TextField label="Video/Image URL" fullWidth size="small" /></Grid>
+            <Grid size={12}><TextField label="Instructions" fullWidth size="small" multiline rows={3} /></Grid>
+            <Grid size={12}><TextField label="Video/Image URL" fullWidth size="small" /></Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

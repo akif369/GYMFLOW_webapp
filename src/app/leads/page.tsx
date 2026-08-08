@@ -26,7 +26,7 @@ export default function LeadsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ display: 'flex', mb: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Leads & CRM</Typography>
           <Typography variant="body2" color="text.secondary">{leads.length} total leads · {byStage('Joined').length} converted</Typography>
@@ -128,12 +128,12 @@ export default function LeadsPage() {
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={12}><TextField label="Full Name" fullWidth size="small" /></Grid>
             <Grid size={12}><TextField label="Phone Number" fullWidth size="small" /></Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Lead Source" select fullWidth size="small">
                 {SOURCES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField label="Status" select fullWidth size="small">
                 {PIPELINE_STAGES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
