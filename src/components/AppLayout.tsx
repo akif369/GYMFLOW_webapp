@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import AuthGuard from './AuthGuard';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -14,33 +15,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Sidebar 
-        mobileOpen={mobileOpen} 
-        onClose={() => setMobileOpen(false)} 
-        drawerWidth={220} 
-      />
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minWidth: 0,
-        }}
-      >
-        <Header onMenuClick={handleDrawerToggle} />
+    <AuthGuard>
+      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Sidebar 
+          mobileOpen={mobileOpen} 
+          onClose={() => setMobileOpen(false)} 
+          drawerWidth={220} 
+        />
         <Box
-          component="main"
           sx={{
             flexGrow: 1,
-            p: { xs: 2, md: 3 },
-            overflow: 'auto',
-            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
           }}
         >
-          {children}
+          <Header onMenuClick={handleDrawerToggle} />
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              p: { xs: 2, md: 3 },
+              overflow: 'auto',
+              minHeight: 0,
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </AuthGuard>
   );
 }

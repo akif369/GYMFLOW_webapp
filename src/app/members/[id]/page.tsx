@@ -1,5 +1,5 @@
 'use client';
-import { use, useState, type ReactNode } from 'react';
+import { use, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -14,6 +14,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { mockMembers, mockMembershipEvents, mockActivityTimeline, mockMeasurements, mockAttendanceLogs, mockPayments, mockPtSessions } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -38,10 +39,88 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   const router = useRouter();
   const [tab, setTab] = useState(0);
 
-  const member = mockMembers.find(m => m.id === id) || mockMembers[0];
-  const memberPayments = mockPayments.filter(p => p.memberId === member.id);
-  const memberAttendance = mockAttendanceLogs.filter(a => a.memberId === member.id);
-  const memberPt = mockPtSessions.filter(p => p.member === `${member.firstName} ${member.lastName}`);
+  const [apiMember, setApiMember] = useState<typeof mockMembers[0] | null>(null);
+  const [apiPayments, setApiPayments] = useState<typeof mockPayments | null>(null);
+  const [apiAttendance, setApiAttendance] = useState<typeof mockAttendanceLogs | null>(null);
+  const [apiPtSessions, setApiPtSessions] = useState<typeof mockPtSessions | null>(null);
+
+  useEffect(() => {
+    // Member details
+    api.get(`/members/${id}`).then(res => {
+      const m = res.data;
+      if (m) {
+        setApiMember({
+          id: String(m.id),
+          memberId: String(m.memberNumber ?? ''),
+          firstName: String(m.firstName ?? ''),
+          lastName: String(m.lastName ?? ''),
+          email: String(m.email ?? ''),
+          phone: String(m.phone ?? ''),
+          photoUrl: null,
+          joinDate: String(m.createdAt ?? '').split('T')[0],
+          gender: '',
+          dob: '',
+          plan: String(m.membershipPlan ?? ''),
+          startDate: String(m.membershipStart ?? '').split('T')[0],
+          expiryDate: String(m.membershipExpiry ?? '').split('T')[0],
+          trainer: null,
+          lastVisit: '',
+          paymentStatus: String(m.paymentStatus ?? 'PAID'),
+          membershipStatus: String(m.membershipStatus ?? 'ACTIVE'),
+          goal: '',
+          experience: '',
+          branch: '',
+          address: '',
+          emergency: { name: '', phone: '', relation: '' },
+          medicalConditions: '',
+          allergies: '',
+          injuries: '',
+        });
+      }
+    }).catch(() => setApiMember(null));
+
+    // Attendance
+    api.get('/attendance', { params: { memberId: id } }).then(res => {
+      const items = res.data?.items ?? [];
+      setApiAttendance(items.map((l: Record<string, unknown>) => ({
+        id: String(l.id), member: '', memberId: String(l.memberId ?? ''),
+        date: String(l.checkInTime ?? '').split('T')[0],
+        checkIn: String(l.checkInTime ?? '').substring(11, 16),
+        checkOut: l.checkOutTime ? String(l.checkOutTime).substring(11, 16) : null,
+        duration: l.durationMinutes ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m` : 'Inside',
+        method: String(l.method ?? 'MANUAL'), branch: String(l.branch ?? ''),
+      })));
+    }).catch(() => setApiAttendance(null));
+
+    // Payments
+    api.get('/payments', { params: { memberId: id } }).then(res => {
+      const items = res.data?.items ?? [];
+      setApiPayments(items.map((p: Record<string, unknown>) => ({
+        id: String(p.id), member: '', memberId: String(p.memberId ?? ''),
+        amount: Number(p.amount ?? 0), method: String(p.method ?? ''),
+        status: String(p.status ?? ''), date: String(p.date ?? p.createdAt ?? '').split('T')[0],
+        refId: String(p.referenceId ?? ''), plan: String(p.plan ?? ''),
+      })));
+    }).catch(() => setApiPayments(null));
+
+    // PT Sessions
+    api.get('/pt/sessions', { params: { memberId: id } }).then(res => {
+      const items = res.data?.items ?? [];
+      setApiPtSessions(items.map((s: Record<string, unknown>) => ({
+        id: String(s.id), member: '', memberId: String(s.memberId ?? ''),
+        trainer: String(s.trainerName ?? ''), trainerId: String(s.trainerId ?? ''),
+        date: String(s.scheduledAt ?? '').split('T')[0], time: String(s.scheduledAt ?? '').substring(11, 16),
+        duration: Number(s.durationMinutes ?? 60), type: String(s.sessionType ?? ''),
+        status: String(s.status ?? ''), notes: String(s.notes ?? ''),
+        package: String(s.packageName ?? ''), sessionsRemaining: Number(s.sessionsRemaining ?? 0),
+      })));
+    }).catch(() => setApiPtSessions(null));
+  }, [id]);
+
+  const member = apiMember ?? mockMembers.find(m => m.id === id) ?? mockMembers[0];
+  const memberPayments = apiPayments ?? mockPayments.filter(p => p.memberId === member.id);
+  const memberAttendance = apiAttendance ?? mockAttendanceLogs.filter(a => a.memberId === member.id);
+  const memberPt = apiPtSessions ?? mockPtSessions.filter(p => p.member === `${member.firstName} ${member.lastName}`);
 
   const tabs = ['Overview', 'Membership', 'Attendance', 'Payments', 'Fitness', 'Measurements', 'PT Sessions', 'Activity'];
 

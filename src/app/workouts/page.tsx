@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { mockExercises, mockWorkoutTemplates } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -20,6 +21,48 @@ const difficultyColor: Record<string, ChipColor> = { Beginner: 'success', Interm
 export default function WorkoutsPage() {
   const [tab, setTab] = useState(0);
   const [addExOpen, setAddExOpen] = useState(false);
+  const [apiExercises, setApiExercises] = useState<typeof mockExercises | null>(null);
+  const [apiTemplates, setApiTemplates] = useState<typeof mockWorkoutTemplates | null>(null);
+
+  useEffect(() => {
+    api.get('/exercises', { params: { pageSize: '100' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiExercises(items.map((e: Record<string, unknown>) => ({
+          id: String(e.id),
+          name: String(e.name ?? ''),
+          category: String(e.category ?? ''),
+          difficulty: String(e.difficulty ?? 'Intermediate'),
+          muscle: String(e.muscleGroup ?? e.muscle ?? ''),
+          equipment: String(e.equipment ?? ''),
+          description: String(e.description ?? ''),
+          videoUrl: String(e.videoUrl ?? ''),
+          sets: Number(e.defaultSets ?? e.sets ?? 3),
+          reps: Number(e.defaultReps ?? e.reps ?? 10),
+          duration: Number(e.defaultDuration ?? e.duration ?? 0),
+        })));
+      })
+      .catch(() => setApiExercises(null));
+
+    api.get('/workout-templates', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiTemplates(items.map((t: Record<string, unknown>) => ({
+          id: String(t.id),
+          name: String(t.name ?? ''),
+          type: String(t.type ?? ''),
+          duration: Number(t.durationMinutes ?? t.duration ?? 60),
+          exercises: Number(t.exerciseCount ?? (Array.isArray(t.exercises) ? t.exercises.length : 0)),
+          difficulty: String(t.difficulty ?? 'Intermediate'),
+          createdBy: String(t.createdByName ?? t.createdBy ?? ''),
+          description: String(t.description ?? ''),
+        })));
+      })
+      .catch(() => setApiTemplates(null));
+  }, []);
+
+  const exercises = apiExercises ?? mockExercises;
+  const templates = apiTemplates ?? mockWorkoutTemplates;
 
   return (
     <AppLayout>

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { mockPtSessions, mockPtPackages } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -20,6 +21,48 @@ const statusColor: Record<string, ChipColor> = { COMPLETED: 'success', UPCOMING:
 export default function PtSessionsPage() {
   const [tab, setTab] = useState(0);
   const [bookOpen, setBookOpen] = useState(false);
+  const [apiSessions, setApiSessions] = useState<typeof mockPtSessions | null>(null);
+  const [apiPackages, setApiPackages] = useState<typeof mockPtPackages | null>(null);
+
+  useEffect(() => {
+    api.get('/pt/sessions', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiSessions(items.map((s: Record<string, unknown>) => ({
+          id: String(s.id),
+          member: `${s.memberFirstName ?? ''} ${s.memberLastName ?? ''}`.trim() || String(s.memberName ?? ''),
+          memberId: String(s.memberId ?? ''),
+          trainer: `${s.trainerFirstName ?? ''} ${s.trainerLastName ?? ''}`.trim() || String(s.trainerName ?? ''),
+          trainerId: String(s.trainerId ?? ''),
+          date: String(s.scheduledAt ?? s.date ?? '').split('T')[0],
+          time: String(s.scheduledAt ?? '').substring(11, 16),
+          duration: Number(s.durationMinutes ?? 60),
+          type: String(s.sessionType ?? s.type ?? 'General'),
+          status: String(s.status ?? 'UPCOMING'),
+          notes: String(s.notes ?? ''),
+          package: String(s.packageName ?? s.package ?? ''),
+          sessionsRemaining: Number(s.sessionsRemaining ?? 0),
+        })));
+      })
+      .catch(() => setApiSessions(null));
+
+    api.get('/pt/packages', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiPackages(items.map((p: Record<string, unknown>) => ({
+          id: String(p.id),
+          name: String(p.name ?? ''),
+          sessions: Number(p.sessions ?? p.totalSessions ?? 0),
+          validityDays: Number(p.validityDays ?? 30),
+          price: Number(p.price ?? 0),
+          description: String(p.description ?? ''),
+        })));
+      })
+      .catch(() => setApiPackages(null));
+  }, []);
+
+  const sessions = apiSessions ?? mockPtSessions;
+  const packages = apiPackages ?? mockPtPackages;
 
   return (
     <AppLayout>

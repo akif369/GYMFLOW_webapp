@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip,
@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { mockLeads } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 const PIPELINE_STAGES = ['New Lead', 'Contacted', 'Trial Booked', 'Trial Completed', 'Interested', 'Joined', 'Lost'];
 const SOURCES = ['Walk-in', 'Instagram', 'Google', 'Referral', 'WhatsApp', 'Website', 'Other'];
@@ -19,8 +20,31 @@ const stageColor: Record<string, 'default' | 'info' | 'primary' | 'secondary' | 
 
 export default function LeadsPage() {
   const [addOpen, setAddOpen] = useState(false);
-  const [leads] = useState(mockLeads);
+  const [apiLeads, setApiLeads] = useState<typeof mockLeads | null>(null);
 
+  useEffect(() => {
+    api.get('/leads', { params: { pageSize: '100' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiLeads(items.map((l: Record<string, unknown>) => ({
+          id: String(l.id),
+          name: String(l.name ?? `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim()),
+          phone: String(l.phone ?? ''),
+          email: String(l.email ?? ''),
+          source: String(l.source ?? ''),
+          status: String(l.status ?? 'New Lead'),
+          interestedIn: String(l.interestedIn ?? l.plan ?? ''),
+          assignedTo: String(l.assignedTo ?? l.assignedStaff ?? ''),
+          notes: String(l.notes ?? ''),
+          createdAt: String(l.createdAt ?? '').split('T')[0],
+          followUpDate: String(l.followUpDate ?? '').split('T')[0],
+          trialDate: String(l.trialDate ?? '').split('T')[0] || null,
+        })));
+      })
+      .catch(() => setApiLeads(null));
+  }, []);
+
+  const leads = apiLeads ?? mockLeads;
   const byStage = (stage: string) => leads.filter(l => l.status === stage);
   const bySource = SOURCES.map(s => ({ source: s, count: leads.filter(l => l.source === s).length }));
 

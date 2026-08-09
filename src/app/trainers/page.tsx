@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { mockTrainers } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 const statusColor: Record<string, 'success' | 'warning' | 'error'> = {
   ACTIVE: 'success',
@@ -16,19 +17,48 @@ const statusColor: Record<string, 'success' | 'warning' | 'error'> = {
 
 export default function TrainersPage() {
   const [addOpen, setAddOpen] = useState(false);
+  const [apiTrainers, setApiTrainers] = useState<typeof mockTrainers | null>(null);
+
+  useEffect(() => {
+    api.get('/trainers')
+      .then(res => {
+        const items = res.data?.items ?? res.data?.trainers ?? [];
+        setApiTrainers(items.map((t: Record<string, unknown>) => ({
+          id: String(t.id),
+          name: `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() || String(t.name ?? ''),
+          specialization: String(t.specialization ?? ''),
+          email: String(t.email ?? ''),
+          phone: String(t.phone ?? ''),
+          status: String(t.status ?? 'ACTIVE'),
+          membersAssigned: Number(t.membersAssigned ?? t.memberCount ?? 0),
+          ptClients: Number(t.ptClients ?? t.ptClientCount ?? 0),
+          sessionsThisMonth: Number(t.sessionsThisMonth ?? 0),
+          sessionsCompleted: Number(t.sessionsCompleted ?? 0),
+          sessionsCancelled: Number(t.sessionsCancelled ?? 0),
+          rating: Number(t.rating ?? 0),
+          bio: String(t.bio ?? ''),
+          certifications: Array.isArray(t.certifications) ? t.certifications.map(String) : [],
+          joinDate: String(t.joinDate ?? '').split('T')[0],
+          salary: Number(t.salary ?? 0),
+        })));
+      })
+      .catch(() => setApiTrainers(null));
+  }, []);
+
+  const trainers = apiTrainers ?? mockTrainers;
 
   return (
     <AppLayout>
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Trainer Management</Typography>
-          <Typography variant="body2" color="text.secondary">{mockTrainers.length} trainers registered</Typography>
+          <Typography variant="body2" color="text.secondary">{trainers.length} trainers registered</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>Add Trainer</Button>
       </Box>
 
       <Grid container spacing={2}>
-        {mockTrainers.map(trainer => (
+        {trainers.map(trainer => (
           <Grid size={{ xs: 12, md: 6, lg: 4 }} key={trainer.id}>
             <Card elevation={0} sx={{ height: '100%' }}>
               <CardContent>

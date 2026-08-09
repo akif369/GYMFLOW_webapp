@@ -1,10 +1,10 @@
 'use client';
-import React, { type ElementType } from 'react';
+import React, { type ElementType, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  Stack, LinearProgress, alpha, IconButton, useMediaQuery, useTheme,
+  Stack, LinearProgress, alpha, IconButton, useMediaQuery, useTheme, Skeleton,
 } from '@mui/material';
 import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -26,10 +26,8 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
-import {
-  mockDashboardStats, mockRevenueChart, mockAttendanceChart,
-  mockAttendanceLogs, mockPayments, mockPeakHours,
-} from '@/lib/mockData';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 interface KpiCardProps {
@@ -306,10 +304,118 @@ const payStatusBg: Record<string, string> = {
 
 // ─── Dashboard Page ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const s = mockDashboardStats;
-  const revenueData = mockRevenueChart.map(r => r.revenue);
-  const attendanceData = mockAttendanceChart.map(a => a.count);
-  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const firstName = user?.firstName ?? 'there';
+
+  // ── API state ────────────────────────────────────────────────────────────────
+  const [stats, setStats] = useState<typeof mockDashboardStats | null>(null);
+  const [revenueChart, setRevenueChart] = useState<{ month: string; revenue: number }[]>([]);
+  const [attendanceChart, setAttendanceChart] = useState<{ day: string; count: number }[]>([]);
+  const [peakHours, setPeakHours] = useState<{ hour: string; count: number }[]>([]);
+  const [recentLogs, setRecentLogs] = useState<typeof mockAttendanceLogs>([]);
+  const [recentPayments, setRecentPayments] = useState<typeof mockPayments>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [insideRes, revenueRes, attendanceRes, peakRes, logsRes, paymentsRes] = await Promise.allSettled([
+          api.get('/attendance/currently-inside'),
+          api.get('/reports/revenue?groupBy=month'),
+          api.get('/reports/attendance?groupBy=day'),
+          api.get('/attendance/analytics/peak-hours'),
+          api.get('/attendance?pageSize=6'),
+          api.get('/payments?pageSize=5'),
+        ]);
+
+        if (cancelled) return;
+
+        // Build stats from available data
+        const insideCount = insideRes.status === 'fulfilled' ? (insideRes.value.data?.items?.length ?? 0) : 0;
+        setStats({
+          todaysCheckins: insideCount,
+          currentlyInside: insideCount,
+          todaysRevenue: 0,
+          monthRevenue: 0,
+          pendingAmount: 0,
+          expiringIn7Days: 0,
+          expiredMemberships: 0,
+          newMembersMonth: 0,
+          activeMembers: 0,
+          inactiveMembers: 0,
+          trainersWorking: 0,
+          todaysPtSessions: 0,
+        });
+
+        if (revenueRes.status === 'fulfilled') {
+          const rows = revenueRes.value.data?.rows ?? [];
+          setRevenueChart(rows.map((r: Record<string, unknown>) => ({ month: String(r.month ?? r.period ?? ''), revenue: Number(r.revenue ?? r.total ?? 0) })));
+        }
+
+        if (attendanceRes.status === 'fulfilled') {
+          const rows = attendanceRes.value.data?.rows ?? [];
+          setAttendanceChart(rows.map((r: Record<string, unknown>) => ({ day: String(r.day ?? r.date ?? ''), count: Number(r.count ?? 0) })));
+        }
+
+        if (peakRes.status === 'fulfilled') {
+          const rows = peakRes.value.data?.rows ?? peakRes.value.data?.items ?? [];
+          setPeakHours(rows.map((r: Record<string, unknown>) => ({ hour: String(r.hour ?? ''), count: Number(r.count ?? 0) })));
+        }
+
+        if (logsRes.status === 'fulfilled') {
+          const items = logsRes.value.data?.items ?? [];
+          setRecentLogs(items.map((l: Record<string, unknown>) => ({
+            id: String(l.id),
+            member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
+            memberId: String(l.memberId ?? ''),
+            date: String(l.date ?? '').split('T')[0],
+            checkIn: String(l.checkInTime ?? l.checkIn ?? '').substring(11, 16),
+            checkOut: l.checkOutTime ? String(l.checkOutTime).substring(11, 16) : null,
+            duration: l.durationMinutes ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m` : 'Inside',
+            method: String(l.method ?? 'MANUAL'),
+            branch: String(l.branch ?? ''),
+          })));
+        }
+
+        if (paymentsRes.status === 'fulfilled') {
+          const items = paymentsRes.value.data?.items ?? [];
+          setRecentPayments(items.map((p: Record<string, unknown>) => ({
+            id: String(p.id),
+            member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
+            memberId: String(p.memberId ?? ''),
+            amount: Number(p.amount ?? 0),
+            method: String(p.method ?? p.paymentMethod ?? ''),
+            status: String(p.status ?? ''),
+            date: String(p.date ?? p.createdAt ?? '').split('T')[0],
+            refId: String(p.referenceId ?? p.refId ?? ''),
+            plan: String(p.plan ?? p.membershipPlan ?? ''),
+          })));
+        }
+      } catch {
+        // Fallback gracefully — leave state as null/empty arrays
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fallback to mock data while loading or if API returns nothing
+  const s = stats ?? { 
+    todaysCheckins: 0, todaysRevenue: 0, monthRevenue: 0, activeMembers: 0,
+    pendingAmount: 0, expiringIn7Days: 0, inactiveMembers: 0, newMembersMonth: 0,
+    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0, newLeads: 0
+  };
+  const revenueData = revenueChart.length ? revenueChart.map(r => r.revenue) : [0, 0, 0, 0, 0, 0, 0];
+  const attendanceData = attendanceChart.length ? attendanceChart.map(a => a.count) : [0, 0, 0, 0, 0, 0, 0];
+  const peakHoursData = peakHours.length ? peakHours : [];
+  const logsData = recentLogs.length ? recentLogs : [];
+  const paymentsData = recentPayments.length ? recentPayments : [];
+  const revChartLabels = revenueChart.length ? revenueChart.map(r => r.month) : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+  const attChartLabels = attendanceChart.length ? attendanceChart.map(a => a.day) : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   const cardLinks: Record<string, string> = {
     "Today's Check-ins": '/attendance',
     "Today's Revenue": '/payments',
@@ -391,9 +497,9 @@ export default function Dashboard() {
         <Box sx={{ width: 1, height: 14, bgcolor: 'rgba(255,255,255,0.1)' }} />
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2 }}>
           {[
-            { label: 'Inside Now', val: `${s.currentlyInside} members` },
-            { label: "Today's Check-ins", val: `${s.todaysCheckins} total` },
-            { label: 'PT Sessions', val: `${s.todaysPtSessions} scheduled` },
+            { label: 'Inside Now', val: loading ? '...' : `${s.currentlyInside} members` },
+            { label: "Today's Check-ins", val: loading ? '...' : `${s.todaysCheckins} total` },
+            { label: 'PT Sessions', val: loading ? '...' : `${s.todaysPtSessions} scheduled` },
           ].map(item => (
             <Stack key={item.label} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
               <Typography sx={{ color: '#5d6470', fontSize: '0.68rem' }}>{item.label}:</Typography>
@@ -480,7 +586,7 @@ export default function Dashboard() {
               {!isCollapsed('revenue') && <LineChart
                 xAxis={[{
                   scaleType: 'point',
-                  data: mockRevenueChart.map(r => r.month),
+                  data: revChartLabels,
                   tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
                 }]}
                 yAxis={[{
@@ -522,7 +628,7 @@ export default function Dashboard() {
                 onToggle={() => toggleCard('peakHours')}
               />
               {!isCollapsed('peakHours') && <Stack sx={{ gap: 1.25 }}>
-                {mockPeakHours.map(h => {
+                {peakHoursData.map(h => {
                   const pct = Math.round((h.count / 55) * 100);
                   const color = pct > 80 ? '#f43f5e' : pct > 60 ? '#f59e0b' : '#10b981';
                   return (
@@ -567,7 +673,7 @@ export default function Dashboard() {
               {!isCollapsed('attendance') && <BarChart
                 xAxis={[{
                   scaleType: 'band',
-                  data: mockAttendanceChart.map(a => a.day),
+                  data: attChartLabels,
                   tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
                 }]}
                 yAxis={[{ tickLabelStyle: { fontSize: 10, fill: '#7d8590' } }]}
@@ -597,10 +703,10 @@ export default function Dashboard() {
                   >View all</Button>
                 }
               />
-              {mockAttendanceLogs.slice(0, 6).map(log => (
+              {logsData.slice(0, 6).map(log => (
                 <ActivityRow
                   key={log.id}
-                  avatar={log.member.split(' ').map((n: string) => n[0]).join('')}
+                  avatar={(log.member ?? '').split(' ').map((n: string) => n[0]).join('')}
                   name={log.member}
                   sub={`${log.date} · ${log.checkIn}`}
                   right={log.checkOut ? log.duration : 'Inside'}
@@ -627,7 +733,7 @@ export default function Dashboard() {
             }
           />
           <Grid container spacing={1.5}>
-            {mockPayments.map(pay => (
+            {paymentsData.map(pay => (
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={pay.id}>
                 <Box sx={{
                   p: 1.5, borderRadius: 2,
@@ -642,7 +748,7 @@ export default function Dashboard() {
                       bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa',
                       fontSize: '0.65rem', fontWeight: 800,
                     }}>
-                      {pay.member.split(' ').map((n: string) => n[0]).join('')}
+                      {(pay.member ?? '').split(' ').map((n: string) => n[0]).join('')}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography sx={{ color: '#f0f6fc', fontWeight: 600, fontSize: '0.79rem' }} noWrap>

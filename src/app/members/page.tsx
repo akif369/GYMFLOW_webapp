@@ -1,12 +1,12 @@
 'use client';
-import { Suspense, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { Suspense, useRef, useState, useEffect, type MouseEvent, type PointerEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
   DialogActions, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
-  Tooltip,
+  Tooltip, CircularProgress,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -20,6 +20,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { mockMembers } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
@@ -49,6 +50,73 @@ function MembersPageContent() {
   const [actionMemberId, setActionMemberId] = useState<string | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
+
+  // ── API state ────────────────────────────────────────────────────────────────
+  const [apiMembers, setApiMembers] = useState<typeof mockMembers | null>(null);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+
+  useEffect(() => {
+    let cancelled = false;
+    setApiLoading(true);
+    const params: Record<string, string> = {
+      page: String(paginationModel.page + 1),
+      pageSize: String(paginationModel.pageSize),
+    };
+    if (search) params.search = search;
+    if (activeFilter !== 'ALL') {
+      if (activeFilter === 'PAYMENT_PENDING') {
+        params.paymentStatus = 'PENDING';
+      } else {
+        params.membershipStatus = activeFilter;
+      }
+    }
+    api.get('/members', { params })
+      .then(res => {
+        if (cancelled) return;
+        const items = res.data?.items ?? [];
+        // Map API response to mock data shape for compatibility
+        setApiMembers(items.map((m: Record<string, unknown>) => ({
+          id: String(m.id),
+          memberId: String(m.memberNumber ?? m.memberId ?? ''),
+          firstName: String(m.firstName ?? ''),
+          lastName: String(m.lastName ?? ''),
+          email: String(m.email ?? ''),
+          phone: String(m.phone ?? ''),
+          photoUrl: m.photoUrl ?? null,
+          joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
+          gender: String(m.gender ?? ''),
+          dob: String(m.dob ?? ''),
+          plan: String(m.membershipPlan ?? m.plan ?? ''),
+          startDate: String(m.membershipStart ?? '').split('T')[0],
+          expiryDate: String(m.membershipExpiry ?? '').split('T')[0],
+          trainer: m.trainerName ? String(m.trainerName) : null,
+          lastVisit: String(m.lastVisit ?? '').split('T')[0],
+          paymentStatus: String(m.paymentStatus ?? 'PAID'),
+          membershipStatus: String(m.membershipStatus ?? m.status ?? 'ACTIVE'),
+          goal: String(m.goal ?? ''),
+          experience: String(m.experience ?? ''),
+          branch: String(m.branch ?? ''),
+          address: String(m.address ?? ''),
+          emergency: m.emergency as typeof mockMembers[0]['emergency'] ?? { name: '', phone: '', relation: '' },
+          medicalConditions: String(m.medicalConditions ?? 'None'),
+          allergies: String(m.allergies ?? 'None'),
+          injuries: String(m.injuries ?? 'None'),
+        })));
+        setApiTotal(res.data?.total ?? items.length);
+      })
+      .catch(() => {
+        // Fall back to mock data
+        if (!cancelled) setApiMembers(null);
+      })
+      .finally(() => { if (!cancelled) setApiLoading(false); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize]);
+
+  const members = apiMembers ?? mockMembers;
+  const totalCount = apiMembers ? apiTotal : mockMembers.length;
 
   const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
     event.stopPropagation();
@@ -110,7 +178,7 @@ function MembersPageContent() {
 
   const runMemberAction = (action: 'view' | 'renew' | 'attendance' | 'payment') => {
     if (!actionMemberId) return;
-    const member = mockMembers.find(item => item.id === actionMemberId);
+    const member = members.find(item => item.id === actionMemberId);
     closeActions();
     if (!member) return;
 
@@ -123,7 +191,9 @@ function MembersPageContent() {
     }
   };
 
-  const filtered = mockMembers.filter(m => {
+  // Client-side filtering when API data is already paginated/filtered server-side
+  // When using apiMembers, filtering is done by the API. When using mockMembers, filter locally.
+  const filtered = apiMembers ? members : members.filter(m => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
     let matchFilter = true;
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
@@ -135,12 +205,12 @@ function MembersPageContent() {
   });
 
   const counts = {
-    ALL: mockMembers.length,
-    ACTIVE: mockMembers.filter(m => m.membershipStatus === 'ACTIVE').length,
-    EXPIRING: mockMembers.filter(m => m.membershipStatus === 'EXPIRING').length,
-    EXPIRED: mockMembers.filter(m => m.membershipStatus === 'EXPIRED').length,
-    PAYMENT_PENDING: mockMembers.filter(m => m.paymentStatus !== 'PAID').length,
-    NO_TRAINER: mockMembers.filter(m => !m.trainer).length,
+    ALL: totalCount,
+    ACTIVE: members.filter(m => m.membershipStatus === 'ACTIVE').length,
+    EXPIRING: members.filter(m => m.membershipStatus === 'EXPIRING').length,
+    EXPIRED: members.filter(m => m.membershipStatus === 'EXPIRED').length,
+    PAYMENT_PENDING: members.filter(m => m.paymentStatus !== 'PAID').length,
+    NO_TRAINER: members.filter(m => !m.trainer).length,
   };
 
   const columns: GridColDef[] = [

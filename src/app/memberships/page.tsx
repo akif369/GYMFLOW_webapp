@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useState, useEffect, type ReactNode, type SyntheticEvent } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box,
@@ -24,6 +24,7 @@ import {
   mockMembershipPlans,
   mockMembershipEvents,
 } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -121,6 +122,48 @@ const operations: {
 export default function MembershipsPage() {
   const [tab, setTab] = useState(0);
   const [planOpen, setPlanOpen] = useState(false);
+  const [apiPlans, setApiPlans] = useState<typeof mockMembershipPlans | null>(null);
+  const [apiEvents, setApiEvents] = useState<typeof mockMembershipEvents | null>(null);
+
+  useEffect(() => {
+    api.get('/membership-plans', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiPlans(items.map((p: Record<string, unknown>) => ({
+          id: String(p.id),
+          name: String(p.name ?? ''),
+          duration: Number(p.durationDays ?? p.duration ?? 30),
+          price: Number(p.price ?? 0),
+          description: String(p.description ?? ''),
+          features: Array.isArray(p.features) ? p.features.map(String) : [],
+          isPopular: Boolean(p.isPopular),
+          isActive: Boolean(p.isActive ?? true),
+          category: String(p.category ?? ''),
+          ptSessions: Number(p.ptSessions ?? 0),
+          guestPasses: Number(p.guestPasses ?? 0),
+        })));
+      })
+      .catch(() => setApiPlans(null));
+
+    api.get('/membership-events', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setApiEvents(items.map((e: Record<string, unknown>) => ({
+          id: String(e.id),
+          memberId: String(e.memberId ?? ''),
+          member: String(e.memberName ?? `${e.firstName ?? ''} ${e.lastName ?? ''}`.trim()),
+          event: String(e.eventType ?? e.event ?? ''),
+          plan: String(e.planName ?? e.plan ?? ''),
+          date: String(e.createdAt ?? e.date ?? '').split('T')[0],
+          by: String(e.createdByName ?? e.by ?? ''),
+          notes: String(e.notes ?? ''),
+        })));
+      })
+      .catch(() => setApiEvents(null));
+  }, []);
+
+  const plans = apiPlans ?? mockMembershipPlans;
+  const events = apiEvents ?? mockMembershipEvents;
 
   const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
     setTab(newValue);

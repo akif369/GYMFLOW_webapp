@@ -1,24 +1,41 @@
 'use client';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
   Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, Grid
+  Dialog, DialogTitle, DialogContent, DialogActions, Grid, CircularProgress, Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { mockAttendanceLogs } from '@/lib/mockData';
+import { api } from '@/lib/api';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-const CURRENTLY_INSIDE = [
-  { name: 'Vikram Nair', memberId: 'GYM005', plan: 'Half-Yearly Elite', checkIn: '07:15', trainer: 'Amit Singh' },
-  { name: 'Arjun Verma', memberId: 'GYM003', plan: 'Yearly Platinum', checkIn: '06:45', trainer: 'Amit Singh' },
-  { name: 'Meera Singh', memberId: 'GYM012', plan: 'Monthly Pro', checkIn: '06:00', trainer: 'Neha Gupta' },
-];
+type InsideMember = {
+  id: string;
+  name: string;
+  memberId: string;
+  plan: string;
+  checkIn: string;
+  trainer: string;
+  attendanceId: string;
+};
+
+type AttendanceLog = {
+  id: string;
+  member: string;
+  memberId: string;
+  date: string;
+  checkIn: string;
+  checkOut: string | null;
+  duration: string;
+  method: string;
+  branch: string;
+};
 
 function AttendancePageContent() {
   const searchParams = useSearchParams();
@@ -27,8 +44,130 @@ function AttendancePageContent() {
   const [dateFilter, setDateFilter] = useState('today');
   const [checkInOpen, setCheckInOpen] = useState(() => Boolean(memberParam));
   const [memberSearch, setMemberSearch] = useState(memberParam);
+  const [memberIdInput, setMemberIdInput] = useState('');
+  const [checkInSubmitting, setCheckInSubmitting] = useState(false);
+  const [checkInError, setCheckInError] = useState('');
 
-  const allLogs = mockAttendanceLogs;
+  // ── Currently inside ─────────────────────────────────────────────────────────────
+  const [insideMembers, setInsideMembers] = useState<InsideMember[]>([]);
+  const [insideLoading, setInsideLoading] = useState(false);
+
+  const fetchInside = () => {
+    setInsideLoading(true);
+    api.get('/attendance/currently-inside')
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setInsideMembers(items.map((m: Record<string, unknown>) => ({
+          id: String(m.memberId ?? m.id ?? ''),
+          name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
+          memberId: String(m.memberNumber ?? m.memberId ?? ''),
+          plan: String(m.plan ?? m.membershipPlan ?? ''),
+          checkIn: String(m.checkInTime ?? '').substring(11, 16),
+          trainer: String(m.trainerName ?? ''),
+          attendanceId: String(m.attendanceId ?? m.id ?? ''),
+        })));
+      })
+      .catch(() => setInsideMembers([]))
+      .finally(() => setInsideLoading(false));
+  };
+
+  // ── History logs ────────────────────────────────────────────────────────────────
+  const [historyLogs, setHistoryLogs] = useState<AttendanceLog[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const fetchHistory = () => {
+    setHistoryLoading(true);
+    const params: Record<string, string> = { pageSize: '50' };
+    api.get('/attendance', { params })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setHistoryLogs(items.map((l: Record<string, unknown>) => ({
+          id: String(l.id),
+          member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
+          memberId: String(l.memberNumber ?? l.memberId ?? ''),
+          date: String(l.checkInTime ?? l.date ?? '').split('T')[0],
+          checkIn: String(l.checkInTime ?? '').substring(11, 16),
+          checkOut: l.checkOutTime ? String(l.checkOutTime).substring(11, 16) : null,
+          duration: l.durationMinutes ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m` : 'Inside',
+          method: String(l.method ?? 'MANUAL'),
+          branch: String(l.branch ?? ''),
+        })));
+      })
+      .catch(() => setHistoryLogs([]))
+      .finally(() => setHistoryLoading(false));
+  };
+
+  // ── Peak hours analytics ───────────────────────────────────────────────────────
+  const [peakHours, setPeakHours] = useState<{ hour: string; count: number; pct: number }[]>([]);
+
+  const fetchPeakHours = () => {
+    api.get('/attendance/analytics/peak-hours')
+      .then(res => {
+        const rows = res.data?.rows ?? res.data?.items ?? [];
+        const maxCount = Math.max(...rows.map((r: Record<string, unknown>) => Number(r.count ?? 0)), 1);
+        setPeakHours(rows.map((r: Record<string, unknown>) => ({
+          hour: String(r.hour ?? ''),
+          count: Number(r.count ?? 0),
+          pct: Math.round((Number(r.count ?? 0) / maxCount) * 100),
+        })));
+      })
+      .catch(() => setPeakHours([
+        { hour: '6–7 AM', count: 28, pct: 51 }, { hour: '7–8 AM', count: 45, pct: 82 },
+        { hour: '8–9 AM', count: 38, pct: 69 }, { hour: '9–10 AM', count: 22, pct: 40 },
+        { hour: '10–11 AM', count: 15, pct: 27 }, { hour: '5–6 PM', count: 35, pct: 64 },
+        { hour: '6–7 PM', count: 52, pct: 95 }, { hour: '7–8 PM', count: 48, pct: 87 },
+        { hour: '8–9 PM', count: 30, pct: 55 },
+      ]));
+  };
+
+  useEffect(() => {
+    fetchInside();
+    fetchHistory();
+    fetchPeakHours();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Show fallback mock data if API returns nothing
+  const insideData = insideMembers;
+  const allLogs: AttendanceLog[] = historyLogs.length ? historyLogs : mockAttendanceLogs.map(l => ({
+    ...l,
+    checkOut: l.checkOut,
+  }));
+  const analyticsData = peakHours.length ? peakHours : [
+    { hour: '6–7 AM', count: 28, pct: 51 }, { hour: '7–8 AM', count: 45, pct: 82 },
+    { hour: '8–9 AM', count: 38, pct: 69 }, { hour: '9–10 AM', count: 22, pct: 40 },
+    { hour: '10–11 AM', count: 15, pct: 27 }, { hour: '5–6 PM', count: 35, pct: 64 },
+    { hour: '6–7 PM', count: 52, pct: 95 }, { hour: '7–8 PM', count: 48, pct: 87 },
+    { hour: '8–9 PM', count: 30, pct: 55 },
+  ];
+
+  const handleCheckIn = async () => {
+    if (!memberIdInput) return;
+    setCheckInSubmitting(true);
+    setCheckInError('');
+    try {
+      await api.post('/attendance/check-in', { memberNumber: memberIdInput });
+      setCheckInOpen(false);
+      setMemberIdInput('');
+      fetchInside();
+      fetchHistory();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setCheckInError(msg ?? 'Check-in failed. Please try again.');
+    } finally {
+      setCheckInSubmitting(false);
+    }
+  };
+
+  const handleCheckOut = async (attendanceId: string) => {
+    try {
+      await api.post('/attendance/check-out', { attendanceId });
+      fetchInside();
+      fetchHistory();
+    } catch {
+      // silently ignore
+    }
+  };
 
   return (
     <AppLayout>
@@ -42,7 +181,7 @@ function AttendancePageContent() {
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
-          <Tab label={`Currently Inside (${CURRENTLY_INSIDE.length})`} />
+          <Tab label={`Currently Inside (${insideLoading ? '...' : insideData.length})`} />
           <Tab label="History" />
           <Tab label="Peak Hour Analytics" />
         </Tabs>
@@ -51,13 +190,13 @@ function AttendancePageContent() {
       {/* Tab 0: Currently Inside */}
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
-          {CURRENTLY_INSIDE.map((m, i) => (
+          {insideData.map((m, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
               <Card elevation={0} sx={{ border: '1px solid rgba(16,185,129,0.2)' }}>
                 <CardContent>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">{m.name.split(' ').map(n => n[0]).join('')}</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">{m.name.split(' ').map((n: string) => n[0]).join('')}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body2" fontWeight="bold">{m.name}</Typography>
@@ -74,7 +213,7 @@ function AttendancePageContent() {
                       <Typography variant="caption" color="text.secondary">Trainer</Typography>
                       <Typography variant="body2">{m.trainer}</Typography>
                     </Box>
-                    <Button variant="outlined" size="small" color="warning">Check Out</Button>
+                    <Button variant="outlined" size="small" color="warning" onClick={() => handleCheckOut(m.attendanceId)}>Check Out</Button>
                   </Box>
                 </CardContent>
               </Card>
@@ -134,13 +273,7 @@ function AttendancePageContent() {
       {/* Tab 2: Analytics */}
       <TabPanel value={tab} index={2}>
         <Grid container spacing={2}>
-          {[
-            { hour: '6–7 AM', count: 28, pct: 51 }, { hour: '7–8 AM', count: 45, pct: 82 },
-            { hour: '8–9 AM', count: 38, pct: 69 }, { hour: '9–10 AM', count: 22, pct: 40 },
-            { hour: '10–11 AM', count: 15, pct: 27 }, { hour: '5–6 PM', count: 35, pct: 64 },
-            { hour: '6–7 PM', count: 52, pct: 95 }, { hour: '7–8 PM', count: 48, pct: 87 },
-            { hour: '8–9 PM', count: 30, pct: 55 },
-          ].map(h => (
+          {analyticsData.map(h => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={h.hour}>
               <Card elevation={0}>
                 <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -162,23 +295,30 @@ function AttendancePageContent() {
       <Dialog open={checkInOpen} onClose={() => setCheckInOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
         <DialogTitle>Manual Check-in</DialogTitle>
         <DialogContent>
+          {checkInError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{checkInError}</Alert>}
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={12}>
-              <TextField label="Member Name or ID" fullWidth size="small" placeholder="Search member..." defaultValue={memberSearch} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField label="Check-in Time" type="time" fullWidth size="small" InputLabelProps={{ shrink: true }} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField label="Branch" select fullWidth size="small">
-                <MenuItem value="koramangala">Koramangala</MenuItem>
-              </TextField>
+              <TextField
+                label="Member Number or Name"
+                fullWidth
+                size="small"
+                placeholder="e.g. GYM0001"
+                value={memberIdInput}
+                onChange={e => setMemberIdInput(e.target.value)}
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setCheckInOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => setCheckInOpen(false)}>Check In</Button>
+          <Button onClick={() => { setCheckInOpen(false); setCheckInError(''); }}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCheckIn}
+            disabled={checkInSubmitting || !memberIdInput}
+            startIcon={checkInSubmitting ? <CircularProgress size={14} color="inherit" /> : undefined}
+          >
+            {checkInSubmitting ? 'Checking in...' : 'Check In'}
+          </Button>
         </DialogActions>
       </Dialog>
     </AppLayout>

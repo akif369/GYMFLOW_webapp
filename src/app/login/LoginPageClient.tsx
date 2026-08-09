@@ -45,6 +45,7 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const REMEMBERED_EMAIL_STORAGE_KEY = 'gymflow:remembered-email';
 const USER_STORAGE_KEY = 'gymflow:user';
@@ -55,13 +56,17 @@ interface LoginPageClientProps {
 }
 
 interface LoginResponse {
-  access_token: string;
+  accessToken: string;
+  refreshToken: string;
   user: {
     id: string;
     email: string;
     role: string;
     firstName: string;
     lastName: string;
+    orgId: string;
+    branchId: string | null;
+    permissions: string[];
   };
 }
 
@@ -107,6 +112,14 @@ function getLoginErrors(email: string, password: string): FieldErrors {
 
 function getLoginErrorMessage(error: unknown) {
   if (isAxiosError(error)) {
+    if (error.response?.data?.error?.code === 'ACCOUNT_INACTIVE' || error.response?.data?.code === 'ACCOUNT_INACTIVE') {
+      return 'Your organization account has been suspended. Please contact support.';
+    }
+
+    if (error.response?.data?.error?.code === 'ACCOUNT_LOCKED' || error.response?.data?.code === 'ACCOUNT_LOCKED') {
+      return error.response?.data?.error?.message || error.response?.data?.message || 'Your account has been locked due to too many failed attempts.';
+    }
+
     if (error.response?.status === 401) {
       return 'Incorrect email or password. Please try again.';
     }
@@ -128,6 +141,7 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const destination = useMemo(() => sanitizeRedirectPath(redirectTo), [redirectTo]);
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -210,8 +224,23 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
         password,
       });
 
-      window.localStorage.setItem('token', response.data.access_token);
-      window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.data.user));
+      const { accessToken, refreshToken, user } = response.data;
+
+      // Store tokens + user in auth store (persisted to localStorage)
+      setAuth(
+        {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          orgId: user.orgId,
+          branchId: user.branchId,
+          permissions: user.permissions,
+        },
+        accessToken,
+        refreshToken,
+      );
 
       if (rememberMe) {
         window.localStorage.setItem(REMEMBERED_EMAIL_STORAGE_KEY, email.trim());

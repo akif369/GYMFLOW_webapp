@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AppBar, Toolbar, InputBase, Badge, Avatar, Typography, Box,
   IconButton, Divider, Chip, Menu, MenuItem, ListItemIcon,
@@ -10,8 +11,12 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import { useAuthStore } from '@/store/useAuthStore';
+import { api } from '@/lib/api';
 
 const NOTIFICATIONS = [
   { icon: <CheckCircleRoundedIcon sx={{ fontSize: 16, color: '#4ade80' }} />, text: 'Rahul Sharma checked in', time: '2 min ago' },
@@ -19,9 +24,42 @@ const NOTIFICATIONS = [
   { icon: <PaymentRoundedIcon sx={{ fontSize: 16, color: '#a78bfa' }} />, text: 'Payment ₹2,500 received', time: '2h ago' },
 ];
 
+function getInitials(firstName?: string, lastName?: string) {
+  if (!firstName && !lastName) return '??';
+  return `${(firstName?.[0] ?? '').toUpperCase()}${(lastName?.[0] ?? '').toUpperCase()}`;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  OWNER: 'Owner',
+  MANAGER: 'Manager',
+  RECEPTIONIST: 'Receptionist',
+  TRAINER: 'Trainer',
+  SUPER_ADMIN: 'Super Admin',
+};
+
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
+  const router = useRouter();
+  const { user, logout: storeLogout } = useAuthStore();
   const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
   const [userAnchor, setUserAnchor] = useState<null | HTMLElement>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const initials = getInitials(user?.firstName, user?.lastName);
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Staff User';
+  const roleLabel = ROLE_LABELS[user?.role ?? ''] ?? (user?.role ?? 'Staff');
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setUserAnchor(null);
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Even if the server call fails, clear local state
+    } finally {
+      storeLogout();
+      router.replace('/login');
+    }
+  };
 
   return (
     <AppBar
@@ -111,7 +149,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
           {/* Branch Chip */}
           <Chip
-            label="Koramangala"
+            label={user?.branchId ? 'Main Branch' : 'All Branches'}
             size="small"
             sx={{
               display: { xs: 'none', sm: 'inline-flex' },
@@ -141,14 +179,14 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                 color: '#000', fontSize: '0.68rem', fontWeight: 700,
               }}
             >
-              SO
+              {initials}
             </Avatar>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
               <Typography variant="caption" sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2, fontWeight: 700 }}>
-                Sarah Owner
+                {displayName}
               </Typography>
               <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
-                Super Admin
+                {roleLabel}
               </Typography>
             </Box>
             <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
@@ -192,6 +230,85 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             </Box>
           </MenuItem>
         ))}
+      </Menu>
+
+      {/* User Profile Menu */}
+      <Menu
+        anchorEl={userAnchor}
+        open={Boolean(userAnchor)}
+        onClose={() => setUserAnchor(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 220,
+              bgcolor: '#161b22',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 2,
+              mt: 1,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        {/* User Info Header */}
+        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <Typography variant="subtitle2" sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.82rem' }}>
+            {displayName}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>
+            {user?.email}
+          </Typography>
+          <Box sx={{ mt: 0.75 }}>
+            <Chip
+              label={roleLabel}
+              size="small"
+              sx={{
+                height: 18,
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                bgcolor: 'rgba(16,185,129,0.12)',
+                color: '#10b981',
+                border: '1px solid rgba(16,185,129,0.25)',
+              }}
+            />
+          </Box>
+        </Box>
+
+        <MenuItem
+          onClick={() => { setUserAnchor(null); }}
+          sx={{ py: 1, px: 2, gap: 1.5, mt: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 'auto' }}>
+            <PersonRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+          </ListItemIcon>
+          <Typography variant="body2" sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>My Profile</Typography>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => { setUserAnchor(null); }}
+          sx={{ py: 1, px: 2, gap: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 'auto' }}>
+            <LockResetRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+          </ListItemIcon>
+          <Typography variant="body2" sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>Change Password</Typography>
+        </MenuItem>
+
+        <Divider sx={{ my: 0.5 }} />
+
+        <MenuItem
+          onClick={handleLogout}
+          disabled={loggingOut}
+          sx={{ py: 1, px: 2, gap: 1.5, mb: 0.5, '&:hover': { bgcolor: 'rgba(239,68,68,0.08)' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 'auto' }}>
+            <LogoutRoundedIcon sx={{ fontSize: 16, color: '#f87171' }} />
+          </ListItemIcon>
+          <Typography variant="body2" sx={{ color: '#f87171', fontSize: '0.82rem', fontWeight: 600 }}>
+            {loggingOut ? 'Signing out...' : 'Sign out'}
+          </Typography>
+        </MenuItem>
       </Menu>
     </AppBar>
   );
