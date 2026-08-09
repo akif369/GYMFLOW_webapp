@@ -18,6 +18,8 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -124,6 +126,14 @@ export default function MembershipsPage() {
   const [planOpen, setPlanOpen] = useState(false);
   const [apiPlans, setApiPlans] = useState<typeof mockMembershipPlans | null>(null);
   const [apiEvents, setApiEvents] = useState<typeof mockMembershipEvents | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  // Form State
+  const [planForm, setPlanForm] = useState({
+    name: '', durationDays: 30, price: 0, gstPercent: 18, joiningFee: 0, ptSessionsIncluded: 0, status: 'ACTIVE'
+  });
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState('');
 
   useEffect(() => {
     api.get('/membership-plans', { params: { pageSize: '50' } })
@@ -160,13 +170,33 @@ export default function MembershipsPage() {
         })));
       })
       .catch(() => setApiEvents(null));
-  }, []);
+  }, [fetchTrigger]);
 
   const plans = apiPlans ?? mockMembershipPlans;
   const events = apiEvents ?? mockMembershipEvents;
 
   const handleTabChange = (_event: SyntheticEvent, newValue: number) => {
     setTab(newValue);
+  };
+
+  const handleCreatePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planForm.name || !planForm.durationDays || !planForm.price) {
+      setPlanError('Name, Duration, and Price are required.');
+      return;
+    }
+    setPlanLoading(true);
+    setPlanError('');
+    try {
+      await api.post('/membership-plans', planForm);
+      setPlanOpen(false);
+      setPlanForm({ name: '', durationDays: 30, price: 0, gstPercent: 18, joiningFee: 0, ptSessionsIncluded: 0, status: 'ACTIVE' });
+      setFetchTrigger(t => t + 1);
+    } catch (err: any) {
+      setPlanError(err.response?.data?.message || 'Failed to create plan');
+    } finally {
+      setPlanLoading(false);
+    }
   };
 
   return (
@@ -547,112 +577,121 @@ export default function MembershipsPage() {
         slotProps={{
           paper: {
             sx: {
+              borderRadius: 2,
               bgcolor: 'background.paper',
             },
           },
         }}
       >
-        <DialogTitle>Create Membership Plan</DialogTitle>
+        <Box component="form" onSubmit={handleCreatePlan}>
+          <DialogTitle>Create Membership Plan</DialogTitle>
 
-        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
-          <Grid
-            container
-            spacing={2}
-            sx={{ mt: 0.5 }}
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+            {planError && <Alert severity="error" sx={{ mb: 2 }}>{planError}</Alert>}
+            <Grid
+              container
+              spacing={2}
+              sx={{ mt: 0.5 }}
+            >
+              <Grid size={12}>
+                <TextField
+                  label="Plan Name"
+                  required
+                  value={planForm.name}
+                  onChange={e => setPlanForm({ ...planForm, name: e.target.value })}
+                  fullWidth
+                  size="small"
+                  placeholder="e.g. Monthly Pro"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Duration (days)"
+                  required
+                  type="number"
+                  value={planForm.durationDays}
+                  onChange={e => setPlanForm({ ...planForm, durationDays: Number(e.target.value) })}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Price (₹)"
+                  required
+                  type="number"
+                  value={planForm.price}
+                  onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="GST (%)"
+                  type="number"
+                  value={planForm.gstPercent}
+                  onChange={e => setPlanForm({ ...planForm, gstPercent: Number(e.target.value) })}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Joining Fee (₹)"
+                  type="number"
+                  value={planForm.joiningFee}
+                  onChange={e => setPlanForm({ ...planForm, joiningFee: Number(e.target.value) })}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="PT Sessions Included"
+                  type="number"
+                  value={planForm.ptSessionsIncluded}
+                  onChange={e => setPlanForm({ ...planForm, ptSessionsIncluded: Number(e.target.value) })}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Status"
+                  select
+                  value={planForm.status}
+                  onChange={e => setPlanForm({ ...planForm, status: e.target.value })}
+                  fullWidth
+                  size="small"
+                >
+                  <MenuItem value="ACTIVE">Active</MenuItem>
+                  <MenuItem value="INACTIVE">Inactive</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
+          </DialogContent>
+
+          <DialogActions
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              gap: 1,
+              flexDirection: { xs: 'column-reverse', sm: 'row' },
+              '& > *': { width: { xs: '100%', sm: 'auto' } },
+            }}
           >
-            <Grid size={12}>
-              <TextField
-                label="Plan Name"
-                fullWidth
-                size="small"
-                placeholder="e.g. Monthly Pro"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Duration (days)"
-                type="number"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Price (₹)"
-                type="number"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="GST (%)"
-                type="number"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Joining Fee (₹)"
-                type="number"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="PT Sessions Included"
-                type="number"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Status"
-                select
-                fullWidth
-                size="small"
-                defaultValue="ACTIVE"
-              >
-                <MenuItem value="ACTIVE">
-                  Active
-                </MenuItem>
-
-                <MenuItem value="INACTIVE">
-                  Inactive
-                </MenuItem>
-              </TextField>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            p: { xs: 2, sm: 2.5 },
-            gap: 1,
-            flexDirection: { xs: 'column-reverse', sm: 'row' },
-            '& > *': { width: { xs: '100%', sm: 'auto' } },
-          }}
-        >
-          <Button onClick={() => setPlanOpen(false)}>
-            Cancel
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() => setPlanOpen(false)}
-          >
-            Create Plan
-          </Button>
-        </DialogActions>
+            <Button onClick={() => setPlanOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={planLoading}>
+              {planLoading ? <CircularProgress size={24} /> : 'Create Plan'}
+            </Button>
+          </DialogActions>
+        </Box>
       </Dialog>
     </AppLayout>
   );

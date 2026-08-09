@@ -6,7 +6,7 @@ import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
   DialogActions, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
-  Tooltip, CircularProgress,
+  Tooltip, CircularProgress, Alert,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -56,6 +56,15 @@ function MembersPageContent() {
   const [apiTotal, setApiTotal] = useState(0);
   const [apiLoading, setApiLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  // Add Member State
+  const [addForm, setAddForm] = useState({
+    firstName: '', lastName: '', phone: '', email: '', gender: '',
+    dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0],
+  });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +122,7 @@ function MembersPageContent() {
       .finally(() => { if (!cancelled) setApiLoading(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize]);
+  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger]);
 
   const members = apiMembers ?? mockMembers;
   const totalCount = apiMembers ? apiTotal : mockMembers.length;
@@ -188,6 +197,26 @@ function MembersPageContent() {
       router.push(`/attendance?member=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}`);
     } else {
       router.push(`/payments?memberId=${member.id}`);
+    }
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.joinDate) {
+      setAddError('First Name, Last Name, Phone, and Join Date are required.');
+      return;
+    }
+    setAddLoading(true);
+    setAddError('');
+    try {
+      await api.post('/members', addForm);
+      setAddOpen(false);
+      setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: '', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0] });
+      setFetchTrigger(t => t + 1);
+    } catch (err: any) {
+      setAddError(err.response?.data?.message || 'Failed to create member');
+    } finally {
+      setAddLoading(false);
     }
   };
 
@@ -466,59 +495,59 @@ function MembersPageContent() {
 
       {/* Add Member Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Add New Member</Typography>
-          <Typography variant="caption" sx={{ color: '#7d8590' }}>Fill in the member details below</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" fullWidth size="small" /></Grid>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" fullWidth size="small" /></Grid>
-            <Grid size={12}><TextField label="Email" type="email" fullWidth size="small" /></Grid>
-            <Grid size={12}><TextField label="Phone" fullWidth size="small" /></Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField label="Gender" select fullWidth size="small">
-                {['Male', 'Female', 'Other'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
-              </TextField>
+        <Box component="form" onSubmit={handleAddSubmit}>
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Add New Member</Typography>
+            <Typography variant="caption" sx={{ color: '#7d8590' }}>Fill in the member details below. Essential fields are marked with *</Typography>
+          </DialogTitle>
+          <DialogContent>
+            {addError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{addError}</Alert>}
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={addForm.firstName} onChange={e => setAddForm({ ...addForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={addForm.lastName} onChange={e => setAddForm({ ...addForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} fullWidth size="small" /></Grid>
+              
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Gender" select value={addForm.gender} onChange={e => setAddForm({ ...addForm, gender: e.target.value })} fullWidth size="small">
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {['MALE', 'FEMALE', 'OTHER'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Date of Birth"
+                  type="date"
+                  value={addForm.dob} onChange={e => setAddForm({ ...addForm, dob: e.target.value })}
+                  fullWidth
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Join Date"
+                  type="date"
+                  required
+                  value={addForm.joinDate} onChange={e => setAddForm({ ...addForm, joinDate: e.target.value })}
+                  fullWidth
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Fitness Goal" value={addForm.goal} onChange={e => setAddForm({ ...addForm, goal: e.target.value })} fullWidth size="small" placeholder="e.g. Weight Loss" />
+              </Grid>
+              <Grid size={12}><TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth size="small" multiline rows={2} /></Grid>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Date of Birth"
-                type="date"
-                fullWidth
-                size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Grid>
-            <Grid size={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
-            <Grid size={12}>
-              <TextField label="Membership Plan" select fullWidth size="small">
-                {['Monthly Basic', 'Monthly Pro', 'Quarterly Gold', 'Half-Yearly Elite', 'Yearly Platinum'].map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Start Date"
-                type="date"
-                fullWidth
-                size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField label="Assigned Trainer" select fullWidth size="small">
-                {['Amit Singh', 'Neha Gupta', 'Ravi Kumar', 'None'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid size={12}>
-              <TextField label="Fitness Goal" fullWidth size="small" placeholder="e.g. Weight Loss, Muscle Gain" />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setAddOpen(false)} variant="outlined">Cancel</Button>
-          <Button variant="contained" onClick={() => setAddOpen(false)}>Create Member</Button>
-        </DialogActions>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+            <Button onClick={() => setAddOpen(false)} variant="outlined">Cancel</Button>
+            <Button type="submit" variant="contained" disabled={addLoading}>
+              {addLoading ? <CircularProgress size={24} /> : 'Create Member'}
+            </Button>
+          </DialogActions>
+        </Box>
       </Dialog>
     </AppLayout>
   );

@@ -293,33 +293,35 @@ function AttendancePageContent() {
 
       {/* Manual Check-in Dialog */}
       <Dialog open={checkInOpen} onClose={() => setCheckInOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
-        <DialogTitle>Manual Check-in</DialogTitle>
-        <DialogContent>
-          {checkInError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{checkInError}</Alert>}
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}>
-              <TextField
-                label="Member Number or Name"
-                fullWidth
-                size="small"
-                placeholder="e.g. GYM0001"
-                value={memberIdInput}
-                onChange={e => setMemberIdInput(e.target.value)}
-              />
+        <Box component="form" onSubmit={(e) => { e.preventDefault(); handleCheckIn(); }}>
+          <DialogTitle>Manual Check-in</DialogTitle>
+          <DialogContent>
+            {checkInError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{checkInError}</Alert>}
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={12}>
+                <TextField
+                  label="Member Number or Name"
+                  fullWidth
+                  size="small"
+                  placeholder="e.g. GYM0001"
+                  value={memberIdInput}
+                  onChange={e => setMemberIdInput(e.target.value)}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => { setCheckInOpen(false); setCheckInError(''); }}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCheckIn}
-            disabled={checkInSubmitting || !memberIdInput}
-            startIcon={checkInSubmitting ? <CircularProgress size={14} color="inherit" /> : undefined}
-          >
-            {checkInSubmitting ? 'Checking in...' : 'Check In'}
-          </Button>
-        </DialogActions>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => { setCheckInOpen(false); setCheckInError(''); }}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={checkInSubmitting || !memberIdInput}
+              startIcon={checkInSubmitting ? <CircularProgress size={14} color="inherit" /> : undefined}
+            >
+              {checkInSubmitting ? 'Checking in...' : 'Check In'}
+            </Button>
+          </DialogActions>
+        </Box>
       </Dialog>
     </AppLayout>
   );
