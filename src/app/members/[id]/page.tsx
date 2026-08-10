@@ -21,6 +21,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { api } from '@/lib/api';
+import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -921,7 +922,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       </Dialog>
 
       {/* ── Renew Membership Dialog ─────────────────────────────────────────────── */}
-      <Dialog open={renewOpen} onClose={() => setRenewOpen(false)} maxWidth="sm" fullWidth>
+      <RenewMembershipDialog
+        open={renewOpen}
+        memberId={id}
+        memberName={member ? `${member.firstName} ${member.lastName}` : undefined}
+        plans={apiPlans}
+        onClose={() => setRenewOpen(false)}
+        onSuccess={refresh}
+      />
+      <Dialog open={false} onClose={() => setRenewOpen(false)} maxWidth="sm" fullWidth>
         <Box component="form" onSubmit={async (e) => {
           e.preventDefault();
           if (!renewForm.planId) { setRenewError('Please select a plan.'); return; }

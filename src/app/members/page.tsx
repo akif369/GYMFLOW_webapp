@@ -22,6 +22,7 @@ import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { mockMembers } from '@/lib/mockData';
 import { api } from '@/lib/api';
+import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
@@ -51,6 +52,9 @@ function MembersPageContent() {
   const [actionAnchor, setActionAnchor] = useState<null | HTMLElement>(null);
   const [actionPosition, setActionPosition] = useState<{ top: number; left: number } | null>(null);
   const [actionMemberId, setActionMemberId] = useState<string | null>(null);
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [renewMemberId, setRenewMemberId] = useState<string | null>(null);
+  const [renewPlans, setRenewPlans] = useState<RenewPlan[]>([]);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
 
@@ -68,6 +72,20 @@ function MembersPageContent() {
   });
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
+
+  useEffect(() => {
+    api.get('/membership-plans', { params: { pageSize: '50' } })
+      .then(res => {
+        const items = res.data?.plans ?? res.data?.items ?? [];
+        setRenewPlans(items.map((plan: Record<string, unknown>) => ({
+          id: String(plan.id),
+          name: String(plan.name ?? ''),
+          price: Number(plan.price ?? 0),
+          durationDays: Number(plan.durationDays ?? 30),
+        })));
+      })
+      .catch(() => setRenewPlans([]));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,11 +212,14 @@ function MembersPageContent() {
     closeActions();
     if (!member) return;
 
-    if (action === 'view' || action === 'renew') {
-      router.push(`/members/${member.id}${action === 'renew' ? '?action=renew' : ''}`);
+    if (action === 'renew') {
+      setRenewMemberId(member.id);
+      setRenewOpen(true);
+    } else if (action === 'view') {
+      router.push(`/members/${member.id}`);
     } else if (action === 'attendance') {
       router.push(`/attendance?member=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}`);
-    } else {
+      } else {
       router.push(`/payments?memberId=${member.id}`);
     }
   };
@@ -501,6 +522,18 @@ function MembersPageContent() {
         </MenuItem>
       </Menu>
 
+      <RenewMembershipDialog
+        open={renewOpen}
+        memberId={renewMemberId ?? ''}
+        memberName={renewMemberId ? `${members.find(member => member.id === renewMemberId)?.firstName ?? ''} ${members.find(member => member.id === renewMemberId)?.lastName ?? ''}`.trim() : undefined}
+        plans={renewPlans}
+        onClose={() => {
+          setRenewOpen(false);
+          setRenewMemberId(null);
+        }}
+        onSuccess={() => setFetchTrigger(trigger => trigger + 1)}
+      />
+
       {/* Add Member Dialog */}
       <Dialog
         open={addOpen}
@@ -508,10 +541,12 @@ function MembersPageContent() {
         maxWidth="sm"
         fullWidth
         fullScreen={isMobile}
-        PaperProps={{
-          sx: {
-            backgroundImage: 'none',
-            maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundImage: 'none',
+              maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
+            },
           },
         }}
       >
