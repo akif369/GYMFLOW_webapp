@@ -127,12 +127,11 @@ function MembersPageContent() {
           const expiryDate = membershipExpiry ? String(membershipExpiry).split('T')[0] : '-';
           const lastVisit = (m.lastVisit ?? m.lastCheckIn) ? String(m.lastVisit ?? m.lastCheckIn).split('T')[0] : '-';
 
-          let calculatedMembershipStatus = membershipStatus ? String(membershipStatus) : null;
+          let calculatedMembershipStatus = membershipPlan ? (membershipStatus ? String(membershipStatus) : null) : 'INACTIVE';
           let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;
 
           if (!membershipPlan || planName === '-') {
-            if (!calculatedMembershipStatus) calculatedMembershipStatus = 'INACTIVE';
-            if (!calculatedPaymentStatus) calculatedPaymentStatus = '-';
+            calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
           } else {
             if (!calculatedMembershipStatus && expiryDate !== '-') {
               const today = new Date();
@@ -147,7 +146,7 @@ function MembersPageContent() {
             } else if (!calculatedMembershipStatus) {
               calculatedMembershipStatus = 'ACTIVE';
             }
-            if (!calculatedPaymentStatus) calculatedPaymentStatus = 'PENDING';
+            calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
           }
 
           return {
