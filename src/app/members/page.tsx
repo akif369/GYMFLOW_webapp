@@ -8,6 +8,7 @@ import {
   DialogActions, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
   Tooltip, CircularProgress, Alert,
 } from '@mui/material';
+import { useMediaQuery, useTheme } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -39,6 +40,8 @@ const FILTERS = [
 function MembersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState(() => {
     const filter = searchParams.get('filter');
@@ -60,7 +63,7 @@ function MembersPageContent() {
 
   // Add Member State
   const [addForm, setAddForm] = useState({
-    firstName: '', lastName: '', phone: '', email: '', gender: '',
+    firstName: '', lastName: '', phone: '', email: '', gender: 'MALE',
     dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0],
   });
   const [addLoading, setAddLoading] = useState(false);
@@ -202,8 +205,8 @@ function MembersPageContent() {
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.joinDate) {
-      setAddError('First Name, Last Name, Phone, and Join Date are required.');
+    if (!addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.dob || !addForm.joinDate) {
+      setAddError('First Name, Last Name, Phone, Date of Birth, and Join Date are required.');
       return;
     }
     setAddLoading(true);
@@ -211,7 +214,7 @@ function MembersPageContent() {
     try {
       await api.post('/members', addForm);
       setAddOpen(false);
-      setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: '', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0] });
+      setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: 'MALE', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0] });
       setFetchTrigger(t => t + 1);
     } catch (err: any) {
       setAddError(err.response?.data?.message || 'Failed to create member');
@@ -499,36 +502,60 @@ function MembersPageContent() {
       </Menu>
 
       {/* Add Member Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            backgroundImage: 'none',
+            maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
+          },
+        }}
+      >
         <Box component="form" onSubmit={handleAddSubmit}>
-          <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Add New Member</Typography>
-            <Typography variant="caption" sx={{ color: '#7d8590' }}>Fill in the member details below. Essential fields are marked with *</Typography>
+          <DialogTitle sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 1.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.01em' }}>Add New Member</Typography>
+            <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.5 }}>
+              Create a member profile to start tracking their fitness journey.
+            </Typography>
           </DialogTitle>
-          <DialogContent>
-            {addError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{addError}</Alert>}
-            <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={addForm.firstName} onChange={e => setAddForm({ ...addForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={addForm.lastName} onChange={e => setAddForm({ ...addForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} fullWidth size="small" /></Grid>
-              
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Gender" select value={addForm.gender} onChange={e => setAddForm({ ...addForm, gender: e.target.value })} fullWidth size="small">
-                  <MenuItem value=""><em>None</em></MenuItem>
-                  {['MALE', 'FEMALE', 'OTHER'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
-                </TextField>
-              </Grid>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 }, pb: 1 }}>
+            {addError && <Alert severity="error" sx={{ mb: 2 }}>{addError}</Alert>}
+
+            <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: '0.08em' }}>
+              Personal details
+            </Typography>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: 0.25 }}>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required autoComplete="given-name" value={addForm.firstName} onChange={e => setAddForm({ ...addForm, firstName: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required autoComplete="family-name" value={addForm.lastName} onChange={e => setAddForm({ ...addForm, lastName: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required type="tel" autoComplete="tel" value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" autoComplete="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} fullWidth /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Date of Birth"
                   type="date"
-                  value={addForm.dob} onChange={e => setAddForm({ ...addForm, dob: e.target.value })}
+                  required
+                  value={addForm.dob}
+                  onChange={e => setAddForm({ ...addForm, dob: e.target.value })}
                   fullWidth
-                  size="small"
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: new Date().toISOString().split('T')[0] } }}
                 />
               </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Gender" select value={addForm.gender} onChange={e => setAddForm({ ...addForm, gender: e.target.value })} fullWidth>
+                  <MenuItem value=""><em>Prefer not to say</em></MenuItem>
+                  {['MALE', 'FEMALE', 'OTHER'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+                </TextField>
+              </Grid>
+            </Grid>
+
+            <Typography variant="overline" sx={{ display: 'block', color: 'primary.main', fontWeight: 800, letterSpacing: '0.08em', mt: 2.5 }}>
+              Membership details
+            </Typography>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: 0.25 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Join Date"
@@ -536,18 +563,19 @@ function MembersPageContent() {
                   required
                   value={addForm.joinDate} onChange={e => setAddForm({ ...addForm, joinDate: e.target.value })}
                   fullWidth
-                  size="small"
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Fitness Goal" value={addForm.goal} onChange={e => setAddForm({ ...addForm, goal: e.target.value })} fullWidth size="small" placeholder="e.g. Weight Loss" />
-              </Grid>
-              <Grid size={12}><TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth size="small" multiline rows={2} /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Fitness Goal" value={addForm.goal} onChange={e => setAddForm({ ...addForm, goal: e.target.value })} fullWidth placeholder="e.g. Weight Loss" /></Grid>
             </Grid>
+
+            <Typography variant="overline" sx={{ display: 'block', color: 'primary.main', fontWeight: 800, letterSpacing: '0.08em', mt: 2.5 }}>
+              Additional information
+            </Typography>
+            <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} sx={{ mt: 0.25 }} />
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-            <Button onClick={() => setAddOpen(false)} variant="outlined">Cancel</Button>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 2.5 }, gap: 1, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>
+            <Button onClick={() => setAddOpen(false)} variant="outlined" disabled={addLoading}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={addLoading}>
               {addLoading ? <CircularProgress size={24} /> : 'Create Member'}
             </Button>
