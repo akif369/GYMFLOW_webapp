@@ -362,17 +362,23 @@ function MembersPageContent() {
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card
               elevation={0}
-              onClick={() => setActiveFilter(s.filter)}
+              onClick={() => setActiveFilter(activeFilter === s.filter ? 'ALL' : s.filter)}
               onKeyDown={event => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  setActiveFilter(s.filter);
+                  setActiveFilter(activeFilter === s.filter ? 'ALL' : s.filter);
                 }
               }}
               role="button"
               tabIndex={0}
               aria-label={`Show ${s.label} members`}
-              sx={{ cursor: 'pointer', transition: 'border-color 0.2s, transform 0.18s', '&:hover': { borderColor: alpha(s.color, 0.55), transform: 'translateY(-2px)' } }}
+              sx={{
+                cursor: 'pointer',
+                border: '1px solid',
+                borderColor: activeFilter === s.filter ? s.color : 'transparent',
+                transition: 'border-color 0.2s, transform 0.18s',
+                '&:hover': { borderColor: activeFilter === s.filter ? s.color : alpha(s.color, 0.55), transform: 'translateY(-2px)' }
+              }}
             >
               <CardContent sx={{ py: '12px !important', px: '16px !important' }}>
                 <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
@@ -417,7 +423,7 @@ function MembersPageContent() {
               size="small"
               color={activeFilter === f.value ? 'primary' : 'default'}
               variant={activeFilter === f.value ? 'filled' : 'outlined'}
-              onClick={() => setActiveFilter(f.value)}
+              onClick={() => setActiveFilter(activeFilter === f.value ? 'ALL' : f.value)}
               sx={{ fontWeight: 600, height: 26 }}
             />
           ))}
