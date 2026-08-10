@@ -20,6 +20,9 @@ import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import BlockIcon from '@mui/icons-material/Block';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 
@@ -34,7 +37,7 @@ const membershipStatusColor: Record<string, ChipColor> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error', FROZEN: 'info', PENDING: 'default', CANCELLED: 'error',
 };
 const payStatusColor: Record<string, ChipColor> = {
-  PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', FAILED: 'error',
+  PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', FAILED: 'error', REFUNDED: 'error', CANCELLED: 'default',
 };
 
 const eventIcon: Record<string, ReactNode> = {
@@ -82,7 +85,7 @@ type MemberData = {
   status: string;
   photoUrl: string | null;
   emergency: { name: string; phone: string; relation: string } | null;
-  health: { medicalConditions: string; allergies: string; injuries: string; bloodGroup: string } | null;
+  health: { medicalConditions: string; allergies: string; injuries: string; bloodGroup: string; medications?: string; notes?: string } | null;
   trainer: { id: string; firstName: string; lastName: string } | null;
   latestMembership: {
     id: string;
@@ -180,6 +183,25 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   const [measureLoading, setMeasureLoading] = useState(false);
   const [measureError, setMeasureError] = useState('');
 
+  // Member status, attendance, payments, and health actions
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ amount: '', paymentMethod: 'CASH', referenceId: '', description: '', notes: '' });
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [refundPayment, setRefundPayment] = useState<any | null>(null);
+  const [refundForm, setRefundForm] = useState({ amount: '', reason: '' });
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundError, setRefundError] = useState('');
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [healthOpen, setHealthOpen] = useState(false);
+  const [healthForm, setHealthForm] = useState({ medicalConditions: '', allergies: '', injuries: '', bloodGroup: '', medications: '', notes: '' });
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthError, setHealthError] = useState('');
+  const [sessionActionId, setSessionActionId] = useState('');
+  const [actionError, setActionError] = useState('');
+
   useEffect(() => {
     setLoading(true);
 
@@ -212,6 +234,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             allergies: String(m.health.allergies ?? 'None'),
             injuries: String(m.health.injuries ?? 'None'),
             bloodGroup: String(m.health.bloodGroup ?? ''),
+            medications: String(m.health.medications ?? ''),
+            notes: String(m.health.notes ?? ''),
           } : null,
           trainer: m.trainer ? {
             id: String(m.trainer.id),
@@ -360,6 +384,127 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         ? 'warning'
         : 'success';
 
+  const memberStatusLabel = member?.status === 'ARCHIVED' ? 'INACTIVE' : member?.status ?? 'ACTIVE';
+  const isCurrentlyInside = attendance.some(a => !a.checkOut);
+
+  const handleMemberStatus = async () => {
+    if (!member) return;
+    setStatusLoading(true);
+    setActionError('');
+    try {
+      await api.patch(`/members/${id}/status`, { status: member.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED' });
+      setStatusConfirmOpen(false);
+      refresh();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not update member status.');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleAttendance = async () => {
+    setAttendanceLoading(true);
+    setActionError('');
+    try {
+      if (isCurrentlyInside) {
+        await api.post('/attendance/check-out', { memberId: id });
+      } else {
+        await api.post('/attendance/check-in', { memberId: id, method: 'MANUAL' });
+      }
+      refresh();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not update attendance.');
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  const handleRecordPayment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const amount = Number(paymentForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setPaymentError('Enter a payment amount greater than zero.');
+      return;
+    }
+    setPaymentLoading(true);
+    setPaymentError('');
+    try {
+      await api.post('/payments', {
+        memberId: id,
+        amount,
+        paymentMethod: paymentForm.paymentMethod,
+        referenceId: paymentForm.referenceId || undefined,
+        description: paymentForm.description || undefined,
+        notes: paymentForm.notes || undefined,
+      }, { headers: { 'Idempotency-Key': crypto.randomUUID() } });
+      setPaymentOpen(false);
+      setPaymentForm({ amount: '', paymentMethod: 'CASH', referenceId: '', description: '', notes: '' });
+      refresh();
+    } catch (err: any) {
+      setPaymentError(err.response?.data?.message || 'Could not record payment.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleRefundPayment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!refundPayment) return;
+    const amount = Number(refundForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0 || amount > refundPayment.amount) {
+      setRefundError('Enter a valid refund amount up to the payment total.');
+      return;
+    }
+    if (!refundForm.reason.trim()) {
+      setRefundError('A refund reason is required for the audit trail.');
+      return;
+    }
+    setRefundLoading(true);
+    setRefundError('');
+    try {
+      await api.post(`/payments/${refundPayment.id}/refund`, { amount, reason: refundForm.reason.trim() });
+      setRefundPayment(null);
+      setRefundForm({ amount: '', reason: '' });
+      refresh();
+    } catch (err: any) {
+      setRefundError(err.response?.data?.message || 'Could not refund payment.');
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
+  const openHealthEditor = () => {
+    if (!member) return;
+    setHealthForm({
+      medicalConditions: member.health?.medicalConditions === 'None' ? '' : member.health?.medicalConditions ?? '',
+      allergies: member.health?.allergies === 'None' ? '' : member.health?.allergies ?? '',
+      injuries: member.health?.injuries === 'None' ? '' : member.health?.injuries ?? '',
+      bloodGroup: member.health?.bloodGroup ?? '', medications: member.health?.medications ?? '', notes: member.health?.notes ?? '',
+    });
+    setHealthError('');
+    setHealthOpen(true);
+  };
+
+  const handleSessionAction = async (sessionId: string, action: 'complete' | 'miss' | 'cancel') => {
+    if (action === 'cancel' && !window.confirm('Cancel this upcoming PT session?')) return;
+    if (action === 'miss' && !window.confirm('Mark this PT session as missed?')) return;
+    setSessionActionId(sessionId);
+    setActionError('');
+    try {
+      const endpoint = action === 'complete'
+        ? `/pt/sessions/${sessionId}/complete`
+        : action === 'miss'
+          ? `/pt/sessions/${sessionId}/miss`
+          : `/pt/sessions/${sessionId}/cancel`;
+      await api.post(endpoint, action === 'cancel' ? { reason: 'Cancelled from member profile' } : undefined);
+      refresh();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not update PT session.');
+    } finally {
+      setSessionActionId('');
+    }
+  };
+
   const tabs = ['Overview', 'Membership', 'Attendance', 'Payments', 'Fitness', 'Measurements', 'PT Sessions', 'Activity'];
 
   if (loading) {
@@ -389,6 +534,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
         <Button startIcon={<AutorenewIcon />} variant="outlined" size="small" onClick={() => { setRenewOpen(true); setRenewError(''); }}>Renew</Button>
+        <Button
+          startIcon={member.status === 'ARCHIVED' ? <PlayArrowIcon /> : <BlockIcon />}
+          variant="outlined"
+          color={member.status === 'ARCHIVED' ? 'success' : 'warning'}
+          size="small"
+          onClick={() => { setActionError(''); setStatusConfirmOpen(true); }}
+        >
+          {member.status === 'ARCHIVED' ? 'Activate member' : 'Deactivate member'}
+        </Button>
         <Button startIcon={<EditIcon />} variant="contained" size="small" onClick={() => {
           setEditForm({
             firstName: member.firstName,
@@ -415,6 +569,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
               <Typography variant="h5" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberNumber} size="small" variant="outlined" />
+              <Chip label={`Member: ${memberStatusLabel}`} size="small" color={memberStatusLabel === 'ACTIVE' ? 'success' : 'default'} variant="outlined" />
               <Chip label={membershipStatus} size="small" color={membershipStatusColor[membershipStatus] ?? 'default'} />
               <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
             </Box>
@@ -429,6 +584,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </Box>
         </CardContent>
       </Card>
+      {actionError && <Alert severity="error" onClose={() => setActionError('')} sx={{ mb: 2 }}>{actionError}</Alert>}
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
@@ -615,7 +771,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                           await api.post(`/members/${id}/memberships/activate`);
                           refresh();
                         } catch (err: any) {
-                          alert(err.response?.data?.message || 'Failed to activate');
+                          setActionError(err.response?.data?.message || 'Failed to activate membership.');
                         }
                       }}>
                       Activate Pending
@@ -636,7 +792,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                           await api.post(`/members/${id}/memberships/resume`);
                           refresh();
                         } catch (err: any) {
-                          alert(err.response?.data?.message || 'Failed to resume');
+                          setActionError(err.response?.data?.message || 'Failed to resume membership.');
                         } finally { setResumeLoading(false); }
                       }}>
                       {resumeLoading ? <CircularProgress size={18} /> : 'Resume'}
@@ -663,9 +819,21 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={2}>
         <Card elevation={0}>
           <CardContent>
-            <Box sx={{ display: 'flex', mb: 2, alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle2" fontWeight="bold">Attendance History</Typography>
-              <Typography variant="caption" color="text.secondary">{attendance.length} records</Typography>
+            <Box sx={{ display: 'flex', mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Box>
+                <Typography variant="subtitle2" fontWeight="bold">Attendance History</Typography>
+                <Typography variant="caption" color="text.secondary">{attendance.length} records</Typography>
+              </Box>
+              <Button
+                size="small"
+                variant={isCurrentlyInside ? 'contained' : 'outlined'}
+                color={isCurrentlyInside ? 'warning' : 'success'}
+                startIcon={isCurrentlyInside ? <LogoutIcon /> : <LoginIcon />}
+                disabled={attendanceLoading || member.status === 'ARCHIVED'}
+                onClick={handleAttendance}
+              >
+                {attendanceLoading ? 'Saving...' : isCurrentlyInside ? 'Check out' : 'Check in'}
+              </Button>
             </Box>
             <Table size="small">
               <TableHead>
@@ -688,7 +856,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={5} align="center">
                       <Typography variant="caption" color="text.secondary">No attendance records yet</Typography>
                     </TableCell>
                   </TableRow>
@@ -703,12 +871,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={3}>
         <Card elevation={0}>
           <CardContent>
-            <Box sx={{ display: 'flex', mb: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
               <Typography variant="subtitle2" fontWeight="bold">Payment History</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
                   Total: <strong>₹{payments.filter(p => p.status === 'PAID').reduce((s: number, p: any) => s + p.amount, 0).toLocaleString()}</strong>
                 </Typography>
+                <Button size="small" variant="contained" startIcon={<AddCircleIcon />} onClick={() => { setPaymentError(''); setPaymentOpen(true); }}>
+                  Record payment
+                </Button>
               </Box>
             </Box>
             <Table size="small">
@@ -720,6 +891,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <TableCell>Method</TableCell>
                   <TableCell>Ref ID</TableCell>
                   <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -731,10 +903,21 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                     <TableCell><Chip label={p.method || 'CASH'} size="small" variant="outlined" /></TableCell>
                     <TableCell><Typography variant="caption" color="text.secondary">{p.refId || '—'}</Typography></TableCell>
                     <TableCell><Chip label={p.status} size="small" color={payStatusColor[p.status] ?? 'default'} /></TableCell>
+                    <TableCell>
+                      {['PAID', 'PARTIALLY_PAID'].includes(p.status) && (
+                        <Button size="small" color="error" onClick={() => {
+                          setRefundPayment(p);
+                          setRefundForm({ amount: String(p.amount), reason: '' });
+                          setRefundError('');
+                        }}>
+                          Refund
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Typography variant="caption" color="text.secondary">No payment records yet</Typography>
                     </TableCell>
                   </TableRow>
@@ -754,6 +937,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">Health & Fitness Profile</Typography>
                   <Chip label="Sensitive" size="small" color="error" />
+                  <Box flex={1} />
+                  <Button size="small" variant="outlined" onClick={openHealthEditor}>Edit</Button>
                 </Box>
                 <Typography variant="caption" color="error.main" display="block" sx={{ mb: 2 }}>
                   ⚠ Access to this section is logged. Sensitive health information.
@@ -764,6 +949,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   ['Medical Conditions', member.health?.medicalConditions || 'None'],
                   ['Allergies', member.health?.allergies || 'None'],
                   ['Previous Injuries', member.health?.injuries || 'None'],
+                  ['Medications', member.health?.medications || 'None'],
+                  ['Health Notes', member.health?.notes || '-'],
                   ['Blood Group', member.health?.bloodGroup || '—'],
                 ].map(([k, v]) => (
                   <Box key={k} py={1} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -833,6 +1020,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <TableCell>Duration</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Notes</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -844,13 +1032,22 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                     <TableCell>{s.duration}min</TableCell>
                     <TableCell>
                       <Chip label={s.status} size="small"
-                        color={s.status === 'COMPLETED' ? 'success' : s.status === 'SCHEDULED' ? 'default' : 'error'} />
+                        color={s.status === 'COMPLETED' ? 'success' : s.status === 'UPCOMING' ? 'default' : 'error'} />
                     </TableCell>
                     <TableCell><Typography variant="caption" color="text.secondary">{s.notes || '—'}</Typography></TableCell>
-                  </TableRow>
+                    <TableCell>
+                      {s.status === 'UPCOMING' && (
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <Button size="small" color="success" disabled={sessionActionId === s.id} onClick={() => handleSessionAction(s.id, 'complete')}>Complete</Button>
+                          <Button size="small" color="warning" disabled={sessionActionId === s.id} onClick={() => handleSessionAction(s.id, 'miss')}>Missed</Button>
+                          <Button size="small" color="error" disabled={sessionActionId === s.id} onClick={() => handleSessionAction(s.id, 'cancel')}>Cancel</Button>
+                        </Box>
+                      )}
+                    </TableCell>
+                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Typography variant="caption" color="text.secondary">No PT sessions found</Typography>
                     </TableCell>
                   </TableRow>
@@ -1165,6 +1362,97 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Button type="submit" variant="contained" disabled={measureLoading}>
               {measureLoading ? <CircularProgress size={24} /> : 'Save Measurement'}
             </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={statusConfirmOpen} onClose={() => !statusLoading && setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{member.status === 'ARCHIVED' ? 'Activate member?' : 'Deactivate member?'}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {member.status === 'ARCHIVED'
+              ? 'This restores the member to the active member list. Their history and payments remain unchanged.'
+              : 'This hides the member from normal active workflows. Their history, membership, and payment ledger remain unchanged.'}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setStatusConfirmOpen(false)} disabled={statusLoading}>Keep status</Button>
+          <Button variant="contained" color={member.status === 'ARCHIVED' ? 'success' : 'warning'} onClick={handleMemberStatus} disabled={statusLoading}>
+            {statusLoading ? <CircularProgress size={20} /> : member.status === 'ARCHIVED' ? 'Activate member' : 'Deactivate member'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={paymentOpen} onClose={() => !paymentLoading && setPaymentOpen(false)} maxWidth="sm" fullWidth>
+        <Box component="form" onSubmit={handleRecordPayment}>
+          <DialogTitle>Record payment</DialogTitle>
+          <DialogContent>
+            {paymentError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{paymentError}</Alert>}
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Amount" type="number" value={paymentForm.amount} onChange={e => setPaymentForm({ ...paymentForm, amount: e.target.value })} fullWidth required slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField select label="Payment method" value={paymentForm.paymentMethod} onChange={e => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })} fullWidth>
+                  {['CASH', 'UPI', 'CARD', 'NETBANKING', 'CHEQUE', 'OTHER'].map(method => <MenuItem key={method} value={method}>{method}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid size={12}><TextField label="Reference ID (optional)" value={paymentForm.referenceId} onChange={e => setPaymentForm({ ...paymentForm, referenceId: e.target.value })} fullWidth helperText="UPI reference, card authorization, or cheque number" /></Grid>
+              <Grid size={12}><TextField label="Description (optional)" value={paymentForm.description} onChange={e => setPaymentForm({ ...paymentForm, description: e.target.value })} fullWidth /></Grid>
+              <Grid size={12}><TextField label="Internal note (optional)" value={paymentForm.notes} onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })} fullWidth multiline rows={2} /></Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setPaymentOpen(false)} disabled={paymentLoading}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={paymentLoading}>{paymentLoading ? <CircularProgress size={20} /> : 'Record payment'}</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={Boolean(refundPayment)} onClose={() => !refundLoading && setRefundPayment(null)} maxWidth="xs" fullWidth>
+        <Box component="form" onSubmit={handleRefundPayment}>
+          <DialogTitle>Refund payment</DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mt: 1, mb: 2 }}>Refunds are recorded in the payment ledger and cannot be silently deleted.</Alert>
+            {refundError && <Alert severity="error" sx={{ mb: 2 }}>{refundError}</Alert>}
+            <TextField label="Refund amount" type="number" value={refundForm.amount} onChange={e => setRefundForm({ ...refundForm, amount: e.target.value })} fullWidth required slotProps={{ htmlInput: { min: 0.01, step: 0.01, max: refundPayment?.amount } }} sx={{ mb: 2 }} />
+            <TextField label="Reason" value={refundForm.reason} onChange={e => setRefundForm({ ...refundForm, reason: e.target.value })} fullWidth required multiline rows={3} />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setRefundPayment(null)} disabled={refundLoading}>Keep payment</Button>
+            <Button type="submit" variant="contained" color="error" disabled={refundLoading}>{refundLoading ? <CircularProgress size={20} /> : 'Process refund'}</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={healthOpen} onClose={() => !healthLoading && setHealthOpen(false)} maxWidth="sm" fullWidth>
+        <Box component="form" onSubmit={async (event) => {
+          event.preventDefault();
+          setHealthLoading(true); setHealthError('');
+          try {
+            await api.patch(`/members/${id}/health-profile`, healthForm);
+            setHealthOpen(false);
+            refresh();
+          } catch (err: any) {
+            setHealthError(err.response?.data?.message || 'Could not update health profile.');
+          } finally { setHealthLoading(false); }
+        }}>
+          <DialogTitle>Edit health profile</DialogTitle>
+          <DialogContent>
+            {healthError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{healthError}</Alert>}
+            <Alert severity="warning" sx={{ mt: 1, mb: 2 }}>Health information is sensitive and access is logged.</Alert>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Medical conditions" value={healthForm.medicalConditions} onChange={e => setHealthForm({ ...healthForm, medicalConditions: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Allergies" value={healthForm.allergies} onChange={e => setHealthForm({ ...healthForm, allergies: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Previous injuries" value={healthForm.injuries} onChange={e => setHealthForm({ ...healthForm, injuries: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Blood group" value={healthForm.bloodGroup} onChange={e => setHealthForm({ ...healthForm, bloodGroup: e.target.value })} fullWidth /></Grid>
+              <Grid size={12}><TextField label="Medications" value={healthForm.medications} onChange={e => setHealthForm({ ...healthForm, medications: e.target.value })} fullWidth /></Grid>
+              <Grid size={12}><TextField label="Notes" value={healthForm.notes} onChange={e => setHealthForm({ ...healthForm, notes: e.target.value })} fullWidth multiline rows={2} /></Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setHealthOpen(false)} disabled={healthLoading}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={healthLoading}>{healthLoading ? <CircularProgress size={20} /> : 'Save health profile'}</Button>
           </DialogActions>
         </Box>
       </Dialog>
