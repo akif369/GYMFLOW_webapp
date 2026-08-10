@@ -109,7 +109,7 @@ function MembersPageContent() {
       if (activeFilter === 'PAYMENT_PENDING') {
         params.paymentStatus = 'PENDING';
       } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
-        params.status = activeFilter;
+        params.membershipStatus = activeFilter;
       }
     }
     api.get('/members', { params })
