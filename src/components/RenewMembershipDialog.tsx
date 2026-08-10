@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
@@ -20,6 +23,7 @@ import {
 } from '@mui/material';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { api } from '@/lib/api';
 
@@ -30,7 +34,7 @@ export type RenewPlan = {
   durationDays: number;
 };
 
-type PaymentMethod = 'CASH' | 'UPI' | 'CARD';
+type PaymentMethod = 'CASH' | 'UPI' | 'CARD' | 'NETBANKING' | 'CHEQUE' | 'OTHER';
 
 type RenewMembershipDialogProps = {
   open: boolean;
@@ -44,7 +48,7 @@ type RenewMembershipDialogProps = {
 const initialForm = {
   planId: '',
   notes: '',
-  recordPayment: false,
+  recordPayment: true,
   paymentAmount: '',
   paymentMethod: 'CASH' as PaymentMethod,
   paymentReference: '',
@@ -64,6 +68,9 @@ export default function RenewMembershipDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [renewalCompleted, setRenewalCompleted] = useState(false);
+  const [paymentDetailsOpen, setPaymentDetailsOpen] = useState(false);
+  const [renewalRequestKey, setRenewalRequestKey] = useState('');
+  const [paymentRequestKey, setPaymentRequestKey] = useState('');
 
   const selectedPlan = plans.find(plan => plan.id === form.planId);
 
@@ -72,6 +79,9 @@ export default function RenewMembershipDialog({
     setForm(initialForm);
     setError('');
     setRenewalCompleted(false);
+    setPaymentDetailsOpen(false);
+    setRenewalRequestKey('');
+    setPaymentRequestKey('');
     onClose();
   };
 
@@ -95,21 +105,30 @@ export default function RenewMembershipDialog({
       setError('Enter a valid payment amount or turn off payment recording.');
       return;
     }
+    if (form.recordPayment && !form.paymentMethod) {
+      setError('Choose a payment method to record the received payment.');
+      return;
+    }
 
     setLoading(true);
     setError('');
     let renewalWasCompleted = renewalCompleted;
     try {
       if (!renewalCompleted) {
+        const requestKey = renewalRequestKey || crypto.randomUUID();
+        setRenewalRequestKey(requestKey);
         await api.post(`/members/${memberId}/memberships/renew`, {
           planId: form.planId,
           notes: form.notes || undefined,
-        });
+        }, { headers: { 'Idempotency-Key': requestKey } });
         renewalWasCompleted = true;
         setRenewalCompleted(true);
+        setPaymentDetailsOpen(true);
       }
 
       if (form.recordPayment) {
+        const requestKey = paymentRequestKey || crypto.randomUUID();
+        setPaymentRequestKey(requestKey);
         await api.post('/payments', {
           memberId,
           amount: Number(form.paymentAmount),
@@ -117,7 +136,7 @@ export default function RenewMembershipDialog({
           referenceId: form.paymentReference || undefined,
           description: `Membership renewal - ${selectedPlan?.name ?? 'Plan'}`,
           notes: form.notes || undefined,
-        });
+        }, { headers: { 'Idempotency-Key': requestKey } });
       }
 
       onSuccess();
@@ -182,35 +201,41 @@ export default function RenewMembershipDialog({
             </Grid>
           )}
 
-          {!renewalCompleted && <Box sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <FormControlLabel
-              control={<Checkbox checked={form.recordPayment} onChange={event => setForm(current => ({ ...current, recordPayment: event.target.checked }))} />}
-              label={<Typography sx={{ fontWeight: 700 }}>Record payment now <Typography component="span" variant="body2" sx={{ color: '#7d8590' }}>(Optional)</Typography></Typography>}
-            />
-            <Typography variant="caption" sx={{ display: 'block', color: '#7d8590', ml: 4.5, mt: -0.5 }}>
-              Leave this off if payment will be collected later.
-            </Typography>
-          </Box>}
+      
 
-          {(form.recordPayment || renewalCompleted) && <Box sx={{ mt: 2 }}>
-            <Stack direction="row" sx={{ gap: 1, alignItems: 'center', mb: 1.5 }}>
-              <PaymentsRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-              <Typography sx={{ fontWeight: 800 }}>Payment details</Typography>
-            </Stack>
+          <Accordion expanded={paymentDetailsOpen} onChange={(_, expanded) => setPaymentDetailsOpen(expanded)} disableGutters sx={{ mt: 2, bgcolor: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: { xs: 1.5, sm: 2 } }}>
+              <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
+                <PaymentsRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
+                <Box>
+                  <Typography sx={{ fontWeight: 800 }}>Payment details</Typography>
+                  <Typography variant="caption" sx={{ color: '#7d8590' }}>
+                    {form.recordPayment || renewalCompleted ? 'Plan amount and Cash method are used by default' : 'Open to review payment details'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </AccordionSummary>
+            <AccordionDetails sx={{ px: { xs: 1.5, sm: 2 }, pb: 2 }}>
+           {(form.recordPayment || renewalCompleted) && <Box>
             <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField label="Amount (₹)" type="number" required value={form.paymentAmount} onChange={event => setForm(current => ({ ...current, paymentAmount: event.target.value }))} fullWidth slotProps={{ htmlInput: { min: 1, step: '0.01' } }} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Payment method" select required value={form.paymentMethod} onChange={event => setForm(current => ({ ...current, paymentMethod: event.target.value as PaymentMethod }))} fullWidth>
+                <TextField label="Payment method" select value={form.paymentMethod} onChange={event => setForm(current => ({ ...current, paymentMethod: event.target.value as PaymentMethod }))} fullWidth>
                   <MenuItem value="CASH">Cash</MenuItem>
                   <MenuItem value="UPI">UPI</MenuItem>
                   <MenuItem value="CARD">Card</MenuItem>
+                  <MenuItem value="NETBANKING">Net banking</MenuItem>
+                  <MenuItem value="CHEQUE">Cheque</MenuItem>
+                  <MenuItem value="OTHER">Other</MenuItem>
                 </TextField>
               </Grid>
               <Grid size={12}><TextField label="Reference (Optional)" value={form.paymentReference} onChange={event => setForm(current => ({ ...current, paymentReference: event.target.value }))} fullWidth placeholder="UPI transaction ID or card reference" /></Grid>
             </Grid>
-          </Box>}
+           </Box>}
+            </AccordionDetails>
+          </Accordion>
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 2.5 }, gap: 1, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>
           <Button onClick={resetAndClose} variant="outlined" disabled={loading}>Cancel</Button>
