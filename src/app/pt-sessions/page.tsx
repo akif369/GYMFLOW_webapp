@@ -7,8 +7,13 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Divider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { mockPtSessions, mockPtPackages } from '@/lib/mockData';
 import { api } from '@/lib/api';
+
+type PtSessionRow = {
+  id: string; member: string; memberId: string; trainer: string; trainerId: string; date: string;
+  time: string; duration: number; type: string; status: string; notes: string; package: string; sessionsRemaining: number;
+};
+type PtPackageRow = { id: string; name: string; sessions: number; validityDays: number; price: number; description: string; gst?: number };
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -21,8 +26,8 @@ const statusColor: Record<string, ChipColor> = { COMPLETED: 'success', UPCOMING:
 export default function PtSessionsPage() {
   const [tab, setTab] = useState(0);
   const [bookOpen, setBookOpen] = useState(false);
-  const [apiSessions, setApiSessions] = useState<typeof mockPtSessions | null>(null);
-  const [apiPackages, setApiPackages] = useState<typeof mockPtPackages | null>(null);
+  const [apiSessions, setApiSessions] = useState<PtSessionRow[] | null>(null);
+  const [apiPackages, setApiPackages] = useState<PtPackageRow[] | null>(null);
 
   useEffect(() => {
     api.get('/pt/sessions', { params: { pageSize: '50' } })
@@ -44,7 +49,7 @@ export default function PtSessionsPage() {
           sessionsRemaining: Number(s.sessionsRemaining ?? 0),
         })));
       })
-      .catch(() => setApiSessions(null));
+      .catch(() => setApiSessions([]));
 
     api.get('/pt/packages', { params: { pageSize: '50' } })
       .then(res => {
@@ -58,11 +63,12 @@ export default function PtSessionsPage() {
           description: String(p.description ?? ''),
         })));
       })
-      .catch(() => setApiPackages(null));
+      .catch(() => setApiPackages([]));
   }, []);
 
-  const sessions = apiSessions ?? mockPtSessions;
-  const packages = apiPackages ?? mockPtPackages;
+  const sessions = apiSessions ?? [];
+  const packages = apiPackages ?? [];
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <AppLayout>
@@ -85,7 +91,7 @@ export default function PtSessionsPage() {
       {/* Tab 0: Today's Schedule */}
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
-          {mockPtSessions.filter(s => s.date === '2026-07-10').map(session => (
+          {sessions.filter(s => s.date === today).map(session => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={session.id}>
               <Card elevation={0} sx={{ borderLeft: '3px solid', borderColor: session.status === 'COMPLETED' ? 'success.main' : session.status === 'MISSED' ? 'error.main' : 'primary.main' }}>
                 <CardContent>
@@ -108,12 +114,12 @@ export default function PtSessionsPage() {
               </Card>
             </Grid>
           ))}
-          {mockPtSessions.filter(s => s.status === 'MISSED' && s.date !== '2026-07-10').length > 0 && (
+          {sessions.filter(s => s.status === 'MISSED' && s.date !== today).length > 0 && (
             <Grid size={12}>
               <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.3)', bgcolor: 'rgba(239,68,68,0.04)' }}>
                 <CardContent>
                   <Typography variant="subtitle2" color="error">⚠ Missed Sessions</Typography>
-                  {mockPtSessions.filter(s => s.status === 'MISSED').map(s => (
+                  {sessions.filter(s => s.status === 'MISSED').map(s => (
                     <Typography key={s.id} variant="caption" color="text.secondary" display="block">
                       {s.date} — {s.member} with {s.trainer}
                     </Typography>
@@ -140,7 +146,7 @@ export default function PtSessionsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockPtSessions.map(s => (
+              {sessions.map(s => (
                 <TableRow key={s.id}>
                   <TableCell>{s.date}</TableCell>
                   <TableCell>{s.time}</TableCell>
@@ -158,7 +164,7 @@ export default function PtSessionsPage() {
       {/* Tab 2: Packages */}
       <TabPanel value={tab} index={2}>
         <Grid container spacing={2}>
-          {mockPtPackages.map(pkg => (
+          {packages.map(pkg => (
             <Grid size={{ xs: 12, sm: 4 }} key={pkg.id}>
               <Card elevation={0}>
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
@@ -166,7 +172,7 @@ export default function PtSessionsPage() {
                   <Typography variant="body1" color="text.secondary">Sessions</Typography>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="h5" fontWeight="bold">₹{pkg.price.toLocaleString()}</Typography>
-                  <Typography variant="caption" color="text.secondary">+ {pkg.gst}% GST</Typography>
+                  <Typography variant="caption" color="text.secondary">{pkg.validityDays} days validity</Typography>
                   <Box sx={{ mt: 2 }}>
                     <Button variant="outlined" fullWidth>Edit Package</Button>
                   </Box>
@@ -186,15 +192,13 @@ export default function PtSessionsPage() {
       </TabPanel>
 
       {/* Book Session Dialog */}
-      <Dialog open={bookOpen} onClose={() => setBookOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={bookOpen} onClose={() => setBookOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Book PT Session</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={12}><TextField label="Member" fullWidth size="small" placeholder="Search member..." /></Grid>
             <Grid size={12}>
-              <TextField label="Trainer" select fullWidth size="small">
-                {['Amit Singh', 'Neha Gupta', 'Ravi Kumar'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </TextField>
+              <TextField label="Trainer" fullWidth size="small" placeholder="Enter trainer name" />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="Date" type="date" fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="Time" type="time" fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} /></Grid>

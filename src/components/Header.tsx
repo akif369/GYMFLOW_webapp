@@ -8,21 +8,12 @@ import {
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
-
-const NOTIFICATIONS = [
-  { icon: <CheckCircleRoundedIcon sx={{ fontSize: 16, color: '#4ade80' }} />, text: 'Rahul Sharma checked in', time: '2 min ago' },
-  { icon: <WarningAmberRoundedIcon sx={{ fontSize: 16, color: '#fbbf24' }} />, text: 'Priya Mehta membership expiring', time: '1h ago' },
-  { icon: <PaymentRoundedIcon sx={{ fontSize: 16, color: '#a78bfa' }} />, text: 'Payment ₹2,500 received', time: '2h ago' },
-];
 
 function getInitials(firstName?: string, lastName?: string) {
   if (!firstName && !lastName) return '??';
@@ -127,7 +118,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             }}
           >
             <Badge
-              badgeContent={3}
+              badgeContent={0}
               sx={{
                 '& .MuiBadge-badge': {
                   bgcolor: '#10b981',
@@ -217,19 +208,9 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           <Typography variant="subtitle2" sx={{ color: '#f0f6fc', fontWeight: 700 }}>Notifications</Typography>
         </Box>
         <Divider />
-        {NOTIFICATIONS.map((n, i) => (
-          <MenuItem
-            key={i}
-            onClick={() => setNotifAnchor(null)}
-            sx={{ py: 1.25, px: 2, gap: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
-          >
-            <ListItemIcon sx={{ minWidth: 'auto' }}>{n.icon}</ListItemIcon>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ color: '#f0f6fc', fontSize: '0.8rem' }}>{n.text}</Typography>
-              <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>{n.time}</Typography>
-            </Box>
-          </MenuItem>
-        ))}
+        <Box sx={{ px: 2, py: 2 }}>
+          <Typography variant="body2" sx={{ color: '#7d8590' }}>No new notifications</Typography>
+        </Box>
       </Menu>
 
       {/* User Profile Menu */}

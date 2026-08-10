@@ -7,8 +7,14 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Checkbox, FormControlLabel, Alert, CircularProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { mockStaff, ALL_PERMISSIONS } from '@/lib/mockData';
 import { api } from '@/lib/api';
+
+const ALL_PERMISSIONS = [
+  'member.create', 'member.update', 'member.delete', 'attendance.create',
+  'attendance.correct', 'payment.create', 'payment.refund', 'revenue.view',
+  'trainer.manage', 'report.export',
+];
+type StaffRow = { id: string; name: string; email: string; phone: string; role: string; status: string; permissions: string[]; joinDate: string; branch: string };
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -31,7 +37,7 @@ export default function StaffPage() {
   const [addError, setAddError] = useState('');
 
   // ── API state ────────────────────────────────────────────────────────────────
-  const [apiStaff, setApiStaff] = useState<typeof mockStaff | null>(null);
+  const [apiStaff, setApiStaff] = useState<StaffRow[] | null>(null);
 
   const fetchStaff = () => {
     api.get('/staff')
@@ -49,12 +55,12 @@ export default function StaffPage() {
           branch: String(s.branch ?? ''),
         })));
       })
-      .catch(() => setApiStaff(null));
+      .catch(() => setApiStaff([]));
   };
 
   useEffect(() => { fetchStaff(); }, []);
 
-  const staff = apiStaff ?? mockStaff;
+  const staff = apiStaff ?? [];
   const defaultPerms = selectedRole === 'MANAGER' ? ALL_PERMISSIONS.filter(p => !p.includes('delete')) : ['member.create', 'payment.create', 'attendance.create'];
 
   return (
@@ -150,7 +156,7 @@ export default function StaffPage() {
       </TabPanel>
 
       {/* Add Staff Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Add Staff Member</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>

@@ -7,8 +7,10 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { mockExercises, mockWorkoutTemplates } from '@/lib/mockData';
 import { api } from '@/lib/api';
+
+type ExerciseRow = { id: string; name: string; muscleGroup: string; equipment: string; difficulty: string; active: boolean; description: string };
+type WorkoutTemplateRow = { id: string; name: string; exercises: number; trainer: string; members: number; description: string };
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -21,8 +23,8 @@ const difficultyColor: Record<string, ChipColor> = { Beginner: 'success', Interm
 export default function WorkoutsPage() {
   const [tab, setTab] = useState(0);
   const [addExOpen, setAddExOpen] = useState(false);
-  const [apiExercises, setApiExercises] = useState<typeof mockExercises | null>(null);
-  const [apiTemplates, setApiTemplates] = useState<typeof mockWorkoutTemplates | null>(null);
+  const [apiExercises, setApiExercises] = useState<ExerciseRow[] | null>(null);
+  const [apiTemplates, setApiTemplates] = useState<WorkoutTemplateRow[] | null>(null);
 
   useEffect(() => {
     api.get('/exercises', { params: { pageSize: '100' } })
@@ -31,18 +33,14 @@ export default function WorkoutsPage() {
         setApiExercises(items.map((e: Record<string, unknown>) => ({
           id: String(e.id),
           name: String(e.name ?? ''),
-          category: String(e.category ?? ''),
           difficulty: String(e.difficulty ?? 'Intermediate'),
-          muscle: String(e.muscleGroup ?? e.muscle ?? ''),
+          muscleGroup: String(e.muscleGroup ?? e.muscle ?? ''),
           equipment: String(e.equipment ?? ''),
           description: String(e.description ?? ''),
-          videoUrl: String(e.videoUrl ?? ''),
-          sets: Number(e.defaultSets ?? e.sets ?? 3),
-          reps: Number(e.defaultReps ?? e.reps ?? 10),
-          duration: Number(e.defaultDuration ?? e.duration ?? 0),
+          active: e.active !== false,
         })));
       })
-      .catch(() => setApiExercises(null));
+      .catch(() => setApiExercises([]));
 
     api.get('/workout-templates', { params: { pageSize: '50' } })
       .then(res => {
@@ -50,19 +48,18 @@ export default function WorkoutsPage() {
         setApiTemplates(items.map((t: Record<string, unknown>) => ({
           id: String(t.id),
           name: String(t.name ?? ''),
-          type: String(t.type ?? ''),
-          duration: Number(t.durationMinutes ?? t.duration ?? 60),
+          trainer: String(t.createdByName ?? t.createdBy ?? ''),
           exercises: Number(t.exerciseCount ?? (Array.isArray(t.exercises) ? t.exercises.length : 0)),
           difficulty: String(t.difficulty ?? 'Intermediate'),
-          createdBy: String(t.createdByName ?? t.createdBy ?? ''),
+          members: Number(t.memberCount ?? t.members ?? 0),
           description: String(t.description ?? ''),
         })));
       })
-      .catch(() => setApiTemplates(null));
+      .catch(() => setApiTemplates([]));
   }, []);
 
-  const exercises = apiExercises ?? mockExercises;
-  const templates = apiTemplates ?? mockWorkoutTemplates;
+  const exercises = apiExercises ?? [];
+  const templates = apiTemplates ?? [];
 
   return (
     <AppLayout>
@@ -96,7 +93,7 @@ export default function WorkoutsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockExercises.map(ex => (
+              {exercises.map(ex => (
                 <TableRow key={ex.id}>
                   <TableCell><Typography variant="body2" fontWeight={600}>{ex.name}</Typography></TableCell>
                   <TableCell><Chip label={ex.muscleGroup} size="small" variant="outlined" /></TableCell>
@@ -122,7 +119,7 @@ export default function WorkoutsPage() {
           <Button variant="outlined" startIcon={<AddIcon />} size="small" fullWidth sx={{ width: { xs: '100%', sm: 'auto' } }}>New Template</Button>
         </Box>
         <Grid container spacing={2}>
-          {mockWorkoutTemplates.map(template => (
+          {templates.map(template => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={template.id}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' }, transition: 'border-color 0.2s' }}>
                 <CardContent>
@@ -153,7 +150,7 @@ export default function WorkoutsPage() {
       </TabPanel>
 
       {/* Add Exercise Dialog */}
-      <Dialog open={addExOpen} onClose={() => setAddExOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={addExOpen} onClose={() => setAddExOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Add Exercise to Library</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>

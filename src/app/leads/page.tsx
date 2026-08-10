@@ -7,8 +7,13 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { mockLeads } from '@/lib/mockData';
 import { api } from '@/lib/api';
+
+type LeadRow = {
+  id: string; name: string; phone: string; email: string; source: string; status: string;
+  interestedIn: string; assignedTo: string; notes: string; createdAt: string;
+  followUpDate: string; trialDate: string | null;
+};
 
 const PIPELINE_STAGES = ['New Lead', 'Contacted', 'Trial Booked', 'Trial Completed', 'Interested', 'Joined', 'Lost'];
 const SOURCES = ['Walk-in', 'Instagram', 'Google', 'Referral', 'WhatsApp', 'Website', 'Other'];
@@ -20,7 +25,7 @@ const stageColor: Record<string, 'default' | 'info' | 'primary' | 'secondary' | 
 
 export default function LeadsPage() {
   const [addOpen, setAddOpen] = useState(false);
-  const [apiLeads, setApiLeads] = useState<typeof mockLeads | null>(null);
+  const [apiLeads, setApiLeads] = useState<LeadRow[] | null>(null);
 
   useEffect(() => {
     api.get('/leads', { params: { pageSize: '100' } })
@@ -41,10 +46,10 @@ export default function LeadsPage() {
           trialDate: String(l.trialDate ?? '').split('T')[0] || null,
         })));
       })
-      .catch(() => setApiLeads(null));
+      .catch(() => setApiLeads([]));
   }, []);
 
-  const leads = apiLeads ?? mockLeads;
+  const leads = apiLeads ?? [];
   const byStage = (stage: string) => leads.filter(l => l.status === stage);
   const bySource = SOURCES.map(s => ({ source: s, count: leads.filter(l => l.source === s).length }));
 
@@ -146,7 +151,7 @@ export default function LeadsPage() {
       </Card>
 
       {/* Add Lead Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Add New Lead</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>

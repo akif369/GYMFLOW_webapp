@@ -6,7 +6,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow, Divider
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
-import { mockAttendanceLogs, mockPayments, mockMembers, mockTrainers, mockPtSessions } from '@/lib/mockData';
 import { api } from '@/lib/api';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
@@ -17,6 +16,11 @@ type ReportCell = string | number | { chip: true; label: string; color: string }
 type ReportRow = Record<string, ReportCell>;
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+type ALog = { id: string; member: string; memberId: string; date: string; checkIn: string; checkOut: string | null; duration: string; method: string; branch: string };
+type APayment = { id: string; member: string; memberId: string; amount: number; method: string; status: string; date: string; refId: string; plan: string };
+type AMember = { id: string; memberId: string; firstName: string; lastName: string; plan: string; startDate: string; expiryDate: string; membershipStatus: string; paymentStatus: string };
+type ATrainer = { id: string; name: string; membersAssigned: number; ptClients: number; sessionsThisMonth: number; sessionsCompleted: number; sessionsCancelled: number };
+type APtSession = { id: string; member: string; trainer: string; date: string; time: string; status: string; notes: string };
 
 interface ReportCardProps {
   title: string;
@@ -45,7 +49,7 @@ function ReportCard({ title, subtitle, rows, columns }: ReportCardProps) {
               <TableRow key={i}>
                 {Object.values(row).map((v, j) => (
                   <TableCell key={j}>
-                    {typeof v === 'object' && v.chip ? <Chip label={v.label} size="small" color={v.color as ChipColor} /> : v}
+                    {typeof v === 'object' && v !== null && 'chip' in v ? <Chip label={v.label} size="small" color={v.color as ChipColor} /> : String(v ?? '')}
                   </TableCell>
                 ))}
               </TableRow>
@@ -61,12 +65,6 @@ export default function ReportsPage() {
   const [tab, setTab] = useState(0);
 
   // ── API report data ───────────────────────────────────────────────────────────
-  type ALog = typeof mockAttendanceLogs[0];
-  type APayment = typeof mockPayments[0];
-  type AMember = typeof mockMembers[0];
-  type ATrainer = typeof mockTrainers[0];
-  type APtSession = typeof mockPtSessions[0];
-
   const [attendanceLogs, setAttendanceLogs] = useState<ALog[]>([]);
   const [payments, setPayments] = useState<APayment[]>([]);
   const [members, setMembers] = useState<AMember[]>([]);
@@ -85,7 +83,7 @@ export default function ReportsPage() {
           duration: l.durationMinutes ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m` : 'Inside',
           method: String(l.method ?? 'MANUAL'), branch: String(l.branch ?? ''),
         })));
-      }).catch(() => setAttendanceLogs(mockAttendanceLogs));
+      }).catch(() => setAttendanceLogs([]));
 
     api.get('/payments', { params: { pageSize: '100' } })
       .then(res => {
@@ -97,7 +95,7 @@ export default function ReportsPage() {
           date: String(p.date ?? p.createdAt ?? '').split('T')[0],
           refId: String(p.referenceId ?? ''), plan: String(p.plan ?? ''),
         })));
-      }).catch(() => setPayments(mockPayments));
+      }).catch(() => setPayments([]));
 
     api.get('/members', { params: { pageSize: '100' } })
       .then(res => {
@@ -116,7 +114,7 @@ export default function ReportsPage() {
           emergency: { name: '', phone: '', relation: '' },
           medicalConditions: '', allergies: '', injuries: '',
         })));
-      }).catch(() => setMembers(mockMembers));
+      }).catch(() => setMembers([]));
 
     api.get('/trainers', { params: { pageSize: '50' } })
       .then(res => {
@@ -130,7 +128,7 @@ export default function ReportsPage() {
           sessionsCancelled: Number(t.sessionsCancelled ?? 0), rating: Number(t.rating ?? 0),
           bio: '', certifications: [], joinDate: '', salary: 0,
         })));
-      }).catch(() => setTrainers(mockTrainers));
+      }).catch(() => setTrainers([]));
 
     api.get('/pt/sessions', { params: { pageSize: '100' } })
       .then(res => {
@@ -144,15 +142,14 @@ export default function ReportsPage() {
           type: String(s.sessionType ?? ''), status: String(s.status ?? ''),
           notes: String(s.notes ?? ''), package: String(s.packageName ?? ''), sessionsRemaining: Number(s.sessionsRemaining ?? 0),
         })));
-      }).catch(() => setPtSessions(mockPtSessions));
+      }).catch(() => setPtSessions([]));
   }, []);
 
-  // Use API data if populated, else fall back to mock
-  const aLogs = attendanceLogs.length ? attendanceLogs : mockAttendanceLogs;
-  const aPayments = payments.length ? payments : mockPayments;
-  const aMembers = members.length ? members : mockMembers;
-  const aTrainers = trainers.length ? trainers : mockTrainers;
-  const aPtSessions = ptSessions.length ? ptSessions : mockPtSessions;
+  const aLogs = attendanceLogs;
+  const aPayments = payments;
+  const aMembers = members;
+  const aTrainers = trainers;
+  const aPtSessions = ptSessions;
 
   return (
     <AppLayout>

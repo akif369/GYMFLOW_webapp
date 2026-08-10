@@ -55,12 +55,12 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Gym Profile</Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}><TextField label="Gym Name" defaultValue="IronZone Fitness" fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, md: 6 }}><TextField label="Owner Name" defaultValue="Rajan Sharma" fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, md: 6 }}><TextField label="Email" defaultValue="admin@ironzone.com" fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, md: 6 }}><TextField label="Phone" defaultValue="+91 98765 43210" fullWidth size="small" /></Grid>
-              <Grid size={12}><TextField label="Address" defaultValue="42, 5th Main, Koramangala, Bangalore - 560095" fullWidth size="small" multiline rows={2} /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="GSTIN" defaultValue="29AABCT1332L1ZH" fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, md: 6 }}><TextField label="Gym Name" fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, md: 6 }}><TextField label="Owner Name" fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, md: 6 }}><TextField label="Email" fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, md: 6 }}><TextField label="Phone" fullWidth size="small" /></Grid>
+              <Grid size={12}><TextField label="Address" fullWidth size="small" multiline rows={2} /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="GSTIN" fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Currency" select defaultValue="INR" fullWidth size="small">
                 <MenuItem value="INR">INR (₹)</MenuItem>
                 <MenuItem value="USD">USD ($)</MenuItem>
@@ -79,7 +79,7 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Branch Settings</Typography>
             <SettingRow label="Branch Name" desc="Display name for this branch">
-              <TextField size="small" defaultValue="Koramangala" sx={{ width: 200 }} />
+              <TextField size="small" sx={{ width: 200 }} />
             </SettingRow>
             <SettingRow label="Opening Time" desc="Gym opening time">
               <TextField size="small" type="time" defaultValue="06:00" InputLabelProps={{ shrink: true }} />

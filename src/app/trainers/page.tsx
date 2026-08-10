@@ -6,8 +6,13 @@ import {
   Divider, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { mockTrainers } from '@/lib/mockData';
 import { api } from '@/lib/api';
+
+type TrainerRow = {
+  id: string; name: string; phone: string; specialization: string; certifications: string[];
+  joiningDate: string; shift: string; status: string; membersAssigned: number; ptClients: number;
+  sessionsThisMonth: number; sessionsCompleted: number; sessionsCancelled: number;
+};
 
 const statusColor: Record<string, 'success' | 'warning' | 'error'> = {
   ACTIVE: 'success',
@@ -17,7 +22,7 @@ const statusColor: Record<string, 'success' | 'warning' | 'error'> = {
 
 export default function TrainersPage() {
   const [addOpen, setAddOpen] = useState(false);
-  const [apiTrainers, setApiTrainers] = useState<typeof mockTrainers | null>(null);
+  const [apiTrainers, setApiTrainers] = useState<TrainerRow[] | null>(null);
 
   useEffect(() => {
     api.get('/trainers')
@@ -38,14 +43,15 @@ export default function TrainersPage() {
           rating: Number(t.rating ?? 0),
           bio: String(t.bio ?? ''),
           certifications: Array.isArray(t.certifications) ? t.certifications.map(String) : [],
-          joinDate: String(t.joinDate ?? '').split('T')[0],
+          joiningDate: String(t.joiningDate ?? t.joinDate ?? '').split('T')[0],
+          shift: String(t.shift ?? ''),
           salary: Number(t.salary ?? 0),
         })));
       })
-      .catch(() => setApiTrainers(null));
+      .catch(() => setApiTrainers([]));
   }, []);
 
-  const trainers = apiTrainers ?? mockTrainers;
+  const trainers = apiTrainers ?? [];
 
   return (
     <AppLayout>
@@ -119,7 +125,7 @@ export default function TrainersPage() {
       </Grid>
 
       {/* Add Trainer Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: 'background.paper' } }}>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Add Trainer</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>

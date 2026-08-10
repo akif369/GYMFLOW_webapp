@@ -20,9 +20,17 @@ import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
-import { mockMembers } from '@/lib/mockData';
 import { api } from '@/lib/api';
 import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
+
+type MemberRow = {
+  id: string; memberId: string; firstName: string; lastName: string; email: string; phone: string;
+  photoUrl: unknown; joinDate: string; gender: string; dob: string; plan: string; startDate: string;
+  expiryDate: string; trainer: string | null; lastVisit: string; paymentStatus: string;
+  membershipStatus: string; goal: string; experience: string; branch: string; address: string;
+  emergency: { name: string; phone: string; relation: string }; medicalConditions: string;
+  allergies: string; injuries: string;
+};
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
@@ -59,7 +67,7 @@ function MembersPageContent() {
   const longPressTriggered = useRef(false);
 
   // ── API state ────────────────────────────────────────────────────────────────
-  const [apiMembers, setApiMembers] = useState<typeof mockMembers | null>(null);
+  const [apiMembers, setApiMembers] = useState<MemberRow[] | null>(null);
   const [apiTotal, setApiTotal] = useState(0);
   const [apiLoading, setApiLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
@@ -106,47 +114,82 @@ function MembersPageContent() {
       .then(res => {
         if (cancelled) return;
         const items = res.data?.items ?? [];
-        // Map API response to mock data shape for compatibility
-        setApiMembers(items.map((m: Record<string, unknown>) => ({
-          id: String(m.id),
-          memberId: String(m.memberNumber ?? m.memberId ?? ''),
-          firstName: String(m.firstName ?? ''),
-          lastName: String(m.lastName ?? ''),
-          email: String(m.email ?? ''),
-          phone: String(m.phone ?? ''),
-          photoUrl: m.photoUrl ?? null,
-          joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
-          gender: String(m.gender ?? ''),
-          dob: String(m.dob ?? ''),
-          plan: String(m.membershipPlan ?? m.plan ?? ''),
-          startDate: String(m.membershipStart ?? '').split('T')[0],
-          expiryDate: String(m.membershipExpiry ?? '').split('T')[0],
-          trainer: m.trainerName ? String(m.trainerName) : null,
-          lastVisit: String(m.lastVisit ?? '').split('T')[0],
-          paymentStatus: String(m.paymentStatus ?? 'PAID'),
-          membershipStatus: String(m.membershipStatus ?? m.status ?? 'ACTIVE'),
-          goal: String(m.goal ?? ''),
-          experience: String(m.experience ?? ''),
-          branch: String(m.branch ?? ''),
-          address: String(m.address ?? ''),
-          emergency: m.emergency as typeof mockMembers[0]['emergency'] ?? { name: '', phone: '', relation: '' },
-          medicalConditions: String(m.medicalConditions ?? 'None'),
-          allergies: String(m.allergies ?? 'None'),
-          injuries: String(m.injuries ?? 'None'),
-        })));
+        // Normalize the API response for the table row shape.
+        setApiMembers(items.map((m: Record<string, any>) => {
+          const latestMembership = (m.latestMembership ?? {}) as Record<string, any>;
+          const membershipPlan = m.membershipPlan ?? latestMembership.planName ?? m.plan;
+          const membershipStart = m.membershipStart ?? latestMembership.startDate;
+          const membershipExpiry = m.membershipExpiry ?? latestMembership.endDate;
+          const membershipStatus = m.membershipStatus ?? latestMembership.status ?? m.status;
+
+          const planName = membershipPlan ? String(membershipPlan) : '-';
+          const startDate = membershipStart ? String(membershipStart).split('T')[0] : '-';
+          const expiryDate = membershipExpiry ? String(membershipExpiry).split('T')[0] : '-';
+          const lastVisit = (m.lastVisit ?? m.lastCheckIn) ? String(m.lastVisit ?? m.lastCheckIn).split('T')[0] : '-';
+
+          let calculatedMembershipStatus = membershipStatus ? String(membershipStatus) : null;
+          let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;
+
+          if (!membershipPlan || planName === '-') {
+            if (!calculatedMembershipStatus) calculatedMembershipStatus = 'INACTIVE';
+            if (!calculatedPaymentStatus) calculatedPaymentStatus = '-';
+          } else {
+            if (!calculatedMembershipStatus && expiryDate !== '-') {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const exp = new Date(expiryDate);
+              if (exp < today) calculatedMembershipStatus = 'EXPIRED';
+              else {
+                const diffTime = exp.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                calculatedMembershipStatus = diffDays <= 7 ? 'EXPIRING' : 'ACTIVE';
+              }
+            } else if (!calculatedMembershipStatus) {
+              calculatedMembershipStatus = 'ACTIVE';
+            }
+            if (!calculatedPaymentStatus) calculatedPaymentStatus = 'PENDING';
+          }
+
+          return {
+            id: String(m.id),
+            memberId: String(m.memberNumber ?? m.memberId ?? ''),
+            firstName: String(m.firstName ?? ''),
+            lastName: String(m.lastName ?? ''),
+            email: String(m.email ?? ''),
+            phone: String(m.phone ?? ''),
+            photoUrl: m.photoUrl ?? null,
+            joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
+            gender: String(m.gender ?? ''),
+            dob: String(m.dob ?? ''),
+            plan: planName,
+            startDate,
+            expiryDate,
+            trainer: m.trainerName ? String(m.trainerName) : null,
+            lastVisit,
+            paymentStatus: calculatedPaymentStatus,
+            membershipStatus: calculatedMembershipStatus,
+            goal: String(m.goal ?? ''),
+            experience: String(m.experience ?? ''),
+            branch: String(m.branch ?? ''),
+            address: String(m.address ?? ''),
+            emergency: m.emergency ?? { name: '', phone: '', relation: '' },
+            medicalConditions: String(m.medicalConditions ?? 'None'),
+            allergies: String(m.allergies ?? 'None'),
+            injuries: String(m.injuries ?? 'None'),
+          };
+        }));
         setApiTotal(res.data?.total ?? items.length);
       })
       .catch(() => {
-        // Fall back to mock data
+        // Keep the directory empty when the API is unavailable.
         if (!cancelled) setApiMembers(null);
       })
       .finally(() => { if (!cancelled) setApiLoading(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger]);
-
-  const members = apiMembers ?? mockMembers;
-  const totalCount = apiMembers ? apiTotal : mockMembers.length;
+  const members = apiMembers ?? [];
+  const totalCount = apiMembers ? apiTotal : 0;
 
   const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
     event.stopPropagation();
@@ -367,7 +410,7 @@ function MembersPageContent() {
         <Box>
           <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>Members</Typography>
           <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
-            {mockMembers.length} total members across all branches
+            {totalCount} total members across all branches
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setAddOpen(true)}>

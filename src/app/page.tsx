@@ -28,7 +28,13 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
-import { mockDashboardStats, mockAttendanceLogs, mockPayments } from '@/lib/mockData';
+type DashboardStats = {
+  todaysCheckins: number; currentlyInside: number; todaysRevenue: number; monthRevenue: number;
+  pendingAmount: number; expiringIn7Days: number; expiredMemberships: number; newMembersMonth: number;
+  activeMembers: number; inactiveMembers: number; trainersWorking: number; todaysPtSessions: number;
+};
+type DashboardLog = { id: string; member: string; memberId: string; date: string; checkIn: string; checkOut: string | null; duration: string; method: string; branch: string };
+type DashboardPayment = { id: string; member: string; memberId: string; amount: number; method: string; status: string; date: string; refId: string; plan: string };
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 interface KpiCardProps {
@@ -305,16 +311,17 @@ const payStatusBg: Record<string, string> = {
 
 // ─── Dashboard Page ────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const firstName = user?.firstName ?? 'there';
 
   // ── API state ────────────────────────────────────────────────────────────────
-  const [stats, setStats] = useState<typeof mockDashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [revenueChart, setRevenueChart] = useState<{ month: string; revenue: number }[]>([]);
   const [attendanceChart, setAttendanceChart] = useState<{ day: string; count: number }[]>([]);
   const [peakHours, setPeakHours] = useState<{ hour: string; count: number }[]>([]);
-  const [recentLogs, setRecentLogs] = useState<typeof mockAttendanceLogs>([]);
-  const [recentPayments, setRecentPayments] = useState<typeof mockPayments>([]);
+  const [recentLogs, setRecentLogs] = useState<DashboardLog[]>([]);
+  const [recentPayments, setRecentPayments] = useState<DashboardPayment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -403,11 +410,10 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  // Fallback to mock data while loading or if API returns nothing
   const s = stats ?? { 
-    todaysCheckins: 0, todaysRevenue: 0, monthRevenue: 0, activeMembers: 0,
+    todaysCheckins: 0, currentlyInside: 0, todaysRevenue: 0, monthRevenue: 0, activeMembers: 0,
     pendingAmount: 0, expiringIn7Days: 0, inactiveMembers: 0, newMembersMonth: 0,
-    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0, newLeads: 0
+    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0
   };
   const revenueData = revenueChart.length ? revenueChart.map(r => r.revenue) : [0, 0, 0, 0, 0, 0, 0];
   const attendanceData = attendanceChart.length ? attendanceChart.map(a => a.count) : [0, 0, 0, 0, 0, 0, 0];
@@ -455,12 +461,12 @@ export default function Dashboard() {
       >
         <Box>
           <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '1.35rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-            Good morning, Sarah 👋
+            Good morning, {firstName}
           </Typography>
           <Typography sx={{ color: '#7d8590', fontSize: '0.75rem', mt: 0.3 }}>
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             <Box component="span" sx={{ mx: 0.75, color: 'rgba(255,255,255,0.15)' }}>·</Box>
-            IronZone Fitness
+            Gym dashboard
           </Typography>
         </Box>
 
@@ -514,11 +520,11 @@ export default function Dashboard() {
       <Box sx={{ mb: 3 }}>
       <Grid container spacing={2}>
         {[
-          { title: "Today's Check-ins", value: s.todaysCheckins, icon: AccessTimeRoundedIcon, color: '#10b981', trend: 12, sub: 'vs 42 yesterday', sparkData: [35,40,38,44,41,47] },
-          { title: "Today's Revenue", value: `₹${s.todaysRevenue.toLocaleString()}`, icon: AttachMoneyRoundedIcon, color: '#22c55e', trend: 8, sub: 'vs ₹7,300 avg', sparkData: [5200,6100,7300,6800,7100,8500] },
-          { title: 'Month Revenue', value: `₹${(s.monthRevenue/1000).toFixed(0)}K`, icon: TrendingUpRoundedIcon, color: '#8b5cf6', trend: 8, sub: 'vs ₹131K last month', sparkData: [98,112,125,118,132,138,142] },
+          { title: "Today's Check-ins", value: s.todaysCheckins, icon: AccessTimeRoundedIcon, color: '#10b981' },
+          { title: "Today's Revenue", value: `₹${s.todaysRevenue.toLocaleString()}`, icon: AttachMoneyRoundedIcon, color: '#22c55e' },
+          { title: 'Month Revenue', value: `₹${(s.monthRevenue/1000).toFixed(0)}K`, icon: TrendingUpRoundedIcon, color: '#8b5cf6' },
           { title: 'Active Members', value: s.activeMembers, icon: PeopleRoundedIcon, color: '#06b6d4', sub: 'Total enrolled' },
-          { title: 'Pending Amount', value: `₹${(s.pendingAmount/1000).toFixed(1)}K`, icon: WarningAmberRoundedIcon, color: '#f59e0b', trend: -3, sub: '14 members due' },
+          { title: 'Pending Amount', value: `₹${(s.pendingAmount/1000).toFixed(1)}K`, icon: WarningAmberRoundedIcon, color: '#f59e0b' },
           { title: 'Expiring in 7d', value: s.expiringIn7Days, icon: AutorenewRoundedIcon, color: '#f43f5e', sub: 'Need action' },
         ].map((card, i) => (
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
@@ -537,11 +543,11 @@ export default function Dashboard() {
       <Grid container spacing={2}>
         {[
           { title: 'Inactive', value: s.inactiveMembers, icon: PersonOffRoundedIcon, color: '#6b7280' },
-          { title: 'New This Month', value: s.newMembersMonth, icon: PersonAddRoundedIcon, color: '#22c55e', trend: 5 },
+          { title: 'New This Month', value: s.newMembersMonth, icon: PersonAddRoundedIcon, color: '#22c55e' },
           { title: 'Expired', value: s.expiredMemberships, icon: PersonOffRoundedIcon, color: '#f43f5e' },
           { title: 'Trainers Working', value: `${s.trainersWorking}/3`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
-          { title: 'New Leads', value: 5, icon: TrendingUpRoundedIcon, color: '#f59e0b', trend: 12 },
+          { title: 'New Leads', value: 0, icon: TrendingUpRoundedIcon, color: '#f59e0b' },
         ].map((stat, i) => (
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
             <MiniStat

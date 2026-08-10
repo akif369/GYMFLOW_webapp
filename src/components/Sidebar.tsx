@@ -20,6 +20,7 @@ import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface NavItem {
   name: string;
@@ -79,6 +80,9 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236 }: SidebarProps) {
+  const user = useAuthStore(state => state.user);
+  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Staff User';
+  const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : 'SU';
   const pathname = usePathname();
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
@@ -225,14 +229,14 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
               color: '#000', flexShrink: 0,
             }}
           >
-            SO
+            {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
-              Sarah Owner
+              {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.68rem' }}>
-              Super Admin
+              {user?.role ?? 'Staff'}
             </Typography>
           </Box>
           <LogoutRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />

@@ -57,6 +57,15 @@ const membershipEventColor: Record<string, ChipColor> = {
   EXTENDED: 'primary', CANCELLED: 'error', ACTIVATED: 'success',
 };
 
+function getDaysRemaining(endDate?: string) {
+  if (!endDate) return null;
+  const end = Date.parse(`${endDate.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(end)) return null;
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.ceil((end - todayStart) / (1000 * 60 * 60 * 24));
+}
+
 type MemberData = {
   id: string;
   memberNumber: string;
@@ -335,6 +344,21 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     : 'Unassigned';
 
   const membershipStatus = member?.latestMembership?.status ?? member?.status ?? 'ACTIVE';
+  const daysRemaining = getDaysRemaining(member?.latestMembership?.endDate);
+  const daysRemainingLabel = daysRemaining === null
+    ? 'No expiry date'
+    : daysRemaining > 0
+      ? `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} left`
+      : daysRemaining === 0
+        ? 'Expires today'
+        : `Expired ${Math.abs(daysRemaining)}d ago`;
+  const daysRemainingColor: ChipColor = daysRemaining === null
+    ? 'default'
+    : daysRemaining <= 0
+      ? 'error'
+      : daysRemaining <= 7
+        ? 'warning'
+        : 'success';
 
   const tabs = ['Overview', 'Membership', 'Attendance', 'Payments', 'Fitness', 'Measurements', 'PT Sessions', 'Activity'];
 
@@ -392,6 +416,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               <Typography variant="h5" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberNumber} size="small" variant="outlined" />
               <Chip label={membershipStatus} size="small" color={membershipStatusColor[membershipStatus] ?? 'default'} />
+              <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {member.email} · {member.phone}{member.gender ? ` · ${member.gender}` : ''}
