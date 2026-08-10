@@ -84,7 +84,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
   const drawerContent = (
     <>

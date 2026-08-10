@@ -28,6 +28,7 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
+import { mockDashboardStats, mockAttendanceLogs, mockPayments } from '@/lib/mockData';
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 interface KpiCardProps {
