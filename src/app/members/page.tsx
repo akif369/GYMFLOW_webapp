@@ -55,7 +55,7 @@ function MembersPageContent() {
   const [apiMembers, setApiMembers] = useState<typeof mockMembers | null>(null);
   const [apiTotal, setApiTotal] = useState(0);
   const [apiLoading, setApiLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
   // Add Member State
@@ -77,8 +77,8 @@ function MembersPageContent() {
     if (activeFilter !== 'ALL') {
       if (activeFilter === 'PAYMENT_PENDING') {
         params.paymentStatus = 'PENDING';
-      } else {
-        params.membershipStatus = activeFilter;
+      } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
+        params.status = activeFilter;
       }
     }
     api.get('/members', { params })
@@ -220,9 +220,8 @@ function MembersPageContent() {
     }
   };
 
-  // Client-side filtering when API data is already paginated/filtered server-side
-  // When using apiMembers, filtering is done by the API. When using mockMembers, filter locally.
-  const filtered = apiMembers ? members : members.filter(m => {
+  // Always apply local filter because the backend doesn't natively support all compound statuses yet (like EXPIRING)
+  const filtered = members.filter(m => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
     let matchFilter = true;
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
@@ -450,8 +449,8 @@ function MembersPageContent() {
             }
             router.push(`/members/${params.row.id}`);
           }}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          pageSizeOptions={[10, 25, 50, 100]}
+          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
           sx={{
             border: 0,
             '& .MuiDataGrid-columnHeaders': {

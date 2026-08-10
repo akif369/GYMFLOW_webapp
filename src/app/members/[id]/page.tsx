@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   Tabs, Tab, Divider, Table, TableBody, TableCell, TableHead, TableRow,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, CircularProgress, Alert
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -43,6 +44,20 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   const [apiPayments, setApiPayments] = useState<typeof mockPayments | null>(null);
   const [apiAttendance, setApiAttendance] = useState<typeof mockAttendanceLogs | null>(null);
   const [apiPtSessions, setApiPtSessions] = useState<typeof mockPtSessions | null>(null);
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  // Edit State
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '', email: '', gender: '', dob: '', address: '', goal: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Renew State
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [renewForm, setRenewForm] = useState({ planId: '', notes: '' });
+  const [renewLoading, setRenewLoading] = useState(false);
+  const [renewError, setRenewError] = useState('');
+  const [apiPlans, setApiPlans] = useState<{ id: string; name: string; price: string; durationDays: number }[]>([]);
 
   useEffect(() => {
     // Member details
@@ -115,7 +130,12 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         package: String(s.packageName ?? ''), sessionsRemaining: Number(s.sessionsRemaining ?? 0),
       })));
     }).catch(() => setApiPtSessions(null));
-  }, [id]);
+
+    // Membership Plans for Renew
+    api.get('/membership-plans', { params: { pageSize: '50' } })
+      .then(res => setApiPlans(res.data?.items ?? []))
+      .catch(() => setApiPlans([]));
+  }, [id, fetchTrigger]);
 
   const member = apiMember ?? mockMembers.find(m => m.id === id) ?? mockMembers[0];
   const memberPayments = apiPayments ?? mockPayments.filter(p => p.memberId === member.id);
@@ -130,8 +150,20 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
-        <Button startIcon={<AutorenewIcon />} variant="outlined" size="small">Renew</Button>
-        <Button startIcon={<EditIcon />} variant="contained" size="small">Edit</Button>
+        <Button startIcon={<AutorenewIcon />} variant="outlined" size="small" onClick={() => setRenewOpen(true)}>Renew</Button>
+        <Button startIcon={<EditIcon />} variant="contained" size="small" onClick={() => {
+          setEditForm({
+            firstName: member.firstName || '',
+            lastName: member.lastName || '',
+            phone: member.phone || '',
+            email: member.email || '',
+            gender: member.gender || '',
+            dob: member.dob || '',
+            address: member.address || '',
+            goal: member.goal || '',
+          });
+          setEditOpen(true);
+        }}>Edit</Button>
       </Box>
 
       {/* Profile Card */}
@@ -491,6 +523,104 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </CardContent>
         </Card>
       </TabPanel>
+      {/* Edit Profile Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+        <Box component="form" onSubmit={async (e) => {
+          e.preventDefault();
+          if (!editForm.firstName || !editForm.lastName || !editForm.phone) {
+            setEditError('First Name, Last Name, and Phone are required.');
+            return;
+          }
+          setEditLoading(true);
+          setEditError('');
+          try {
+            await api.patch(`/members/${id}`, editForm);
+            setEditOpen(false);
+            setFetchTrigger(t => t + 1);
+          } catch (err: any) {
+            setEditError(err.response?.data?.message || 'Failed to update member');
+          } finally {
+            setEditLoading(false);
+          }
+        }}>
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Edit Member Profile</Typography>
+          </DialogTitle>
+          <DialogContent>
+            {editError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{editError}</Alert>}
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Gender" select value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })} fullWidth size="small">
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {['MALE', 'FEMALE', 'OTHER'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Date of Birth" type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Fitness Goal" value={editForm.goal} onChange={e => setEditForm({ ...editForm, goal: e.target.value })} fullWidth size="small" />
+              </Grid>
+              <Grid size={12}><TextField label="Address" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} fullWidth size="small" multiline rows={2} /></Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={editLoading}>
+              {editLoading ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      {/* Renew Membership Dialog */}
+      <Dialog open={renewOpen} onClose={() => setRenewOpen(false)} maxWidth="sm" fullWidth>
+        <Box component="form" onSubmit={async (e) => {
+          e.preventDefault();
+          if (!renewForm.planId) {
+            setRenewError('Please select a membership plan.');
+            return;
+          }
+          setRenewLoading(true);
+          setRenewError('');
+          try {
+            await api.post(`/members/${id}/memberships/renew`, renewForm);
+            setRenewOpen(false);
+            setRenewForm({ planId: '', notes: '' });
+            setFetchTrigger(t => t + 1);
+          } catch (err: any) {
+            setRenewError(err.response?.data?.message || 'Failed to renew membership. Member might not have an active membership to renew. Use Create instead.');
+          } finally {
+            setRenewLoading(false);
+          }
+        }}>
+          <DialogTitle>Renew Membership</DialogTitle>
+          <DialogContent>
+            {renewError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{renewError}</Alert>}
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid size={12}>
+                <TextField label="Select Plan" select required value={renewForm.planId} onChange={e => setRenewForm({ ...renewForm, planId: e.target.value })} fullWidth size="small">
+                  <MenuItem value=""><em>Select a Plan</em></MenuItem>
+                  {apiPlans.map(p => <MenuItem key={p.id} value={p.id}>{p.name} — ₹{p.price} ({p.durationDays} days)</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid size={12}>
+                <TextField label="Notes (Optional)" value={renewForm.notes} onChange={e => setRenewForm({ ...renewForm, notes: e.target.value })} fullWidth size="small" multiline rows={2} />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setRenewOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={renewLoading}>
+              {renewLoading ? <CircularProgress size={24} /> : 'Renew Membership'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </AppLayout>
   );
 }

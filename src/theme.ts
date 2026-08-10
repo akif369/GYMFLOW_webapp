@@ -197,6 +197,20 @@ export const theme = createTheme({
         },
       },
     },
+    MuiInputBase: {
+      styleOverrides: {
+        input: {
+          '@media (max-width: 768px)': {
+            fontSize: '16px',
+          },
+        },
+        inputSizeSmall: {
+          '@media (max-width: 768px)': {
+            fontSize: '16px',
+          },
+        },
+      },
+    },
     MuiDialog: {
       styleOverrides: {
         paper: {
