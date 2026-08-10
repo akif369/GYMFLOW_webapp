@@ -34,6 +34,7 @@ type MemberRow = {
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
+  PAYMENT_PENDING: 'warning',
   PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning',
 };
 
@@ -69,6 +70,7 @@ function MembersPageContent() {
   // ── API state ────────────────────────────────────────────────────────────────
   const [apiMembers, setApiMembers] = useState<MemberRow[] | null>(null);
   const [apiTotal, setApiTotal] = useState(0);
+  const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
   const [fetchTrigger, setFetchTrigger] = useState(0);
@@ -114,6 +116,8 @@ function MembersPageContent() {
       .then(res => {
         if (cancelled) return;
         const items = res.data?.items ?? [];
+        const policyEnabled = res.data?.strictPaymentPolicy === true;
+        setStrictPaymentPolicy(policyEnabled);
         // Normalize the API response for the table row shape.
         setApiMembers(items.map((m: Record<string, any>) => {
           const latestMembership = (m.latestMembership ?? {}) as Record<string, any>;
@@ -147,6 +151,10 @@ function MembersPageContent() {
               calculatedMembershipStatus = 'ACTIVE';
             }
             calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
+          }
+
+          if (policyEnabled && calculatedMembershipStatus === 'ACTIVE' && calculatedPaymentStatus !== 'PAID') {
+            calculatedMembershipStatus = 'PAYMENT_PENDING';
           }
 
           return {
@@ -307,6 +315,13 @@ function MembersPageContent() {
     NO_TRAINER: members.filter(m => !m.trainer).length,
   };
 
+  const paymentColumn: GridColDef = {
+    field: 'paymentStatus',
+    headerName: 'Payment',
+    width: 120,
+    renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
+  };
+
   const columns: GridColDef[] = [
     {
       field: '__avatar',
@@ -368,12 +383,7 @@ function MembersPageContent() {
         : <Typography sx={{ fontSize: '0.75rem', color: '#7d8590', fontStyle: 'italic' }}>Unassigned</Typography>,
     },
     { field: 'lastVisit', headerName: 'Last Visit', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: '#7d8590' }}>{p.value}</Typography> },
-    {
-      field: 'paymentStatus',
-      headerName: 'Payment',
-      width: 120,
-      renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
-    },
+    ...(strictPaymentPolicy ? [paymentColumn] : []),
     {
       field: 'membershipStatus',
       headerName: 'Status',

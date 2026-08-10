@@ -10,6 +10,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SendIcon from '@mui/icons-material/Send';
 import { api } from '@/lib/api';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
@@ -29,6 +30,17 @@ type Payment = {
   date: string;
   refId: string;
   description: string;
+};
+
+type Invoice = {
+  id: string;
+  invoiceNumber: string;
+  memberId: string;
+  memberName: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+  dueDate: string;
 };
 
 function PaymentsPageContent() {
@@ -54,6 +66,12 @@ function PaymentsPageContent() {
   const [refundReason, setRefundReason] = useState('');
   const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [refundError, setRefundError] = useState('');
+
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
+  const [invoiceNotice, setInvoiceNotice] = useState('');
+  const [invoiceError, setInvoiceError] = useState('');
 
   // ── API payments ─────────────────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -100,9 +118,29 @@ function PaymentsPageContent() {
   }, [statusFilter, memberIdParam, dateFrom, dateTo, page]);
 
   useEffect(() => {
-    fetchPayments(true);
+    const timer = window.setTimeout(() => fetchPayments(true), 0);
+    return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, memberIdParam, dateFrom, dateTo]);
+
+  useEffect(() => {
+    api.get('/invoices', { params: { pageSize: '50', page: '1' } })
+      .then(res => {
+        const items = res.data?.items ?? [];
+        setInvoices(items.map((invoice: Record<string, unknown>) => ({
+          id: String(invoice.id),
+          invoiceNumber: String(invoice.invoiceNumber ?? ''),
+          memberId: String(invoice.memberId ?? ''),
+          memberName: String(invoice.memberName ?? ''),
+          totalAmount: Number(invoice.totalAmount ?? 0),
+          status: String(invoice.status ?? ''),
+          createdAt: String(invoice.createdAt ?? '').split('T')[0],
+          dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '',
+        })));
+      })
+      .catch(() => setInvoices([]))
+      .finally(() => setInvoiceLoading(false));
+  }, []);
 
   const filtered = payments.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
   const totalRevenue = filtered.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
@@ -110,12 +148,15 @@ function PaymentsPageContent() {
   const totalRefunded = filtered.filter(p => p.status === 'REFUNDED').reduce((sum, p) => sum + p.amount, 0);
 
   const memberName = payments.find(p => p.memberId === memberIdParam)?.member ?? '';
+  const visibleInvoices = memberIdParam
+    ? invoices.filter(invoice => invoice.memberId === memberIdParam)
+    : invoices;
 
   return (
     <AppLayout>
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Payments & Billing</Typography>
           {memberIdParam && memberName && (
             <Typography variant="body2" color="text.secondary">Showing payments for: <strong>{memberName}</strong></Typography>
           )}
@@ -142,8 +183,8 @@ function PaymentsPageContent() {
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>{s.label}</Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ mt: 0.5, color: s.color }}>{s.value}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 600 }}>{s.label}</Typography>
+                <Typography variant="h5" sx={{ mt: 0.5, color: s.color, fontWeight: 'bold' }}>{s.value}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -213,11 +254,11 @@ function PaymentsPageContent() {
               <TableRow key={p.id} sx={{ '&:hover': { bgcolor: 'rgba(16,185,129,0.04)' } }}>
                 <TableCell><Typography variant="caption">{p.date}</Typography></TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={600}>{p.member || '—'}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{p.member || '—'}</Typography>
                 </TableCell>
                 <TableCell><Typography variant="caption" color="text.secondary">{p.description || '—'}</Typography></TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight="bold">₹{p.amount.toLocaleString()}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>₹{p.amount.toLocaleString()}</Typography>
                 </TableCell>
                 <TableCell><Chip label={p.method || 'CASH'} size="small" variant="outlined" /></TableCell>
                 <TableCell><Typography variant="caption" color="text.secondary">{p.refId || '—'}</Typography></TableCell>
@@ -247,6 +288,70 @@ function PaymentsPageContent() {
             </Button>
           </Box>
         )}
+      </Card>
+
+      <Card elevation={0} sx={{ mt: 3 }}>
+        <CardContent sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <ReceiptIcon color="primary" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Invoices</Typography>
+          </Box>
+          {invoiceNotice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setInvoiceNotice('')}>{invoiceNotice}</Alert>}
+          {invoiceError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setInvoiceError('')}>{invoiceError}</Alert>}
+        </CardContent>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Invoice</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Member</TableCell>
+              <TableCell>Total</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {invoiceLoading ? (
+              <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={22} /></TableCell></TableRow>
+            ) : visibleInvoices.length === 0 ? (
+              <TableRow><TableCell colSpan={6} align="center"><Typography variant="caption" color="text.secondary">No invoices found</Typography></TableCell></TableRow>
+            ) : visibleInvoices.map(invoice => (
+              <TableRow key={invoice.id}>
+                <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{invoice.invoiceNumber}</Typography></TableCell>
+                <TableCell><Typography variant="caption">{invoice.createdAt || '—'}</Typography></TableCell>
+                <TableCell><Typography variant="body2">{invoice.memberName || '—'}</Typography></TableCell>
+                <TableCell><Typography variant="body2" sx={{ fontWeight: 700 }}>₹{invoice.totalAmount.toLocaleString()}</Typography></TableCell>
+                <TableCell><Chip label={invoice.status || 'DRAFT'} size="small" color={statusColor[invoice.status] || 'default'} /></TableCell>
+                <TableCell>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={invoiceSendingId === invoice.id ? <CircularProgress size={14} /> : <SendIcon />}
+                    disabled={invoiceSendingId !== null || !invoice.memberId}
+                    title={!invoice.memberId ? 'Link this invoice to a member first' : undefined}
+                    onClick={async () => {
+                      setInvoiceSendingId(invoice.id);
+                      setInvoiceNotice('');
+                      setInvoiceError('');
+                      try {
+                        const response = await api.post(`/invoices/${invoice.id}/whatsapp`);
+                        const delivery = response.data?.delivery;
+                        setInvoiceNotice(`Invoice ${delivery?.invoiceNumber ?? invoice.invoiceNumber} queued for WhatsApp${delivery?.provider === 'NOT_CONFIGURED' ? ' (provider integration pending)' : ''}.`);
+                      } catch (error: unknown) {
+                        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                        setInvoiceError(message ?? 'Could not queue the invoice message.');
+                      } finally {
+                        setInvoiceSendingId(null);
+                      }
+                    }}
+                  >
+                    Send WhatsApp
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
       {/* Record Payment Dialog */}
@@ -370,7 +475,7 @@ function PaymentsPageFallback() {
   return (
     <AppLayout>
       <Box sx={{ py: 3 }}>
-        <Typography variant="h5" fontWeight="bold">Payments & Billing</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Payments & Billing</Typography>
         <Typography variant="body2" color="text.secondary">Loading payments…</Typography>
       </Box>
     </AppLayout>
