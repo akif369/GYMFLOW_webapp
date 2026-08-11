@@ -77,6 +77,7 @@ function PaymentsPageContent() {
   const [generateInvoiceOpen, setGenerateInvoiceOpen] = useState(false);
   const [generateInvoiceSubmitting, setGenerateInvoiceSubmitting] = useState(false);
   const [generateInvoiceForm, setGenerateInvoiceForm] = useState({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
+  const [taxSettings, setTaxSettings] = useState({ taxRate: 18, taxIncluded: true });
 
   // ── API payments ─────────────────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -129,6 +130,18 @@ function PaymentsPageContent() {
   }, [statusFilter, memberIdParam, dateFrom, dateTo]);
 
   useEffect(() => {
+    api.get('/settings')
+      .then(res => {
+        const tax = res.data?.settings?.tax;
+        if (tax && typeof tax === 'object') {
+          const taxRate = Number((tax as Record<string, unknown>).taxRate);
+          const taxIncluded = (tax as Record<string, unknown>).taxIncluded !== false;
+          setTaxSettings({ taxRate: Number.isFinite(taxRate) ? taxRate : 18, taxIncluded });
+          setGenerateInvoiceForm(form => ({ ...form, gstPercent: String(Number.isFinite(taxRate) ? taxRate : 18) }));
+        }
+      })
+      .catch(() => undefined);
+
     api.get('/invoices', { params: { pageSize: '50', page: '1' } })
       .then(res => {
         const items = res.data?.items ?? [];
@@ -375,7 +388,8 @@ function PaymentsPageContent() {
             <Grid size={12}><TextField label="Member ID (UUID)" fullWidth size="small" value={generateInvoiceForm.memberId} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, memberId: e.target.value })} required /></Grid>
             <Grid size={12}><TextField label="Description" fullWidth size="small" value={generateInvoiceForm.description} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, description: e.target.value })} required /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="Amount (Rs.)" type="number" fullWidth size="small" value={generateInvoiceForm.amount} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, amount: e.target.value })} required /></Grid>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField label="GST (%)" type="number" fullWidth size="small" value={generateInvoiceForm.gstPercent} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, gstPercent: e.target.value })} inputProps={{ min: 0, max: 100 }} /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="GST (%)" type="number" fullWidth size="small" value={generateInvoiceForm.gstPercent} disabled helperText="Managed from Settings → Tax / GST" /></Grid>
+            <Grid size={12}><Alert severity="info">{taxSettings.taxIncluded ? 'Tax Included in Price is ON: the entered amount is the final amount; GST is shown as an included component.' : 'Tax Included in Price is OFF: GST is added to the entered amount.'}</Alert></Grid>
             <Grid size={12}><TextField label="Due Date (Optional)" type="date" fullWidth size="small" value={generateInvoiceForm.dueDate} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, dueDate: e.target.value })} slotProps={{ inputLabel: { shrink: true } }} /></Grid>
           </Grid>
         </DialogContent>
