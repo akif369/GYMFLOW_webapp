@@ -26,6 +26,7 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
+import AddMemberDialog from '@/components/AddMemberDialog';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 type DashboardStats = {
@@ -323,6 +324,7 @@ export default function Dashboard() {
   const [recentLogs, setRecentLogs] = useState<DashboardLog[]>([]);
   const [recentPayments, setRecentPayments] = useState<DashboardPayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -421,7 +423,7 @@ export default function Dashboard() {
           <Button size="small" variant="contained" color="primary"
             startIcon={<AddRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontWeight: 700, fontSize: '0.76rem', px: 1.5, py: 0.6 }}
-            onClick={() => router.push('/members')}
+            onClick={() => setAddOpen(true)}
           >Add Member</Button>
           <Button size="small" variant="outlined"
             startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 14 }} />}
@@ -780,6 +782,13 @@ export default function Dashboard() {
       </Card>
       </Box>
 
+      <AddMemberDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => {
+          router.push('/members');
+        }}
+      />
     </AppLayout>
   );
 }
