@@ -10,6 +10,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { api } from '@/lib/api';
+import MemberSearchField, { type MemberSearchResult } from '@/components/MemberSearchField';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -42,6 +43,7 @@ function AttendancePageContent() {
   const [tab, setTab] = useState(0);
   const [checkInOpen, setCheckInOpen] = useState(() => Boolean(memberParam));
   const [memberIdInput, setMemberIdInput] = useState('');
+  const [selectedCheckInMember, setSelectedCheckInMember] = useState<MemberSearchResult | null>(null);
   const [checkInSubmitting, setCheckInSubmitting] = useState(false);
   const [checkInError, setCheckInError] = useState('');
 
@@ -146,9 +148,10 @@ function AttendancePageContent() {
     setCheckInSubmitting(true);
     setCheckInError('');
     try {
-      await api.post('/attendance/check-in', { memberNumber: memberIdInput });
+      await api.post('/attendance/check-in', { memberId: memberIdInput });
       setCheckInOpen(false);
       setMemberIdInput('');
+      setSelectedCheckInMember(null);
       fetchInside();
       fetchHistory(true);
     } catch (err: unknown) {
@@ -361,25 +364,22 @@ function AttendancePageContent() {
             {checkInError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{checkInError}</Alert>}
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={12}>
-                <TextField
-                  label="Member Number"
-                  fullWidth
-                  size="small"
-                  placeholder="e.g. GYM0001"
-                  value={memberIdInput}
-                  onChange={e => setMemberIdInput(e.target.value)}
-                  helperText="Enter the member's ID number (e.g. GYM0001)"
+                <MemberSearchField
                   autoFocus
+                  label="Find member"
+                  helperText="Search by name or member number, then select the member"
+                  onSelect={member => { setSelectedCheckInMember(member); setMemberIdInput(member?.id ?? ''); setCheckInError(''); }}
                 />
+                {selectedCheckInMember?.status === 'EXPIRED' && <Alert severity="warning" sx={{ mt: 1 }}>This membership is expired and cannot be checked in.</Alert>}
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={() => { setCheckInOpen(false); setCheckInError(''); setMemberIdInput(''); }}>Cancel</Button>
+            <Button onClick={() => { setCheckInOpen(false); setCheckInError(''); setMemberIdInput(''); setSelectedCheckInMember(null); }}>Cancel</Button>
             <Button
               type="submit"
               variant="contained"
-              disabled={checkInSubmitting || !memberIdInput}
+              disabled={checkInSubmitting || !memberIdInput || selectedCheckInMember?.status === 'EXPIRED'}
               startIcon={checkInSubmitting ? <CircularProgress size={14} color="inherit" /> : undefined}
             >
               {checkInSubmitting ? 'Checking in…' : 'Check In'}

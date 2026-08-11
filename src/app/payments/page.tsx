@@ -13,6 +13,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '@/lib/api';
+import MemberSearchField from '@/components/MemberSearchField';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
@@ -402,7 +403,13 @@ function PaymentsPageContent() {
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>A secure backend view link is created for every invoice and can be sent to the member.</Typography>
           <Grid container spacing={2}>
-            <Grid size={12}><TextField label="Member ID (UUID)" fullWidth size="small" value={generateInvoiceForm.memberId} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, memberId: e.target.value })} required /></Grid>
+            <Grid size={12}>
+              <MemberSearchField
+                label="Find member"
+                helperText="Search by name or member number, then select the member"
+                onSelect={member => setGenerateInvoiceForm({ ...generateInvoiceForm, memberId: member?.id ?? '' })}
+              />
+            </Grid>
             <Grid size={12}><TextField label="Description" fullWidth size="small" value={generateInvoiceForm.description} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, description: e.target.value })} required /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="Amount (Rs.)" type="number" fullWidth size="small" value={generateInvoiceForm.amount} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, amount: e.target.value })} required /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}><TextField label="GST (%)" type="number" fullWidth size="small" value={generateInvoiceForm.gstPercent} disabled helperText="Managed from Settings → Tax / GST" /></Grid>
