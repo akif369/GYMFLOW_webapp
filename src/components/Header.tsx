@@ -47,6 +47,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [memberResults, setMemberResults] = useState<MemberResult[]>([]);
   const [paymentResults, setPaymentResults] = useState<PaymentResult[]>([]);
   const [activeResult, setActiveResult] = useState(-1);
+  const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const searchAnchorRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,8 +93,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         setActiveResult(-1);
       } catch (error: any) {
         if (error?.code !== 'ERR_CANCELED') {
-          setMemberResults([]);
-          setPaymentResults([]);
           setSearchError(true);
         }
       } finally {
@@ -105,7 +104,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [normalizedQuery]);
+  }, [normalizedQuery, searchRefreshKey]);
 
   const openSearchResult = (result: typeof results[number]) => {
     setSearchOpen(false);
@@ -197,7 +196,10 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             inputRef={searchInputRef}
             value={searchQuery}
             onChange={event => { setSearchQuery(event.target.value); setSearchOpen(true); }}
-            onFocus={() => setSearchOpen(true)}
+            onFocus={() => {
+              setSearchOpen(true);
+              if (normalizedQuery.length >= 2) setSearchRefreshKey(key => key + 1);
+            }}
             onKeyDown={handleSearchKeyDown}
             inputProps={{ 'aria-label': 'Search members and payments', autoComplete: 'off' }}
             sx={{ flex: 1, color: '#f0f6fc', fontSize: '0.82rem' }}
@@ -214,10 +216,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           sx={{ zIndex: theme => theme.zIndex.modal, width: searchAnchorRef.current?.offsetWidth }}
         >
           <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 2, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
-            {searchLoading && <Box sx={{ py: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={20} /></Box>}
-            {!searchLoading && searchError && <Typography variant="body2" sx={{ p: 2, color: '#f87171' }}>Search is temporarily unavailable.</Typography>}
+            {searchLoading && results.length === 0 && <Box sx={{ py: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={20} /></Box>}
+            {searchLoading && results.length > 0 && <Box sx={{ height: 2, bgcolor: 'rgba(16,185,129,0.2)', '&::after': { content: '""', display: 'block', height: '100%', width: '45%', bgcolor: '#10b981', animation: 'search-loading 0.9s ease-in-out infinite alternate' }, '@keyframes search-loading': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(220%)' } } }} />}
+            {!searchLoading && searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: '#f87171' }}>Search is temporarily unavailable.</Typography>}
             {!searchLoading && !searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: '#7d8590' }}>No members or payments found.</Typography>}
-            {!searchLoading && !searchError && results.length > 0 && (
+            {results.length > 0 && (
               <List disablePadding>
                 {memberResults.length > 0 && <Typography variant="caption" sx={{ display: 'block', px: 2, pt: 1.5, pb: 0.5, color: '#7d8590', fontWeight: 700 }}>MEMBERS</Typography>}
                 {memberResults.map(member => {

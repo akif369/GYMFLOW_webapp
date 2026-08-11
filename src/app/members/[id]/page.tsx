@@ -436,8 +436,17 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     setAttendanceLoading(true);
     setActionError('');
     try {
-      await api.post('/attendance/check-in', { memberId: id, method: 'MANUAL' });
-      refresh();
+      const response = await api.post('/attendance/check-in', { memberId: id, method: 'MANUAL' });
+      const log = response.data?.log;
+      const checkInAt = String(log?.checkInAt ?? new Date().toISOString());
+      setAttendance(current => [{
+        id: String(log?.id ?? `local-${Date.now()}`),
+        date: checkInAt.split('T')[0] ?? '',
+        checkIn: checkInAt.substring(11, 16),
+        checkOut: null,
+        duration: 'Just now',
+        method: String(log?.checkInMethod ?? 'MANUAL'),
+      }, ...current]);
     } catch (err: any) {
       setActionError(err.response?.data?.message || 'Could not check in member.');
     } finally {
