@@ -65,12 +65,13 @@ export default function AddMemberDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      fullScreen={isMobile}
       slotProps={{
         paper: {
           sx: {
             backgroundImage: 'none',
-            maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
+            m: { xs: 2, sm: 3 },
+            width: { xs: 'calc(100% - 32px)', sm: '100%' },
+            borderRadius: { xs: 3, sm: 2 },
           },
         },
       }}
@@ -170,9 +171,9 @@ export default function AddMemberDialog({
             <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} sx={{ mt: 1.25 }} />
           </Collapse>
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 2.5 }, gap: 1, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>
-          <Button onClick={onClose} variant="outlined" disabled={addLoading}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={addLoading}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.5, sm: 2.5 }, gap: 1.5, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { mx: '0 !important', width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>
+          <Button onClick={onClose} variant="outlined" disabled={addLoading} sx={{ borderRadius: 2 }}>Cancel</Button>
+          <Button type="submit" variant="contained" disabled={addLoading} sx={{ borderRadius: 2 }}>
             {addLoading ? <CircularProgress size={24} /> : 'Create Member'}
           </Button>
         </DialogActions>
