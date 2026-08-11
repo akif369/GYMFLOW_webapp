@@ -67,6 +67,10 @@ type InvoiceForm = {
   autoSendOnRenewal: boolean;
 };
 
+type NotificationsForm = {
+  attachInvoicePdf: boolean;
+};
+
 const emptyOrg: OrgForm = {
   name: '', email: '', phone: '', address: '', city: '', state: '', gstNumber: '', currency: 'INR', timezone: 'Asia/Kolkata',
 };
@@ -98,6 +102,7 @@ export default function SettingsPage() {
   const [attendanceForm, setAttendanceForm] = useState<AttendanceForm>({ autoCheckoutHours: '3', qrCheckIn: true, lateCheckoutAlert: true });
   const [taxForm, setTaxForm] = useState<TaxForm>({ taxRate: '18', taxIncluded: true });
   const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
+  const [notificationsForm, setNotificationsForm] = useState<NotificationsForm>({ attachInvoicePdf: false });
 
   useEffect(() => {
     Promise.all([api.get('/org'), api.get('/branches'), api.get('/settings')])
@@ -135,6 +140,9 @@ export default function SettingsPage() {
           footer: String(invoiceSetting.footer ?? ''),
           dueDays: String(invoiceSetting.dueDays ?? 0),
           autoSendOnRenewal: invoiceSetting.autoSendOnRenewal !== false,
+        });
+        setNotificationsForm({
+          attachInvoicePdf: invoiceSetting.attachInvoicePdf === true,
         });
         const policy = settingMap['payment-policy'];
         setStrictPaymentPolicy(typeof policy === 'object' && policy !== null && 'strictPaymentPolicy' in policy && policy.strictPaymentPolicy === true);
@@ -176,6 +184,7 @@ export default function SettingsPage() {
           <Tab label="Invoice" />
           <Tab label="Hardware" />
           <Tab label="Payments" />
+          <Tab label="Notifications" />
         </Tabs>
       </Box>
 
@@ -371,6 +380,45 @@ export default function SettingsPage() {
                 }}
               >
                 {policySaving ? 'Saving...' : 'Save Payment Policy'}
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      {/* Notifications */}
+      <TabPanel value={tab} index={7}>
+        <Card elevation={0}>
+          <CardContent>
+            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Notification Settings</Typography>
+            {settingsError && <Alert severity="error" sx={{ mb: 2 }}>{settingsError}</Alert>}
+            <SettingRow
+              label="Attach invoice document"
+              desc="When enabled, WhatsApp invoice deliveries send the invoice as a real PDF attachment instead of a link."
+            >
+              <Switch
+                checked={notificationsForm.attachInvoicePdf}
+                disabled={loading || savingSection !== null}
+                onChange={e => setNotificationsForm({ ...notificationsForm, attachInvoicePdf: e.target.checked })}
+                color="success"
+              />
+            </SettingRow>
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<SaveIcon />}
+                disabled={loading || savingSection !== null}
+                onClick={() => save(
+                  'notifications',
+                  api.patch('/settings/invoice', {
+                    ...invoiceForm,
+                    dueDays: Number(invoiceForm.dueDays),
+                    attachInvoicePdf: notificationsForm.attachInvoicePdf,
+                  }),
+                  'Could not save notification settings.'
+                )}
+              >
+                Save Notification Settings
               </Button>
             </Box>
           </CardContent>
