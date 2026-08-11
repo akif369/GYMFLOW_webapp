@@ -120,6 +120,9 @@ export default function RenewMembershipDialog({
         await api.post(`/members/${memberId}/memberships/renew`, {
           planId: form.planId,
           notes: form.notes || undefined,
+          // The same final amount is used for the invoice and payment, so a
+          // discount or additional charge is reflected on the invoice.
+          invoiceAmount: Number(form.paymentAmount),
         }, { headers: { 'Idempotency-Key': requestKey } });
         renewalWasCompleted = true;
         setRenewalCompleted(true);

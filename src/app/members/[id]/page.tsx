@@ -6,7 +6,7 @@ import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   Tabs, Tab, Divider, Table, TableBody, TableCell, TableHead, TableRow,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  CircularProgress, Alert, Skeleton,
+  CircularProgress, Alert, Skeleton, InputAdornment,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -32,6 +32,11 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 }
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+function localIndianMobile(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+}
 
 const membershipStatusColor: Record<string, ChipColor> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error', FROZEN: 'info', PENDING: 'default', CANCELLED: 'error',
@@ -547,7 +552,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           setEditForm({
             firstName: member.firstName,
             lastName: member.lastName,
-            phone: member.phone,
+            phone: localIndianMobile(member.phone),
             email: member.email,
             gender: member.gender,
             dob: member.dob,
@@ -1097,10 +1102,14 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             setEditError('First Name, Last Name, and Phone are required.');
             return;
           }
+          if (!/^[6-9]\d{9}$/.test(editForm.phone)) {
+            setEditError('Enter a valid 10-digit Indian mobile number.');
+            return;
+          }
           setEditLoading(true);
           setEditError('');
           try {
-            await api.patch(`/members/${id}`, editForm);
+            await api.patch(`/members/${id}`, { ...editForm, phone: `+91${editForm.phone}` });
             setEditOpen(false);
             refresh();
           } catch (err: any) {
@@ -1117,7 +1126,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Mobile number" required value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} fullWidth size="small" helperText="Enter the 10-digit mobile number" slotProps={{ htmlInput: { inputMode: 'numeric', pattern: '[6-9][0-9]{9}', maxLength: 10 }, input: { startAdornment: <InputAdornment position="start">+91 (IN)</InputAdornment> } }} /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField label="Gender" select value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })} fullWidth size="small">
