@@ -213,9 +213,13 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           anchorEl={searchAnchorRef.current}
           placement="bottom-start"
           disablePortal
-          sx={{ zIndex: theme => theme.zIndex.modal, width: searchAnchorRef.current?.offsetWidth }}
+          modifiers={[{ name: 'preventOverflow', options: { padding: 12 } }]}
+          sx={{
+            zIndex: theme => theme.zIndex.modal,
+            width: { xs: 'calc(100vw - 24px)', sm: searchAnchorRef.current?.offsetWidth ?? 320 },
+          }}
         >
-          <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 2, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
+          <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.09)', borderRadius: { xs: 3, sm: 2 }, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
             {searchLoading && results.length === 0 && <Box sx={{ py: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={20} /></Box>}
             {searchLoading && results.length > 0 && <Box sx={{ height: 2, bgcolor: 'rgba(16,185,129,0.2)', '&::after': { content: '""', display: 'block', height: '100%', width: '45%', bgcolor: '#10b981', animation: 'search-loading 0.9s ease-in-out infinite alternate' }, '@keyframes search-loading': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(220%)' } } }} />}
             {!searchLoading && searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: '#f87171' }}>Search is temporarily unavailable.</Typography>}
