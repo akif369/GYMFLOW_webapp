@@ -31,7 +31,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 type DashboardStats = {
   todaysCheckins: number; currentlyInside: number; todaysRevenue: number; monthRevenue: number;
   pendingAmount: number; expiringIn7Days: number; expiredMemberships: number; newMembersMonth: number;
-  activeMembers: number; inactiveMembers: number; trainersWorking: number; todaysPtSessions: number; newLeads: number;
+  activeMembers: number; inactiveMembers: number; trainersWorking: number; totalTrainers: number; todaysPtSessions: number; newLeads: number;
 };
 type DashboardLog = { id: string; member: string; memberId: string; date: string; checkIn: string; checkOut: string | null; duration: string; method: string; branch: string };
 type DashboardPayment = { id: string; member: string; memberId: string; amount: number; method: string; status: string; date: string; refId: string; plan: string };
@@ -355,7 +355,7 @@ export default function Dashboard() {
   const s = stats ?? { 
     todaysCheckins: 0, currentlyInside: 0, todaysRevenue: 0, monthRevenue: 0, activeMembers: 0,
     pendingAmount: 0, expiringIn7Days: 0, inactiveMembers: 0, newMembersMonth: 0,
-    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0, newLeads: 0
+    expiredMemberships: 0, trainersWorking: 0, totalTrainers: 0, todaysPtSessions: 0, newLeads: 0
   };
   const revenueData = revenueChart.length ? revenueChart.map(r => r.revenue) : [0, 0, 0, 0, 0, 0, 0];
   const attendanceData = attendanceChart.length ? attendanceChart.map(a => a.count) : [0, 0, 0, 0, 0, 0, 0];
@@ -364,6 +364,11 @@ export default function Dashboard() {
   const paymentsData = recentPayments.length ? recentPayments : [];
   const revChartLabels = revenueChart.length ? revenueChart.map(r => r.month) : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
   const attChartLabels = attendanceChart.length ? attendanceChart.map(a => a.day) : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const previousMonthRevenue = revenueData.at(-2) ?? 0;
+  const currentMonthRevenue = revenueData.at(-1) ?? 0;
+  const revenueGrowthLabel = previousMonthRevenue > 0
+    ? `${Math.round(((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100)}% vs last month`
+    : currentMonthRevenue > 0 ? 'New revenue this month' : 'No revenue yet';
 
   const cardLinks: Record<string, string> = {
     "Today's Check-ins": '/attendance',
@@ -491,7 +496,7 @@ export default function Dashboard() {
           { title: 'Inactive', value: s.inactiveMembers, icon: PersonOffRoundedIcon, color: '#6b7280' },
           { title: 'New This Month', value: s.newMembersMonth, icon: PersonAddRoundedIcon, color: '#22c55e' },
           { title: 'Expired', value: s.expiredMemberships, icon: PersonOffRoundedIcon, color: '#f43f5e' },
-          { title: 'Trainers Working', value: `${s.trainersWorking}/3`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
+          { title: 'Trainers Working', value: `${s.trainersWorking}/${s.totalTrainers}`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
           { title: 'New Leads', value: s.newLeads, icon: TrendingUpRoundedIcon, color: '#f59e0b' },
         ].map((stat, i) => (
@@ -556,7 +561,7 @@ export default function Dashboard() {
             <CardContent>
               <CardHeader
                 title="Revenue Overview"
-                sub="Monthly revenue for 2026"
+                sub="Monthly revenue for the last 6 months"
                 collapsible
                 collapsed={isCollapsed('revenue')}
                 onToggle={() => toggleCard('revenue')}
@@ -565,7 +570,7 @@ export default function Dashboard() {
                     <Stack direction="row" sx={{ gap: 2 }}>
                       {[
                         { label: 'This Month', value: `₹${(s.monthRevenue/1000).toFixed(0)}K`, color: '#10b981' },
-                      { label: 'Growth', value: 'Live data', color: '#4ade80' },
+                      { label: 'Growth', value: revenueGrowthLabel, color: '#4ade80' },
                       ].map(m => (
                         <Box key={m.label} sx={{ display: { xs: 'none', sm: 'block' } }}>
                           <Typography sx={{ fontSize: '0.58rem', color: '#7d8590', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</Typography>
