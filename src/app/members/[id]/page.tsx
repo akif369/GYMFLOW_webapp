@@ -1470,7 +1470,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         disabled={attendanceLoading || isCurrentlyInside || member.status === 'ARCHIVED'}
         onClick={handleCheckIn}
       >
-        <PanToolIcon  />
+        <PanToolIcon sx={{mr:0.35}} />
       </Button>
 
       <Dialog open={statusConfirmOpen} onClose={() => !statusLoading && setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>

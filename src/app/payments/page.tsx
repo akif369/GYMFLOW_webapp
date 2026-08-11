@@ -48,6 +48,7 @@ type Invoice = {
 function PaymentsPageContent() {
   const searchParams = useSearchParams();
   const memberIdParam = searchParams.get('memberId') ?? '';
+  const searchParam = searchParams.get('search') ?? '';
   const [addOpen, setAddOpen] = useState(() => Boolean(memberIdParam));
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
@@ -91,6 +92,7 @@ function PaymentsPageContent() {
     const params: Record<string, string> = { pageSize: '50', page: String(reset ? 1 : page) };
     if (statusFilter !== 'ALL') params.status = statusFilter;
     if (memberIdParam) params.memberId = memberIdParam;
+    if (searchParam) params.search = searchParam;
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 
@@ -121,13 +123,13 @@ function PaymentsPageContent() {
       .catch(() => { if (reset) setPayments([]); })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, memberIdParam, dateFrom, dateTo, page]);
+  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => fetchPayments(true), 0);
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, memberIdParam, dateFrom, dateTo]);
+  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo]);
 
   useEffect(() => {
     api.get('/settings')
