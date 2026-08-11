@@ -23,6 +23,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import BlockIcon from '@mui/icons-material/Block';
+import PanToolIcon from '@mui/icons-material/PanTool';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 
@@ -430,6 +431,20 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     }
   };
 
+  const handleCheckIn = async () => {
+    if (!member || isCurrentlyInside || member.status === 'ARCHIVED') return;
+    setAttendanceLoading(true);
+    setActionError('');
+    try {
+      await api.post('/attendance/check-in', { memberId: id, method: 'MANUAL' });
+      refresh();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Could not check in member.');
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
   const handleRecordPayment = async (event: React.FormEvent) => {
     event.preventDefault();
     const amount = Number(paymentForm.amount);
@@ -553,6 +568,12 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 'auto' }}
           onClick={() => { setRenewOpen(true); setRenewError(''); }}>
           Renew
+        </Button>
+        <Button startIcon={<PanToolIcon />} variant="outlined" color="success" size="small"
+          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          disabled={attendanceLoading || isCurrentlyInside || member.status === 'ARCHIVED'}
+          onClick={handleCheckIn}>
+          Check in
         </Button>
   
         <Button startIcon={<EditIcon />} variant="contained" size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' } }} onClick={() => {
@@ -1426,6 +1447,30 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         }}
       >
         Edit
+      </Button>
+
+      <Button
+        variant="contained"
+        color="success"
+        aria-label="Check in member"
+        title={isCurrentlyInside ? 'Member is already checked in' : 'Check in member'}
+        sx={{
+          display: { xs: 'inline-flex', sm: 'none' },
+          position: 'fixed',
+          right: 17,
+          bottom: 75,
+          minWidth: 48,
+          width: 48,
+          height: 48,
+          p: 0,
+          zIndex: 1200,
+          borderRadius: '50%',
+          boxShadow: 4,
+        }}
+        disabled={attendanceLoading || isCurrentlyInside || member.status === 'ARCHIVED'}
+        onClick={handleCheckIn}
+      >
+        <PanToolIcon  />
       </Button>
 
       <Dialog open={statusConfirmOpen} onClose={() => !statusLoading && setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>
