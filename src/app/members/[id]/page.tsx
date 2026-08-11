@@ -539,15 +539,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
         <Button startIcon={<AutorenewIcon />} variant="outlined" size="small" onClick={() => { setRenewOpen(true); setRenewError(''); }}>Renew</Button>
-        <Button
-          startIcon={member.status === 'ARCHIVED' ? <PlayArrowIcon /> : <BlockIcon />}
-          variant="outlined"
-          color={member.status === 'ARCHIVED' ? 'success' : 'warning'}
-          size="small"
-          onClick={() => { setActionError(''); setStatusConfirmOpen(true); }}
-        >
-          {member.status === 'ARCHIVED' ? 'Activate member' : 'Deactivate member'}
-        </Button>
+  
         <Button startIcon={<EditIcon />} variant="contained" size="small" onClick={() => {
           setEditForm({
             firstName: member.firstName,
@@ -812,6 +804,16 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <Button variant="outlined" size="small" fullWidth color="error" startIcon={<CancelIcon />}
                     onClick={() => { setCancelOpen(true); setCancelError(''); setCancelReason(''); }}>
                     Cancel
+                  </Button>
+                   <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    color={member.status === 'ARCHIVED' ? 'success' : 'warning'}
+                    startIcon={member.status === 'ARCHIVED' ? <PlayArrowIcon /> : <BlockIcon />}
+                    onClick={() => { setActionError(''); setStatusConfirmOpen(true); }}
+                  >
+                    {member.status === 'ARCHIVED' ? 'Activate member' : 'Deactivate member'}
                   </Button>
                 </Box>
               </CardContent>
