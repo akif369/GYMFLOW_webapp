@@ -500,7 +500,7 @@ export default function Dashboard() {
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
           { title: 'New Leads', value: s.newLeads, icon: TrendingUpRoundedIcon, color: '#f59e0b' },
         ].map((stat, i) => (
-          <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
+          <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i} sx={{ display: ['Trainers Working', 'New Leads'].includes(stat.title) ? { xs: 'none', sm: 'block' } : 'block' }}>
             <MiniStat
               {...stat}
               onClick={() => router.push(cardLinks[stat.title])}
