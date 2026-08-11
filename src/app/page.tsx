@@ -31,7 +31,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 type DashboardStats = {
   todaysCheckins: number; currentlyInside: number; todaysRevenue: number; monthRevenue: number;
   pendingAmount: number; expiringIn7Days: number; expiredMemberships: number; newMembersMonth: number;
-  activeMembers: number; inactiveMembers: number; trainersWorking: number; todaysPtSessions: number;
+  activeMembers: number; inactiveMembers: number; trainersWorking: number; todaysPtSessions: number; newLeads: number;
 };
 type DashboardLog = { id: string; member: string; memberId: string; date: string; checkIn: string; checkOut: string | null; duration: string; method: string; branch: string };
 type DashboardPayment = { id: string; member: string; memberId: string; amount: number; method: string; status: string; date: string; refId: string; plan: string };
@@ -328,78 +328,20 @@ export default function Dashboard() {
     let cancelled = false;
     async function load() {
       try {
-        const [insideRes, revenueRes, attendanceRes, peakRes, logsRes, paymentsRes] = await Promise.allSettled([
-          api.get('/attendance/currently-inside'),
-          api.get('/reports/revenue?groupBy=month'),
-          api.get('/reports/attendance?groupBy=day'),
-          api.get('/attendance/analytics/peak-hours'),
-          api.get('/attendance?pageSize=6'),
-          api.get('/payments?pageSize=5'),
-        ]);
-
+        const response = await api.get('/dashboard');
         if (cancelled) return;
-
-        // Build stats from available data
-        const insideCount = insideRes.status === 'fulfilled' ? (insideRes.value.data?.items?.length ?? 0) : 0;
-        setStats({
-          todaysCheckins: insideCount,
-          currentlyInside: insideCount,
-          todaysRevenue: 0,
-          monthRevenue: 0,
-          pendingAmount: 0,
-          expiringIn7Days: 0,
-          expiredMemberships: 0,
-          newMembersMonth: 0,
-          activeMembers: 0,
-          inactiveMembers: 0,
-          trainersWorking: 0,
-          todaysPtSessions: 0,
-        });
-
-        if (revenueRes.status === 'fulfilled') {
-          const rows = revenueRes.value.data?.rows ?? [];
-          setRevenueChart(rows.map((r: Record<string, unknown>) => ({ month: String(r.month ?? r.period ?? ''), revenue: Number(r.revenue ?? r.total ?? 0) })));
-        }
-
-        if (attendanceRes.status === 'fulfilled') {
-          const rows = attendanceRes.value.data?.rows ?? [];
-          setAttendanceChart(rows.map((r: Record<string, unknown>) => ({ day: String(r.day ?? r.date ?? ''), count: Number(r.count ?? 0) })));
-        }
-
-        if (peakRes.status === 'fulfilled') {
-          const rows = peakRes.value.data?.rows ?? peakRes.value.data?.items ?? [];
-          setPeakHours(rows.map((r: Record<string, unknown>) => ({ hour: String(r.hour ?? ''), count: Number(r.count ?? 0) })));
-        }
-
-        if (logsRes.status === 'fulfilled') {
-          const items = logsRes.value.data?.items ?? [];
-          setRecentLogs(items.map((l: Record<string, unknown>) => ({
-            id: String(l.id),
-            member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
-            memberId: String(l.memberId ?? ''),
-            date: String(l.date ?? '').split('T')[0],
-            checkIn: String(l.checkInTime ?? l.checkIn ?? '').substring(11, 16),
-            checkOut: l.checkOutTime ? String(l.checkOutTime).substring(11, 16) : null,
-            duration: l.durationMinutes ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m` : 'Inside',
-            method: String(l.method ?? 'MANUAL'),
-            branch: String(l.branch ?? ''),
-          })));
-        }
-
-        if (paymentsRes.status === 'fulfilled') {
-          const items = paymentsRes.value.data?.items ?? [];
-          setRecentPayments(items.map((p: Record<string, unknown>) => ({
-            id: String(p.id),
-            member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
-            memberId: String(p.memberId ?? ''),
-            amount: Number(p.amount ?? 0),
-            method: String(p.method ?? p.paymentMethod ?? ''),
-            status: String(p.status ?? ''),
-            date: String(p.date ?? p.createdAt ?? '').split('T')[0],
-            refId: String(p.referenceId ?? p.refId ?? ''),
-            plan: String(p.plan ?? p.membershipPlan ?? ''),
-          })));
-        }
+        const data = response.data;
+        setStats(data.stats);
+        setRevenueChart(data.revenueChart ?? []);
+        setAttendanceChart(data.attendanceChart ?? []);
+        setPeakHours(data.peakHours ?? []);
+        setRecentLogs((data.recentLogs ?? []).map((log: Record<string, unknown>) => {
+          const checkInAt = String(log.checkInAt ?? '');
+          const checkOutAt = log.checkOutAt ? String(log.checkOutAt) : null;
+          const minutes = checkOutAt ? Math.max(0, Math.round((new Date(checkOutAt).getTime() - new Date(checkInAt).getTime()) / 60000)) : 0;
+          return { id: String(log.id), member: String(log.memberName ?? ''), memberId: String(log.memberId ?? ''), date: String(log.date ?? ''), checkIn: String(log.checkIn ?? ''), checkOut: log.checkOut ? String(log.checkOut) : null, duration: checkOutAt ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : 'Inside', method: String(log.method ?? 'MANUAL'), branch: '' };
+        }));
+        setRecentPayments((data.recentPayments ?? []).map((payment: Record<string, unknown>) => ({ id: String(payment.id), member: String(payment.memberName ?? ''), memberId: String(payment.memberId ?? ''), amount: Number(payment.amount ?? 0), method: String(payment.method ?? ''), status: String(payment.status ?? ''), date: String(payment.date ?? ''), refId: String(payment.refId ?? ''), plan: String(payment.plan ?? '') })));
       } catch {
         // Fallback gracefully — leave state as null/empty arrays
       } finally {
@@ -413,7 +355,7 @@ export default function Dashboard() {
   const s = stats ?? { 
     todaysCheckins: 0, currentlyInside: 0, todaysRevenue: 0, monthRevenue: 0, activeMembers: 0,
     pendingAmount: 0, expiringIn7Days: 0, inactiveMembers: 0, newMembersMonth: 0,
-    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0
+    expiredMemberships: 0, trainersWorking: 0, todaysPtSessions: 0, newLeads: 0
   };
   const revenueData = revenueChart.length ? revenueChart.map(r => r.revenue) : [0, 0, 0, 0, 0, 0, 0];
   const attendanceData = attendanceChart.length ? attendanceChart.map(a => a.count) : [0, 0, 0, 0, 0, 0, 0];
@@ -474,18 +416,22 @@ export default function Dashboard() {
           <Button size="small" variant="contained" color="primary"
             startIcon={<AddRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontWeight: 700, fontSize: '0.76rem', px: 1.5, py: 0.6 }}
+            onClick={() => router.push('/members')}
           >Add Member</Button>
           <Button size="small" variant="outlined"
             startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontSize: '0.76rem', px: 1.25 }}
+            onClick={() => router.push('/attendance')}
           >Check In</Button>
           <Button size="small" variant="outlined"
             startIcon={<ReceiptRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontSize: '0.76rem', px: 1.25, display: { xs: 'none', md: 'inline-flex' } }}
+            onClick={() => router.push('/payments')}
           >Payment</Button>
           <Button size="small" variant="outlined"
             startIcon={<EventAvailableRoundedIcon sx={{ fontSize: 14 }} />}
             sx={{ borderRadius: 1.5, fontSize: '0.76rem', px: 1.25, display: { xs: 'none', lg: 'inline-flex' } }}
+            onClick={() => router.push('/pt-sessions')}
           >Book PT</Button>
         </Stack>
       </Stack>
@@ -547,7 +493,7 @@ export default function Dashboard() {
           { title: 'Expired', value: s.expiredMemberships, icon: PersonOffRoundedIcon, color: '#f43f5e' },
           { title: 'Trainers Working', value: `${s.trainersWorking}/3`, icon: FitnessCenterRoundedIcon, color: '#06b6d4' },
           { title: "Today's PT", value: s.todaysPtSessions, icon: SportsMartialArtsRoundedIcon, color: '#8b5cf6' },
-          { title: 'New Leads', value: 0, icon: TrendingUpRoundedIcon, color: '#f59e0b' },
+          { title: 'New Leads', value: s.newLeads, icon: TrendingUpRoundedIcon, color: '#f59e0b' },
         ].map((stat, i) => (
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
             <MiniStat
@@ -578,7 +524,7 @@ export default function Dashboard() {
                     <Stack direction="row" sx={{ gap: 2 }}>
                       {[
                         { label: 'This Month', value: `₹${(s.monthRevenue/1000).toFixed(0)}K`, color: '#10b981' },
-                        { label: 'Growth', value: '+8%', color: '#4ade80' },
+                      { label: 'Growth', value: 'Live data', color: '#4ade80' },
                       ].map(m => (
                         <Box key={m.label} sx={{ display: { xs: 'none', sm: 'block' } }}>
                           <Typography sx={{ fontSize: '0.58rem', color: '#7d8590', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</Typography>
@@ -586,7 +532,7 @@ export default function Dashboard() {
                         </Box>
                       ))}
                     </Stack>
-                    <Chip label="2026" size="small" color="primary" sx={{ ml: 0.5 }} />
+                    <Chip label="Last 6 months" size="small" color="primary" sx={{ ml: 0.5 }} />
                   </Stack>
                 }
               />

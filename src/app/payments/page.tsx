@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip,
   Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, Grid, CircularProgress, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions, Grid, CircularProgress, Alert, TablePagination,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ReceiptIcon from '@mui/icons-material/Receipt';
@@ -72,6 +72,9 @@ function PaymentsPageContent() {
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceTotal, setInvoiceTotal] = useState(0);
+  const [invoicePage, setInvoicePage] = useState(0);
+  const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(10);
   const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
   const [invoiceNotice, setInvoiceNotice] = useState('');
   const [invoiceError, setInvoiceError] = useState('');
@@ -84,12 +87,12 @@ function PaymentsPageContent() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const fetchPayments = useCallback((reset = true) => {
+  const fetchPayments = useCallback(() => {
     setLoading(true);
-    const params: Record<string, string> = { pageSize: '50', page: String(reset ? 1 : page) };
+    const params: Record<string, string> = { pageSize: String(rowsPerPage), page: String(page + 1) };
     if (statusFilter !== 'ALL') params.status = statusFilter;
     if (memberIdParam) params.memberId = memberIdParam;
     if (searchParam) params.search = searchParam;
@@ -110,26 +113,17 @@ function PaymentsPageContent() {
           refId: String(p.referenceId ?? p.refId ?? ''),
           description: String(p.description ?? ''),
         }));
-        if (reset) {
-          setPayments(mapped);
-          setPage(2);
-        } else {
-          setPayments(prev => [...prev, ...mapped]);
-          setPage(p => p + 1);
-        }
-        setTotal(res.data?.total ?? (reset ? mapped.length : total + mapped.length));
-        setHasMore(items.length === 50);
+        setPayments(mapped);
+        setTotal(Number(res.data?.total ?? mapped.length));
       })
-      .catch(() => { if (reset) setPayments([]); })
+      .catch(() => setPayments([]))
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page]);
+  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page, rowsPerPage]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => fetchPayments(true), 0);
+    const timer = window.setTimeout(fetchPayments, 0);
     return () => window.clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo]);
+  }, [fetchPayments]);
 
   useEffect(() => {
     api.get('/settings')
@@ -144,9 +138,11 @@ function PaymentsPageContent() {
       })
       .catch(() => undefined);
 
-    api.get('/invoices', { params: { pageSize: '50', page: '1' } })
+    setInvoiceLoading(true);
+    api.get('/invoices', { params: { pageSize: String(invoiceRowsPerPage), page: String(invoicePage + 1) } })
       .then(res => {
         const items = res.data?.items ?? [];
+        setInvoiceTotal(Number(res.data?.total ?? items.length));
         setInvoices(items.map((invoice: Record<string, unknown>) => ({
           id: String(invoice.id),
           invoiceNumber: String(invoice.invoiceNumber ?? ''),
@@ -161,7 +157,7 @@ function PaymentsPageContent() {
       })
       .catch(() => setInvoices([]))
       .finally(() => setInvoiceLoading(false));
-  }, []);
+  }, [invoicePage, invoiceRowsPerPage]);
 
   const filtered = payments.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
   const totalRevenue = filtered.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
@@ -186,7 +182,7 @@ function PaymentsPageContent() {
           )}
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="outlined" startIcon={<RefreshIcon />} size="small" onClick={() => fetchPayments(true)}>Refresh</Button>
+          <Button variant="outlined" startIcon={<RefreshIcon />} size="small" onClick={fetchPayments}>Refresh</Button>
           <Button variant="outlined" startIcon={<ReceiptIcon />} onClick={() => { setGenerateInvoiceForm(form => ({ ...form, memberId: memberIdParam || form.memberId })); setGenerateInvoiceOpen(true); setInvoiceError(''); }}>
             Generate Invoice
           </Button>
@@ -225,30 +221,31 @@ function PaymentsPageContent() {
             size="small"
             color={statusFilter === f ? 'primary' : 'default'}
             variant={statusFilter === f ? 'filled' : 'outlined'}
-            onClick={() => setStatusFilter(f)}
+            onClick={() => { setStatusFilter(f); setPage(0); }}
           />
         ))}
         <Box sx={{ flex: 1 }} />
         <TextField
           size="small" label="From" type="date" value={dateFrom}
-          onChange={e => setDateFrom(e.target.value)}
+          onChange={e => { setDateFrom(e.target.value); setPage(0); }}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
         <TextField
           size="small" label="To" type="date" value={dateTo}
-          onChange={e => setDateTo(e.target.value)}
+          onChange={e => { setDateTo(e.target.value); setPage(0); }}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
         {(dateFrom || dateTo) && (
-          <Button size="small" variant="text" onClick={() => { setDateFrom(''); setDateTo(''); }}>Clear dates</Button>
+          <Button size="small" variant="text" onClick={() => { setDateFrom(''); setDateTo(''); setPage(0); }}>Clear dates</Button>
         )}
       </Box>
 
       {/* Payments Table */}
       <Card elevation={0}>
-        <Table size="small">
+        <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain' }}>
+        <Table size="small" sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
               <TableCell>Date</TableCell>
@@ -305,13 +302,18 @@ function PaymentsPageContent() {
             ))}
           </TableBody>
         </Table>
-        {hasMore && payments.length > 0 && (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Button size="small" onClick={() => fetchPayments(false)} disabled={loading}>
-              {loading ? <CircularProgress size={16} /> : 'Load more'}
-            </Button>
-          </Box>
-        )}
+        </Box>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          rowsPerPageOptions={[10, 25, 50]}
+          labelRowsPerPage="Rows per page:"
+          sx={{ borderTop: 1, borderColor: 'divider', '.MuiTablePagination-toolbar': { px: { xs: 1, sm: 2 } } }}
+        />
       </Card>
 
       <Card elevation={0} sx={{ mt: 3 }}>
@@ -323,7 +325,8 @@ function PaymentsPageContent() {
           {invoiceNotice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setInvoiceNotice('')}>{invoiceNotice}</Alert>}
           {invoiceError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setInvoiceError('')}>{invoiceError}</Alert>}
         </CardContent>
-        <Table size="small">
+        <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain' }}>
+        <Table size="small" sx={{ minWidth: 760 }}>
           <TableHead>
             <TableRow>
               <TableCell>Invoice</TableCell>
@@ -380,6 +383,18 @@ function PaymentsPageContent() {
             ))}
           </TableBody>
         </Table>
+        </Box>
+        <TablePagination
+          component="div"
+          count={invoiceTotal}
+          page={invoicePage}
+          onPageChange={(_, nextPage) => setInvoicePage(nextPage)}
+          rowsPerPage={invoiceRowsPerPage}
+          onRowsPerPageChange={event => { setInvoiceRowsPerPage(Number(event.target.value)); setInvoicePage(0); }}
+          rowsPerPageOptions={[10, 25, 50]}
+          labelRowsPerPage="Rows per page:"
+          sx={{ borderTop: 1, borderColor: 'divider', '.MuiTablePagination-toolbar': { px: { xs: 1, sm: 2 } } }}
+        />
       </Card>
 
       <Dialog open={generateInvoiceOpen} onClose={() => setGenerateInvoiceOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
@@ -475,7 +490,8 @@ function PaymentsPageContent() {
                 setAmountInput('');
                 setRefIdInput('');
                 setDescInput('');
-                fetchPayments(true);
+                setPage(0);
+                fetchPayments();
               } catch (err: unknown) {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
                 setAddError(msg ?? 'Failed to record payment.');
@@ -520,7 +536,7 @@ function PaymentsPageContent() {
               try {
                 await api.post(`/payments/${refundPayment.id}/refund`, { reason: refundReason });
                 setRefundOpen(false);
-                fetchPayments(true);
+                fetchPayments();
               } catch (err: unknown) {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
                 setRefundError(msg ?? 'Failed to process refund.');

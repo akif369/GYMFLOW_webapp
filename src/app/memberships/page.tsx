@@ -5,10 +5,11 @@ import AppLayout from '@/components/AppLayout';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Tabs, Tab, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  CircularProgress, Alert, Table, TableHead, TableRow, TableCell, TableBody,
+  CircularProgress, Alert, Table, TableHead, TableRow, TableCell, TableBody, FormControlLabel, Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { api } from '@/lib/api';
 
 interface TabPanelProps { children?: ReactNode; value: number; index: number; }
@@ -131,7 +132,7 @@ export default function MembershipsPage() {
   const [editPlanOpen, setEditPlanOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [editPlanForm, setEditPlanForm] = useState({
-    name: '', durationDays: 30, price: 0, gstPercent: 18, joiningFee: 0, ptSessionsIncluded: 0,
+    name: '', durationDays: 30, price: 0, gstPercent: 18, joiningFee: 0, ptSessionsIncluded: 0, status: 'ACTIVE',
   });
   const [editPlanLoading, setEditPlanLoading] = useState(false);
   const [editPlanError, setEditPlanError] = useState('');
@@ -145,6 +146,7 @@ export default function MembershipsPage() {
       gstPercent: plan.gstPercent,
       joiningFee: plan.joiningFee,
       ptSessionsIncluded: plan.ptSessionsIncluded,
+      status: plan.status,
     });
     setEditPlanError('');
     setEditPlanOpen(true);
@@ -165,13 +167,22 @@ export default function MembershipsPage() {
     }
   };
 
-  const handleTogglePlanStatus = async (plan: Plan) => {
-    const newStatus = plan.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
+  const [deletePlanLoading, setDeletePlanLoading] = useState(false);
+  const [deletePlanError, setDeletePlanError] = useState('');
+
+  const handleDeletePlan = async () => {
+    if (!planToDelete) return;
+    setDeletePlanLoading(true);
+    setDeletePlanError('');
     try {
-      await api.patch(`/membership-plans/${plan.id}/status`, { status: newStatus });
+      await api.delete(`/membership-plans/${planToDelete.id}`);
+      setPlanToDelete(null);
       refresh();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update plan status');
+      setDeletePlanError(err.response?.data?.message || 'Failed to delete plan');
+    } finally {
+      setDeletePlanLoading(false);
     }
   };
 
@@ -307,11 +318,8 @@ export default function MembershipsPage() {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                       <Button size="small" variant="outlined" fullWidth startIcon={<EditIcon />} onClick={() => openEditPlan(plan)}>Edit</Button>
-                      <Button
-                        size="small" variant="outlined" color={plan.status === 'ACTIVE' ? 'error' : 'success'}
-                        fullWidth onClick={() => handleTogglePlanStatus(plan)}
-                      >
-                        {plan.status === 'ACTIVE' ? 'Disable' : 'Enable'}
+                      <Button size="small" variant="outlined" color="error" fullWidth startIcon={<DeleteIcon />} onClick={() => { setPlanToDelete(plan); setDeletePlanError(''); }}>
+                        Delete
                       </Button>
                     </Box>
                   </CardContent>
@@ -441,6 +449,16 @@ export default function MembershipsPage() {
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="GST (%)" type="number" value={editPlanForm.gstPercent} onChange={e => setEditPlanForm({ ...editPlanForm, gstPercent: Number(e.target.value) })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Joining Fee (₹)" type="number" value={editPlanForm.joiningFee} onChange={e => setEditPlanForm({ ...editPlanForm, joiningFee: Number(e.target.value) })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="PT Sessions Included" type="number" value={editPlanForm.ptSessionsIncluded} onChange={e => setEditPlanForm({ ...editPlanForm, ptSessionsIncluded: Number(e.target.value) })} fullWidth size="small" /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box sx={{ height: '100%', minHeight: 40, px: 1.5, border: 1, borderColor: 'divider', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{editPlanForm.status === 'ACTIVE' ? 'Active' : 'Inactive'}</Typography>
+                  <FormControlLabel
+                    label=""
+                    control={<Switch checked={editPlanForm.status === 'ACTIVE'} onChange={(_, checked) => setEditPlanForm({ ...editPlanForm, status: checked ? 'ACTIVE' : 'INACTIVE' })} />}
+                    sx={{ m: 0 }}
+                  />
+                </Box>
+              </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: { xs: 2, sm: 2.5 }, gap: 1 }}>
@@ -453,6 +471,21 @@ export default function MembershipsPage() {
       </Dialog>
 
       {/* ── Operations Dialog ── */}
+      <Dialog open={Boolean(planToDelete)} onClose={() => !deletePlanLoading && setPlanToDelete(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete plan?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">Delete <strong>{planToDelete?.name}</strong>? This cannot be undone.</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>Plans with membership history cannot be deleted. Set those plans to inactive from Edit instead.</Typography>
+          {deletePlanError && <Alert severity="error" sx={{ mt: 2 }}>{deletePlanError}</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setPlanToDelete(null)} disabled={deletePlanLoading}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeletePlan} disabled={deletePlanLoading}>
+            {deletePlanLoading ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={Boolean(opDialog)} onClose={() => setOpDialog(null)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>{opDialog} Membership</DialogTitle>
         <DialogContent>
