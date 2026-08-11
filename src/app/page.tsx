@@ -454,7 +454,7 @@ export default function Dashboard() {
             { label: "Today's Check-ins", val: loading ? '...' : `${s.todaysCheckins} total` },
             { label: 'PT Sessions', val: loading ? '...' : `${s.todaysPtSessions} scheduled` },
           ].map(item => (
-            <Stack key={item.label} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+            <Stack key={item.label} direction="row" sx={{ alignItems: 'center', gap: 0.5, display: item.label === 'PT Sessions' ? { xs: 'none', sm: 'flex' } : 'flex' }}>
               <Typography sx={{ color: '#5d6470', fontSize: '0.68rem' }}>{item.label}:</Typography>
               <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.72rem' }}>{item.val}</Typography>
             </Stack>
@@ -504,6 +504,47 @@ export default function Dashboard() {
           </Grid>
         ))}
       </Grid>
+      </Box>
+
+      {/* Recent payments moves above revenue on mobile for faster daily review. */}
+      <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 3 }}>
+        <Card elevation={0}>
+          <CardContent>
+            <CardHeader
+              title="Recent Payments"
+              action={
+                <Button component={Link} href="/payments" size="small" variant="text" color="primary"
+                  endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 12 }} />}
+                  sx={{ fontSize: '0.68rem', px: 0.75, minHeight: 'auto', py: 0.25 }}
+                >View all</Button>
+              }
+            />
+            <Grid container spacing={1.5}>
+              {paymentsData.map(pay => (
+                <Grid size={12} key={pay.id}>
+                  <Box sx={{
+                    p: 1.5, borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)',
+                    bgcolor: 'rgba(255,255,255,0.02)',
+                  }}>
+                    <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
+                      <Avatar sx={{ width: 32, height: 32, flexShrink: 0, bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa', fontSize: '0.65rem', fontWeight: 800 }}>
+                        {(pay.member ?? '').split(' ').map((n: string) => n[0]).join('')}
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ color: '#f0f6fc', fontWeight: 600, fontSize: '0.79rem' }} noWrap>{pay.member}</Typography>
+                        <Typography sx={{ color: '#7d8590', fontSize: '0.65rem' }}>{pay.method} · {pay.date}</Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                        <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '0.85rem' }}>₹{pay.amount.toLocaleString()}</Typography>
+                        <Box sx={{ display: 'inline-block', px: 0.6, py: 0.1, borderRadius: 0.75, bgcolor: payStatusBg[pay.status] || 'rgba(255,255,255,0.05)', fontSize: '0.58rem', fontWeight: 800, color: payStatusColor[pay.status] || '#7d8590' }}>{pay.status}</Box>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
       </Box>
 
       {/* ─── Row 3: Revenue Chart + Peak Hours ───────────────────────────── */}
@@ -674,6 +715,7 @@ export default function Dashboard() {
       </Box>
 
       {/* ─── Row 5: Recent Payments ───────────────────────────────────────── */}
+      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
       <Card elevation={0}>
         <CardContent>
           <CardHeader
@@ -731,6 +773,7 @@ export default function Dashboard() {
           </Grid>
         </CardContent>
       </Card>
+      </Box>
 
     </AppLayout>
   );
