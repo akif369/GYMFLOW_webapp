@@ -372,8 +372,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     ? `${member.trainer.firstName} ${member.trainer.lastName}`
     : 'Unassigned';
 
-  const membershipStatus = member?.latestMembership?.status ?? member?.status ?? 'ACTIVE';
   const daysRemaining = getDaysRemaining(member?.latestMembership?.endDate);
+  const membershipStatus = member?.latestMembership?.status ?? 'INACTIVE';
   const daysRemainingLabel = daysRemaining === null
     ? 'No expiry date'
     : daysRemaining > 0
@@ -389,7 +389,13 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         ? 'warning'
         : 'success';
 
-  const memberStatusLabel = member?.status === 'ARCHIVED' ? 'INACTIVE' : member?.status ?? 'ACTIVE';
+  // Show one effective status instead of separate member and membership statuses.
+  // A past plan expiry takes precedence unless the member was manually archived.
+  const memberStatusLabel = member?.status === 'ARCHIVED'
+    ? 'INACTIVE'
+    : daysRemaining !== null && daysRemaining < 0 && membershipStatus === 'ACTIVE'
+      ? 'EXPIRED'
+      : membershipStatus;
   const isCurrentlyInside = attendance.some(a => !a.checkOut);
 
   const handleMemberStatus = async () => {
@@ -535,12 +541,21 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   return (
     <AppLayout>
       {/* Back + Header */}
-      <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+      <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, width: '100%', flexDirection: 'row' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box flex={1} />
-        <Button startIcon={<AutorenewIcon />} variant="outlined" size="small" onClick={() => { setRenewOpen(true); setRenewError(''); }}>Renew</Button>
+        <Button startIcon={<AutorenewIcon />} variant="contained" size="medium"
+          sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 'auto', minWidth: 145, fontWeight: 700 }}
+          onClick={() => { setRenewOpen(true); setRenewError(''); }}>
+          Renew
+        </Button>
+        <Button startIcon={<AutorenewIcon />} variant="outlined" size="small"
+          sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 'auto' }}
+          onClick={() => { setRenewOpen(true); setRenewError(''); }}>
+          Renew
+        </Button>
   
-        <Button startIcon={<EditIcon />} variant="contained" size="small" onClick={() => {
+        <Button startIcon={<EditIcon />} variant="contained" size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' } }} onClick={() => {
           setEditForm({
             firstName: member.firstName,
             lastName: member.lastName,
@@ -564,10 +579,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </Avatar>
           <Box flex={1}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography variant="h5" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
+              <Typography variant="h4" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberNumber} size="small" variant="outlined" />
-              <Chip label={`Member: ${memberStatusLabel}`} size="small" color={memberStatusLabel === 'ACTIVE' ? 'success' : 'default'} variant="outlined" />
-              <Chip label={membershipStatus} size="small" color={membershipStatusColor[membershipStatus] ?? 'default'} />
+              <Chip label={`${memberStatusLabel}`} size="medium" color={membershipStatusColor[memberStatusLabel] ?? 'default'} />
               <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -584,8 +598,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {actionError && <Alert severity="error" onClose={() => setActionError('')} sx={{ mb: 2 }}>{actionError}</Alert>}
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0, width: '100%', overflowX: 'auto' }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
+          sx={{ minWidth: 'max-content', '& .MuiTab-root': { flexShrink: 0 } }}>
           {tabs.map((t, i) => <Tab key={i} label={t} />)}
         </Tabs>
       </Box>
@@ -650,11 +665,11 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 {member.latestMembership ? (
                   <>
                     {[
-                      ['Plan', member.latestMembership.planName],
-                      ['Start', member.latestMembership.startDate],
-                      ['Expiry', member.latestMembership.endDate],
-                      ['Status', member.latestMembership.status],
-                      ['PT Sessions', `${member.latestMembership.ptSessionsTotal - member.latestMembership.ptSessionsUsed} remaining`],
+                      ['Plan: ', member.latestMembership.planName],
+                      ['Start: ', member.latestMembership.startDate],
+                      ['Expiry: ', member.latestMembership.endDate],
+                      ['Status: ', member.latestMembership.status],
+                      ['PT Sessions: ', `${member.latestMembership.ptSessionsTotal - member.latestMembership.ptSessionsUsed} remaining`],
                       ['Assigned Trainer', trainerName],
                     ].map(([k, v]) => (
                       <Box key={k} display="flex" py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
@@ -680,14 +695,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Tab 1: Membership */}
       <TabPanel value={tab} index={1}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 8 }} sx={{ order: { xs: 2, md: 1 }, minWidth: 0 }}>
             <Card elevation={0} sx={{ mb: 2 }}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership History</Typography>
                 {membershipHistory.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">No memberships found.</Typography>
                 ) : (
-                  <Table size="small">
+                  <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <Table size="small" sx={{ minWidth: 650 }}>
                     <TableHead>
                       <TableRow>
                         <TableCell>Plan</TableCell>
@@ -709,6 +725,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                       ))}
                     </TableBody>
                   </Table>
+                  </Box>
                 )}
               </CardContent>
             </Card>
@@ -748,15 +765,11 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 2 }, minWidth: 0 }}>
             <Card elevation={0}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership Actions</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Button variant="outlined" size="small" fullWidth startIcon={<AutorenewIcon />}
-                    onClick={() => { setRenewOpen(true); setRenewError(''); }}>
-                    Renew
-                  </Button>
                   <Button variant="outlined" size="small" fullWidth startIcon={<AddCircleIcon />}
                     onClick={() => { setCreateMemOpen(true); setCreateMemError(''); }}>
                     Create New
@@ -842,7 +855,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 {attendanceLoading ? 'Saving...' : isCurrentlyInside ? 'Check out' : 'Check in'}
               </Button>
             </Box>
-            <Table size="small">
+            <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Table size="small" sx={{ minWidth: 620 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -870,6 +884,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 )}
               </TableBody>
             </Table>
+            </Box>
           </CardContent>
         </Card>
       </TabPanel>
@@ -889,7 +904,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 </Button>
               </Box>
             </Box>
-            <Table size="small">
+            <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Table size="small" sx={{ minWidth: 850 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -931,6 +947,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 )}
               </TableBody>
             </Table>
+            </Box>
           </CardContent>
         </Card>
       </TabPanel>
@@ -1018,7 +1035,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Card elevation={0}>
           <CardContent>
             <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>PT Sessions</Typography>
-            <Table size="small">
+            <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Table size="small" sx={{ minWidth: 900 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -1061,6 +1079,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                 )}
               </TableBody>
             </Table>
+            </Box>
           </CardContent>
         </Card>
       </TabPanel>
@@ -1376,6 +1395,38 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </DialogActions>
         </Box>
       </Dialog>
+
+      <Button
+        variant="contained"
+        startIcon={<EditIcon />}
+        aria-label="Edit member"
+        sx={{
+          display: { xs: 'inline-flex', sm: 'none' },
+          position: 'fixed',
+          right: 16,
+          bottom: 16,
+          zIndex: 1200,
+          borderRadius: 6,
+          boxShadow: 4,
+          fontWeight: 700,
+        }}
+        onClick={() => {
+          setEditForm({
+            firstName: member.firstName,
+            lastName: member.lastName,
+            phone: localIndianMobile(member.phone),
+            email: member.email,
+            gender: member.gender,
+            dob: member.dob,
+            address: member.address,
+            goal: member.goal,
+          });
+          setEditError('');
+          setEditOpen(true);
+        }}
+      >
+        Edit
+      </Button>
 
       <Dialog open={statusConfirmOpen} onClose={() => !statusLoading && setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>{member.status === 'ARCHIVED' ? 'Activate member?' : 'Deactivate member?'}</DialogTitle>
