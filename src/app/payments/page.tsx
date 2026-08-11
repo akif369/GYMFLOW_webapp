@@ -407,6 +407,7 @@ function PaymentsPageContent() {
               <MemberSearchField
                 label="Find member"
                 helperText="Search by name or member number, then select the member"
+                autoFocus={generateInvoiceOpen}
                 onSelect={member => setGenerateInvoiceForm({ ...generateInvoiceForm, memberId: member?.id ?? '' })}
               />
             </Grid>
@@ -450,13 +451,11 @@ function PaymentsPageContent() {
           {addError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{addError}</Alert>}
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={12}>
-              <TextField
-                label="Member ID (UUID)"
-                fullWidth size="small"
-                placeholder="e.g. d738f360-d6d3-47c8-bc46-ce197ed53bce"
-                value={memberIdInput}
-                onChange={e => setMemberIdInput(e.target.value)}
-                helperText="Member's UUID from their profile URL"
+              <MemberSearchField
+                label="Find member"
+                helperText="Search by name or member number, then select the member"
+                autoFocus={addOpen}
+                onSelect={member => { setMemberIdInput(member?.id ?? ''); setAddError(''); }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

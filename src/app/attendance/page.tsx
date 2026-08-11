@@ -365,7 +365,7 @@ function AttendancePageContent() {
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={12}>
                 <MemberSearchField
-                  autoFocus
+                  autoFocus={checkInOpen}
                   label="Find member"
                   helperText="Search by name or member number, then select the member"
                   onSelect={member => { setSelectedCheckInMember(member); setMemberIdInput(member?.id ?? ''); setCheckInError(''); }}

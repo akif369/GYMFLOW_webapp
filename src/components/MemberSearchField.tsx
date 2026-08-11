@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Autocomplete, Box, Chip, CircularProgress, TextField, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Autocomplete, Box, Chip, TextField, Typography } from '@mui/material';
 import { api } from '@/lib/api';
 
 export type MemberSearchResult = {
@@ -21,6 +21,7 @@ type Props = {
 };
 
 export default function MemberSearchField({ label = 'Search member', helperText = 'Search by member number or name', autoFocus, onSelect }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<MemberSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,12 @@ export default function MemberSearchField({ label = 'Search member', helperText 
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [inputValue]);
 
+  useEffect(() => {
+    if (!autoFocus) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 150);
+    return () => window.clearTimeout(timer);
+  }, [autoFocus]);
+
   return (
     <Autocomplete
       fullWidth
@@ -72,9 +79,9 @@ export default function MemberSearchField({ label = 'Search member', helperText 
       renderInput={params => (
         <TextField
           {...params}
+          inputRef={inputRef}
           label={label}
           size="small"
-          autoFocus={autoFocus}
           helperText={helperText}
           placeholder="Name or GYM0001"
         />
