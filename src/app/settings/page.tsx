@@ -60,6 +60,13 @@ type TaxForm = {
   taxIncluded: boolean;
 };
 
+type InvoiceForm = {
+  prefix: string;
+  footer: string;
+  dueDays: string;
+  autoSendOnRenewal: boolean;
+};
+
 const emptyOrg: OrgForm = {
   name: '', email: '', phone: '', address: '', city: '', state: '', gstNumber: '', currency: 'INR', timezone: 'Asia/Kolkata',
 };
@@ -90,6 +97,7 @@ export default function SettingsPage() {
   const [branchForm, setBranchForm] = useState<BranchForm>(emptyBranch);
   const [attendanceForm, setAttendanceForm] = useState<AttendanceForm>({ autoCheckoutHours: '3', qrCheckIn: true, lateCheckoutAlert: true });
   const [taxForm, setTaxForm] = useState<TaxForm>({ taxRate: '18', taxIncluded: true });
+  const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
 
   useEffect(() => {
     Promise.all([api.get('/org'), api.get('/branches'), api.get('/settings')])
@@ -106,6 +114,7 @@ export default function SettingsPage() {
         const branchSetting = settingMap.branch && typeof settingMap.branch === 'object' ? settingMap.branch as Record<string, unknown> : {};
         const attendanceSetting = settingMap.attendance && typeof settingMap.attendance === 'object' ? settingMap.attendance as Record<string, unknown> : {};
         const taxSetting = settingMap.tax && typeof settingMap.tax === 'object' ? settingMap.tax as Record<string, unknown> : {};
+        const invoiceSetting = settingMap.invoice && typeof settingMap.invoice === 'object' ? settingMap.invoice as Record<string, unknown> : {};
 
         if (branch) {
           setBranchForm({
@@ -121,6 +130,12 @@ export default function SettingsPage() {
           lateCheckoutAlert: attendanceSetting.lateCheckoutAlert !== false,
         });
         setTaxForm({ taxRate: String(taxSetting.taxRate ?? '18'), taxIncluded: taxSetting.taxIncluded !== false });
+        setInvoiceForm({
+          prefix: String(invoiceSetting.prefix ?? 'GYM'),
+          footer: String(invoiceSetting.footer ?? ''),
+          dueDays: String(invoiceSetting.dueDays ?? 0),
+          autoSendOnRenewal: invoiceSetting.autoSendOnRenewal !== false,
+        });
         const policy = settingMap['payment-policy'];
         setStrictPaymentPolicy(typeof policy === 'object' && policy !== null && 'strictPaymentPolicy' in policy && policy.strictPaymentPolicy === true);
       })
@@ -277,10 +292,25 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={4}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>Invoice Formatting</Typography>
-            <Alert severity="info">
-              Invoice numbering, PDF templates, and footer customization are intentionally deferred until the invoice template and numbering migration are implemented. Invoice records and WhatsApp queue actions are available from Payments.
-            </Alert>
+            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Invoice Settings</Typography>
+            {settingsError && <Alert severity="error" sx={{ mb: 2 }}>{settingsError}</Alert>}
+            <SettingRow label="Invoice Prefix" desc="Used for sequential invoice numbers, for example GYM-2026-0001.">
+              <TextField size="small" value={invoiceForm.prefix} onChange={e => setInvoiceForm({ ...invoiceForm, prefix: e.target.value.toUpperCase() })} disabled={loading} inputProps={{ maxLength: 20 }} sx={{ width: 180 }} />
+            </SettingRow>
+            <SettingRow label="Payment Due Days" desc="Set 0 for invoices due immediately.">
+              <TextField size="small" type="number" value={invoiceForm.dueDays} onChange={e => setInvoiceForm({ ...invoiceForm, dueDays: e.target.value })} disabled={loading} inputProps={{ min: 0, max: 365 }} sx={{ width: 100 }} />
+            </SettingRow>
+            <SettingRow label="Send on Renewal" desc="Send the membership renewal invoice link through Evolution Go automatically.">
+              <Switch checked={invoiceForm.autoSendOnRenewal} onChange={e => setInvoiceForm({ ...invoiceForm, autoSendOnRenewal: e.target.checked })} disabled={loading} />
+            </SettingRow>
+            <Box sx={{ py: 2, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Invoice Footer</Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Shown at the bottom of the backend invoice view.</Typography>
+              <TextField fullWidth size="small" multiline minRows={3} value={invoiceForm.footer} onChange={e => setInvoiceForm({ ...invoiceForm, footer: e.target.value })} disabled={loading} inputProps={{ maxLength: 500 }} placeholder="Thank you for training with us." />
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !invoiceForm.prefix.trim()} onClick={() => save('invoice', api.patch('/settings/invoice', { ...invoiceForm, dueDays: Number(invoiceForm.dueDays) }), 'Could not save invoice settings.')}>Save Invoice Settings</Button>
+            </Box>
           </CardContent>
         </Card>
       </TabPanel>

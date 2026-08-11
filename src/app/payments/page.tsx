@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '@/lib/api';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
@@ -41,6 +42,7 @@ type Invoice = {
   status: string;
   createdAt: string;
   dueDate: string;
+  publicViewUrl: string;
 };
 
 function PaymentsPageContent() {
@@ -72,6 +74,9 @@ function PaymentsPageContent() {
   const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
   const [invoiceNotice, setInvoiceNotice] = useState('');
   const [invoiceError, setInvoiceError] = useState('');
+  const [generateInvoiceOpen, setGenerateInvoiceOpen] = useState(false);
+  const [generateInvoiceSubmitting, setGenerateInvoiceSubmitting] = useState(false);
+  const [generateInvoiceForm, setGenerateInvoiceForm] = useState({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
 
   // ── API payments ─────────────────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -136,6 +141,7 @@ function PaymentsPageContent() {
           status: String(invoice.status ?? ''),
           createdAt: String(invoice.createdAt ?? '').split('T')[0],
           dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '',
+          publicViewUrl: String(invoice.publicViewUrl ?? ''),
         })));
       })
       .catch(() => setInvoices([]))
@@ -166,6 +172,9 @@ function PaymentsPageContent() {
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button variant="outlined" startIcon={<RefreshIcon />} size="small" onClick={() => fetchPayments(true)}>Refresh</Button>
+          <Button variant="outlined" startIcon={<ReceiptIcon />} onClick={() => { setGenerateInvoiceForm(form => ({ ...form, memberId: memberIdParam || form.memberId })); setGenerateInvoiceOpen(true); setInvoiceError(''); }}>
+            Generate Invoice
+          </Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setAddOpen(true); setAddError(''); }} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             Record Payment
           </Button>
@@ -323,36 +332,78 @@ function PaymentsPageContent() {
                 <TableCell><Typography variant="body2" sx={{ fontWeight: 700 }}>₹{invoice.totalAmount.toLocaleString()}</Typography></TableCell>
                 <TableCell><Chip label={invoice.status || 'DRAFT'} size="small" color={statusColor[invoice.status] || 'default'} /></TableCell>
                 <TableCell>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={invoiceSendingId === invoice.id ? <CircularProgress size={14} /> : <SendIcon />}
-                    disabled={invoiceSendingId !== null || !invoice.memberId}
-                    title={!invoice.memberId ? 'Link this invoice to a member first' : undefined}
-                    onClick={async () => {
-                      setInvoiceSendingId(invoice.id);
-                      setInvoiceNotice('');
-                      setInvoiceError('');
-                      try {
-                        const response = await api.post(`/invoices/${invoice.id}/whatsapp`);
-                        const delivery = response.data?.delivery;
-                        setInvoiceNotice(`Invoice ${delivery?.invoiceNumber ?? invoice.invoiceNumber} queued for WhatsApp${delivery?.provider === 'NOT_CONFIGURED' ? ' (provider integration pending)' : ''}.`);
-                      } catch (error: unknown) {
-                        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-                        setInvoiceError(message ?? 'Could not queue the invoice message.');
-                      } finally {
-                        setInvoiceSendingId(null);
-                      }
-                    }}
-                  >
-                    Send WhatsApp
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button size="small" variant="text" startIcon={<OpenInNewIcon />} disabled={!invoice.publicViewUrl} onClick={() => window.open(invoice.publicViewUrl, '_blank', 'noopener,noreferrer')}>View</Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={invoiceSendingId === invoice.id ? <CircularProgress size={14} /> : <SendIcon />}
+                      disabled={invoiceSendingId !== null || !invoice.memberId}
+                      title={!invoice.memberId ? 'Link this invoice to a member first' : undefined}
+                      onClick={async () => {
+                        setInvoiceSendingId(invoice.id);
+                        setInvoiceNotice('');
+                        setInvoiceError('');
+                        try {
+                          const response = await api.post(`/invoices/${invoice.id}/whatsapp`);
+                          const delivery = response.data?.delivery;
+                          if (delivery?.status === 'SENT') setInvoiceNotice(`Invoice ${delivery?.invoiceNumber ?? invoice.invoiceNumber} was sent through Evolution Go.`);
+                          else setInvoiceError(`Invoice message was not sent (${delivery?.status ?? 'FAILED'}). Check Evolution Go configuration and delivery logs.`);
+                        } catch (error: unknown) {
+                          const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                          setInvoiceError(message ?? 'Could not send the invoice message.');
+                        } finally {
+                          setInvoiceSendingId(null);
+                        }
+                      }}
+                    >
+                      Send WhatsApp
+                    </Button>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={generateInvoiceOpen} onClose={() => setGenerateInvoiceOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
+        <DialogTitle>Generate Invoice</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>A secure backend view link is created for every invoice and can be sent to the member.</Typography>
+          <Grid container spacing={2}>
+            <Grid size={12}><TextField label="Member ID (UUID)" fullWidth size="small" value={generateInvoiceForm.memberId} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, memberId: e.target.value })} required /></Grid>
+            <Grid size={12}><TextField label="Description" fullWidth size="small" value={generateInvoiceForm.description} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, description: e.target.value })} required /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="Amount (Rs.)" type="number" fullWidth size="small" value={generateInvoiceForm.amount} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, amount: e.target.value })} required /></Grid>
+            <Grid size={{ xs: 12, sm: 6 }}><TextField label="GST (%)" type="number" fullWidth size="small" value={generateInvoiceForm.gstPercent} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, gstPercent: e.target.value })} inputProps={{ min: 0, max: 100 }} /></Grid>
+            <Grid size={12}><TextField label="Due Date (Optional)" type="date" fullWidth size="small" value={generateInvoiceForm.dueDate} onChange={e => setGenerateInvoiceForm({ ...generateInvoiceForm, dueDate: e.target.value })} slotProps={{ inputLabel: { shrink: true } }} /></Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setGenerateInvoiceOpen(false)}>Cancel</Button>
+          <Button variant="contained" disabled={generateInvoiceSubmitting || !generateInvoiceForm.memberId || !generateInvoiceForm.description || Number(generateInvoiceForm.amount) <= 0} onClick={async () => {
+            setGenerateInvoiceSubmitting(true);
+            setInvoiceError('');
+            try {
+              const response = await api.post('/invoices/generate', {
+                memberId: generateInvoiceForm.memberId,
+                lineItems: [{ description: generateInvoiceForm.description, quantity: 1, unitPrice: Number(generateInvoiceForm.amount), gstPercent: Number(generateInvoiceForm.gstPercent) || 0 }],
+                dueDate: generateInvoiceForm.dueDate || undefined,
+              });
+              const invoice = response.data?.invoice;
+              if (invoice) setInvoices(current => [{ id: String(invoice.id), invoiceNumber: String(invoice.invoiceNumber), memberId: String(invoice.memberId ?? ''), memberName: String(invoice.memberName ?? ''), totalAmount: Number(invoice.totalAmount ?? 0), status: String(invoice.status ?? 'DRAFT'), createdAt: String(invoice.createdAt ?? '').split('T')[0], dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '', publicViewUrl: String(invoice.publicViewUrl ?? '') }, ...current]);
+              setGenerateInvoiceOpen(false);
+              setGenerateInvoiceForm({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
+              setInvoiceNotice('Invoice generated with a secure view link.');
+            } catch (error: unknown) {
+              const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+              setInvoiceError(message ?? 'Could not generate the invoice.');
+            } finally {
+              setGenerateInvoiceSubmitting(false);
+            }
+          }}>{generateInvoiceSubmitting ? 'Generating...' : 'Generate Invoice'}</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Record Payment Dialog */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>

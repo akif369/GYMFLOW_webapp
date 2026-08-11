@@ -47,6 +47,12 @@ const FILTERS = [
   { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
 
+function indianMobileDigits(value: string) {
+  const digits = value.replace(/\D/g, '');
+  const localNumber = digits.length > 10 && digits.startsWith('91') ? digits.slice(2) : digits;
+  return localNumber.slice(0, 10);
+}
+
 function MembersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -280,10 +286,14 @@ function MembersPageContent() {
       setAddError('First Name, Last Name, Phone, Date of Birth, and Join Date are required.');
       return;
     }
+    if (!/^[6-9]\d{9}$/.test(addForm.phone)) {
+      setAddError('Enter a valid 10-digit Indian mobile number.');
+      return;
+    }
     setAddLoading(true);
     setAddError('');
     try {
-      await api.post('/members', addForm);
+      await api.post('/members', { ...addForm, phone: `+91${addForm.phone}` });
       setAddOpen(false);
       setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: 'MALE', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0] });
       setFetchTrigger(t => t + 1);
@@ -618,7 +628,23 @@ function MembersPageContent() {
             <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: 0.25 }}>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required autoComplete="given-name" value={addForm.firstName} onChange={e => setAddForm({ ...addForm, firstName: e.target.value })} fullWidth /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required autoComplete="family-name" value={addForm.lastName} onChange={e => setAddForm({ ...addForm, lastName: e.target.value })} fullWidth /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField label="Phone" required type="tel" autoComplete="tel" value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} fullWidth /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Mobile Number"
+                  required
+                  type="tel"
+                  autoComplete="tel-national"
+                  value={addForm.phone}
+                  onChange={e => setAddForm({ ...addForm, phone: indianMobileDigits(e.target.value) })}
+                  placeholder="9876543210"
+                  helperText="Enter the 10-digit mobile number"
+                  fullWidth
+                  slotProps={{
+                    input: { startAdornment: <InputAdornment position="start">🇮🇳 +91</InputAdornment> },
+                    htmlInput: { inputMode: 'numeric', maxLength: 10, pattern: '[6-9][0-9]{9}' },
+                  }}
+                />
+              </Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Email" type="email" autoComplete="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} fullWidth /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
