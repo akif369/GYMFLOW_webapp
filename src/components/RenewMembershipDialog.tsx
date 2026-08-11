@@ -24,7 +24,6 @@ import {
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import { useMediaQuery, useTheme } from '@mui/material';
 import { api } from '@/lib/api';
 
 export type RenewPlan = {
@@ -62,8 +61,6 @@ export default function RenewMembershipDialog({
   onClose,
   onSuccess,
 }: RenewMembershipDialogProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -162,10 +159,20 @@ export default function RenewMembershipDialog({
       onClose={resetAndClose}
       maxWidth="sm"
       fullWidth
-      fullScreen={isMobile}
-      slotProps={{ paper: { sx: { backgroundImage: 'none', maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' } } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: 'calc(100% - 32px)', sm: '100%' },
+            m: { xs: 2, sm: 4 },
+            maxHeight: { xs: 'calc(100dvh - 32px)', sm: 'calc(100% - 64px)' },
+            height: 'auto',
+            borderRadius: { xs: 3, sm: 2 },
+            backgroundImage: 'none',
+          },
+        },
+      }}
     >
-      <Box component="form" onSubmit={handleSubmit}>
+      <Box component="form" sx={{}} onSubmit={handleSubmit}>
         <DialogTitle sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 1.5 }}>
           <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center' }}>
             <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'grid', placeItems: 'center' }}>
