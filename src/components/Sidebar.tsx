@@ -97,10 +97,10 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <Box
             component="img"
-            src="/logo/icon.png"
+            src="/logo/primary_logo/logo_only.png"
             alt="GYMatrix Logo"
             sx={{
-              width: 34, height: 34, borderRadius: 1,
+              width: 56, height: 56, borderRadius: 1,
               flexShrink: 0, objectFit: 'contain'
             }}
           />
