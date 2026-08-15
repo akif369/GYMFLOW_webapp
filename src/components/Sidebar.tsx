@@ -96,18 +96,17 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
       <Box sx={{ px: 2.5, pt: 2.5, pb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <Box
+            component="img"
+            src="/logo/icon.png"
+            alt="GYMatrix Logo"
             sx={{
-              width: 34, height: 34, borderRadius: 2,
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
+              width: 34, height: 34, borderRadius: 1,
+              flexShrink: 0, objectFit: 'contain'
             }}
-          >
-            <FitnessCenterRoundedIcon sx={{ fontSize: 18, color: '#000' }} />
-          </Box>
+          />
           <Box>
             <Typography variant="body1" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
-              GymFlow
+              GYMatrix
             </Typography>
             <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
               Admin Portal

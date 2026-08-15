@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import LoginPageClient from './LoginPageClient';
 
 export const metadata: Metadata = {
-  title: 'Login | GymFlow Admin',
-  description: 'Secure sign in for GymFlow staff and administrators.',
+  title: 'Login | GYMatrix Admin',
+  description: 'Secure sign in for GYMatrix staff and administrators.',
 };
 
 export default async function LoginPage({

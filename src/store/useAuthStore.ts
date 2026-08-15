@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
     }),
     {
-      name: 'gymflow-auth',
+      name: 'gymatrix-auth',
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

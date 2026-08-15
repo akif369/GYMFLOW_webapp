@@ -47,8 +47,8 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 
-const REMEMBERED_EMAIL_STORAGE_KEY = 'gymflow:remembered-email';
-const USER_STORAGE_KEY = 'gymflow:user';
+const REMEMBERED_EMAIL_STORAGE_KEY = 'gymatrix:remembered-email';
+const USER_STORAGE_KEY = 'gymatrix:user';
 const DEFAULT_REDIRECT = '/';
 
 interface LoginPageClientProps {
@@ -351,7 +351,7 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
               maxWidth: 620,
             }}
           >
-            GymFlow keeps front desk, trainers, and billing in sync.
+            GYMatrix keeps front desk, trainers, and billing in sync.
           </Typography>
           <Typography
             sx={{
@@ -442,7 +442,7 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
             >
               <Box sx={{ minWidth: 0 }}>
                 <Chip
-                  label="GymFlow Admin"
+                  label="GYMatrix Admin"
                   size="small"
                   color="primary"
                   variant="outlined"
@@ -456,19 +456,16 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
                 </Typography>
               </Box>
               <Box
+                component="img"
+                src="/logo/icon.png"
+                alt="GYMatrix Logo"
                 sx={{
                   width: 50,
                   height: 50,
-                  borderRadius: 3,
-                  bgcolor: alpha('#10b981', 0.12),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'primary.main',
+                  borderRadius: 2,
+                  objectFit: 'contain'
                 }}
-              >
-                <LockRoundedIcon />
-              </Box>
+              />
             </Stack>
 
             <Stack
