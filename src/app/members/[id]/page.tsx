@@ -364,7 +364,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       .catch(() => setApiPlans([]));
 
     return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [id, fetchTrigger]);
 
   const refresh = () => setFetchTrigger(t => t + 1);

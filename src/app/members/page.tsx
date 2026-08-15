@@ -193,7 +193,7 @@ function MembersPageContent() {
       })
       .finally(() => { if (!cancelled) setApiLoading(false); });
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger]);
   const members = apiMembers ?? [];
   const totalCount = apiMembers ? apiTotal : 0;

@@ -28,10 +28,7 @@ export default function MemberSearchField({ label = 'Search member', helperText 
 
   useEffect(() => {
     const query = inputValue.trim();
-    if (query.length < 2) {
-      setOptions([]);
-      return;
-    }
+    if (query.length < 2) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -62,7 +59,10 @@ export default function MemberSearchField({ label = 'Search member', helperText 
       loading={loading}
       filterOptions={items => items}
       inputValue={inputValue}
-      onInputChange={(_, value) => setInputValue(value)}
+      onInputChange={(_, value) => {
+        setInputValue(value);
+        if (value.trim().length < 2) setOptions([]);
+      }}
       onChange={(_, member) => onSelect(member)}
       getOptionLabel={member => `${member.firstName} ${member.lastName} · ${member.memberNumber}`}
       isOptionEqualToValue={(option, value) => option.id === value.id}

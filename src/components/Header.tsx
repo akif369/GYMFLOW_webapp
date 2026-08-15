@@ -50,6 +50,13 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [searchRefreshKey, setSearchRefreshKey] = useState(0);
   const searchAnchorRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchAnchorWidth, setSearchAnchorWidth] = useState(320);
+
+  useEffect(() => {
+    if (searchOpen && searchAnchorRef.current) {
+      setSearchAnchorWidth(searchAnchorRef.current.offsetWidth);
+    }
+  }, [searchOpen, searchQuery]);
 
   const initials = getInitials(user?.firstName, user?.lastName);
   const displayName = user ? `${user.firstName} ${user.lastName}` : 'Staff User';
@@ -216,7 +223,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           modifiers={[{ name: 'preventOverflow', options: { padding: 12 } }]}
           sx={{
             zIndex: theme => theme.zIndex.modal,
-            width: { xs: 'calc(100vw - 24px)', sm: searchAnchorRef.current?.offsetWidth ?? 320 },
+            width: { xs: 'calc(100vw - 24px)', sm: searchAnchorWidth },
           }}
         >
           <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.09)', borderRadius: { xs: 3, sm: 2 }, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
