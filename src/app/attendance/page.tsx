@@ -12,6 +12,23 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { api } from '@/lib/api';
 import MemberSearchField, { type MemberSearchResult } from '@/components/MemberSearchField';
 
+/** Convert a UTC ISO string to HH:MM in Asia/Kolkata */
+function toISTTime(utcIso: string): string {
+  if (!utcIso) return '';
+  return new Date(utcIso).toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+/** Convert a UTC ISO string to YYYY-MM-DD in Asia/Kolkata */
+function toISTDate(utcIso: string): string {
+  if (!utcIso) return '';
+  return new Date(utcIso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA → YYYY-MM-DD
+}
+
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
@@ -62,7 +79,7 @@ function AttendancePageContent() {
           name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
           memberId: String(m.memberNumber ?? m.memberId ?? ''),
           plan: String(m.planName ?? m.plan ?? ''),
-          checkIn: String(m.checkInAt ?? m.checkInTime ?? '').substring(11, 16),
+          checkIn: toISTTime(String(m.checkInAt ?? m.checkInTime ?? '')),
           trainer: String(m.trainerName ?? ''),
           attendanceId: String(m.attendanceId ?? m.id ?? ''),
         })));
@@ -92,9 +109,9 @@ function AttendancePageContent() {
           id: String(l.id),
           member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
           memberId: String(l.memberNumber ?? l.memberId ?? ''),
-          date: String(l.checkInAt ?? l.date ?? '').split('T')[0],
-          checkIn: String(l.checkInAt ?? '').substring(11, 16),
-          checkOut: l.checkOutAt ? String(l.checkOutAt).substring(11, 16) : null,
+          date: toISTDate(String(l.checkInAt ?? l.date ?? '')),
+          checkIn: toISTTime(String(l.checkInAt ?? '')),
+          checkOut: l.checkOutAt ? toISTTime(String(l.checkOutAt)) : null,
           duration: l.durationMinutes
             ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m`
             : 'Inside',

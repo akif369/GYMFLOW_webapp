@@ -66,6 +66,23 @@ const membershipEventColor: Record<string, ChipColor> = {
   EXTENDED: 'primary', CANCELLED: 'error', ACTIVATED: 'success',
 };
 
+/** Convert a UTC ISO string to HH:MM in Asia/Kolkata */
+function toISTTime(utcIso: string): string {
+  if (!utcIso) return '';
+  return new Date(utcIso).toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+/** Convert a UTC ISO string to YYYY-MM-DD in Asia/Kolkata */
+function toISTDate(utcIso: string): string {
+  if (!utcIso) return '';
+  return new Date(utcIso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+
 function getDaysRemaining(endDate?: string) {
   if (!endDate) return null;
   const end = Date.parse(`${endDate.slice(0, 10)}T00:00:00`);
@@ -278,9 +295,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         const items = res.data?.items ?? [];
         setAttendance(items.map((l: Record<string, unknown>) => ({
           id: String(l.id),
-          date: String(l.checkInAt ?? '').split('T')[0],
-          checkIn: String(l.checkInAt ?? '').substring(11, 16),
-          checkOut: l.checkOutAt ? String(l.checkOutAt).substring(11, 16) : null,
+          date: toISTDate(String(l.checkInAt ?? '')),
+          checkIn: toISTTime(String(l.checkInAt ?? '')),
+          checkOut: l.checkOutAt ? toISTTime(String(l.checkOutAt)) : null,
           duration: l.durationMinutes
             ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m`
             : '—',
@@ -312,8 +329,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         setPtSessions(items.map((s: Record<string, unknown>) => ({
           id: String(s.id),
           trainer: String(s.trainerName ?? `${s.trainerFirstName ?? ''} ${s.trainerLastName ?? ''}`.trim()),
-          date: String(s.scheduledAt ?? '').split('T')[0],
-          time: String(s.scheduledAt ?? '').substring(11, 16),
+          date: toISTDate(String(s.scheduledAt ?? '')),
+          time: toISTTime(String(s.scheduledAt ?? '')),
           status: String(s.status ?? ''),
           notes: String(s.notes ?? ''),
           duration: Number(s.durationMinutes ?? 60),
@@ -441,8 +458,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       const checkInAt = String(log?.checkInAt ?? new Date().toISOString());
       setAttendance(current => [{
         id: String(log?.id ?? `local-${Date.now()}`),
-        date: checkInAt.split('T')[0] ?? '',
-        checkIn: checkInAt.substring(11, 16),
+        date: toISTDate(checkInAt),
+        checkIn: toISTTime(checkInAt),
         checkOut: null,
         duration: 'Just now',
         method: String(log?.checkInMethod ?? 'MANUAL'),
