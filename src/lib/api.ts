@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const api = axios.create({
@@ -30,6 +30,20 @@ function processQueue(error: unknown, token: string | null = null) {
     }
   });
   failedQueue = [];
+}
+
+/**
+ * Returns true ONLY when the server explicitly rejected the refresh with an
+ * auth error (401 / 403). A network error (server down, timeout, ECONNREFUSED)
+ * has no `response`, so we must NOT logout — tokens are still valid and will
+ * work again once the server comes back online.
+ */
+function isHardAuthError(error: unknown): boolean {
+  return (
+    isAxiosError(error) &&
+    error.response !== undefined &&
+    (error.response.status === 401 || error.response.status === 403)
+  );
 }
 
 api.interceptors.response.use(
@@ -77,10 +91,18 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        logout();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+
+        if (isHardAuthError(refreshError)) {
+          // Server explicitly rejected the refresh token (revoked / genuinely expired)
+          // → tokens are truly invalid, must log the user out
+          logout();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
         }
+        // Network / timeout error (server down) → keep tokens intact.
+        // The user resumes seamlessly once the server comes back online.
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

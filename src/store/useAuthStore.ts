@@ -29,8 +29,8 @@ interface AuthState {
 function setAuthCookie(authenticated: boolean) {
   if (typeof document === 'undefined') return;
   if (authenticated) {
-    // Session cookie — no explicit expiry, cleared when browser closes OR on logout
-    document.cookie = 'gymflow_auth=true; path=/; SameSite=Strict';
+    // Persistent cookie — survives browser restarts, matches 365-day refresh token lifetime
+    document.cookie = 'gymflow_auth=true; path=/; SameSite=Strict; Max-Age=31536000';
   } else {
     // Clear by setting expiry in the past
     document.cookie = 'gymflow_auth=; path=/; SameSite=Strict; expires=Thu, 01 Jan 1970 00:00:00 GMT';
