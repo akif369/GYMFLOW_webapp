@@ -26,6 +26,15 @@ function getInitials(firstName?: string, lastName?: string) {
   return `${(firstName?.[0] ?? '').toUpperCase()}${(lastName?.[0] ?? '').toUpperCase()}`;
 }
 
+function formatPhone(phone: string | null | undefined) {
+  if (!phone) return '';
+  const clean = phone.replace(/[^\d+]/g, '');
+  if (clean.startsWith('+')) return phone;
+  if (clean.length === 10) return `+91 ${phone}`;
+  if (clean.startsWith('91') && clean.length === 12) return `+${clean}`;
+  return phone;
+}
+
 const ROLE_LABELS: Record<string, string> = {
   OWNER: 'Owner',
   MANAGER: 'Manager',
@@ -298,6 +307,21 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
 
+          {user?.phone && (
+            <Chip
+              label={formatPhone(user.phone)}
+              size="small"
+              sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
+                bgcolor: 'rgba(59,130,246,0.12)',
+                color: '#3b82f6',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                border: '1px solid rgba(59,130,246,0.25)',
+                height: 26,
+              }}
+            />
+          )}
           {/* Branch Chip */}
           <Chip
             label={user?.branchId ? 'Main Branch' : 'All Branches'}
@@ -400,7 +424,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>
             {user?.email}
           </Typography>
-          <Box sx={{ mt: 0.75 }}>
+          <Box sx={{ mt: 0.75, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Chip
               label={roleLabel}
               size="small"
@@ -413,6 +437,20 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                 border: '1px solid rgba(16,185,129,0.25)',
               }}
             />
+            {user?.phone && (
+              <Chip
+                label={formatPhone(user.phone)}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  bgcolor: 'rgba(59,130,246,0.12)',
+                  color: '#3b82f6',
+                  border: '1px solid rgba(59,130,246,0.25)',
+                }}
+              />
+            )}
           </Box>
         </Box>
 
@@ -468,7 +506,8 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         open={!!successMessage} 
         autoHideDuration={4000} 
         onClose={() => setSuccessMessage('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ top: { xs: '70px !important', sm: '80px !important' } }}
       >
         <Alert severity="success" onClose={() => setSuccessMessage('')} sx={{ boxShadow: 3 }}>
           {successMessage}

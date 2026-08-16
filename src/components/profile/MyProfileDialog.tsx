@@ -2,7 +2,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Typography, Alert, CircularProgress, Box, Chip, Grid
+  TextField, Button, Typography, Alert, CircularProgress, Box, Chip, Grid, InputAdornment
 } from '@mui/material';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -28,7 +28,15 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
     if (open && user) {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
-      setPhone(user.phone || '');
+      
+      let p = user.phone || '';
+      if (p.startsWith('+91')) {
+        p = p.substring(3).trim();
+      } else if (p.length === 12 && p.startsWith('91')) {
+        p = p.substring(2).trim();
+      }
+      setPhone(p);
+      
       setError('');
     }
   }, [open, user]);
@@ -56,7 +64,7 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
         {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          phone: phone.trim() || null
+          phone: phone.trim() ? `+91 ${phone.trim().replace(/^(\+91\s*|91\s*)/, '')}` : null
         }
       );
       
@@ -145,7 +153,10 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 disabled={loading}
-                placeholder="Optional"
+                placeholder="10-digit number"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">🇮🇳 +91</InputAdornment>,
+                }}
               />
             </Grid>
           </Grid>
