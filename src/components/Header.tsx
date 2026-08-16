@@ -245,7 +245,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   const index = results.findIndex(result => result.type === 'member' && result.item.id === member.id);
                   return <ListItemButton key={member.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'member', item: member })} sx={{ gap: 1.25, px: 2 }}>
                     <GroupsRoundedIcon sx={{ color: '#10b981', fontSize: 20 }} />
-                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 700 }} secondaryTypographyProps={{ fontSize: '0.72rem', color: '#7d8590' }} />
+                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} slotProps={{ primary: { fontSize: '0.85rem', fontWeight: 700 }, secondary: { fontSize: '0.72rem', color: '#7d8590' } }} />
                     <Chip label="Member" size="small" sx={{ bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}
@@ -254,7 +254,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   const index = results.findIndex(result => result.type === 'payment' && result.item.id === payment.id);
                   return <ListItemButton key={payment.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'payment', item: payment })} sx={{ gap: 1.25, px: 2 }}>
                     <ReceiptLongRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 700, noWrap: true }} secondaryTypographyProps={{ fontSize: '0.72rem', color: '#7d8590', noWrap: true }} />
+                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} slotProps={{ primary: { fontSize: '0.85rem', fontWeight: 700, noWrap: true }, secondary: { fontSize: '0.72rem', color: '#7d8590', noWrap: true } }} />
                     <Chip label="Payment" size="small" sx={{ bgcolor: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}

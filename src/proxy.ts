@@ -7,7 +7,7 @@ const PUBLIC_PATHS = ['/login', '/reset-password', '/forgot-password'];
 // Static asset prefixes to always allow through
 const STATIC_PREFIXES = ['/_next', '/favicon', '/logo', '/icons', '/site.webmanifest', '/apple-touch-icon'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always allow static assets and Next.js internals
