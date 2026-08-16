@@ -5,6 +5,7 @@ import {
   AppBar, Toolbar, InputBase, Badge, Avatar, Typography, Box,
   IconButton, Divider, Chip, Menu, MenuItem, ListItemIcon, Paper, Popper,
   ClickAwayListener, CircularProgress, List, ListItemButton, ListItemText,
+  Snackbar, Alert,
 } from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -17,6 +18,8 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
+import ChangePasswordDialog from './profile/ChangePasswordDialog';
+import MyProfileDialog from './profile/MyProfileDialog';
 
 function getInitials(firstName?: string, lastName?: string) {
   if (!firstName && !lastName) return '??';
@@ -51,6 +54,10 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const searchAnchorRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchAnchorWidth, setSearchAnchorWidth] = useState(320);
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     if (searchOpen && searchAnchorRef.current) {
@@ -410,7 +417,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </Box>
 
         <MenuItem
-          onClick={() => { setUserAnchor(null); }}
+          onClick={() => { setUserAnchor(null); setProfileOpen(true); }}
           sx={{ py: 1, px: 2, gap: 1.5, mt: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
         >
           <ListItemIcon sx={{ minWidth: 'auto' }}>
@@ -420,7 +427,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </MenuItem>
 
         <MenuItem
-          onClick={() => { setUserAnchor(null); }}
+          onClick={() => { setUserAnchor(null); setPasswordOpen(true); }}
           sx={{ py: 1, px: 2, gap: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
         >
           <ListItemIcon sx={{ minWidth: 'auto' }}>
@@ -444,6 +451,29 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </Typography>
         </MenuItem>
       </Menu>
+
+      <MyProfileDialog 
+        open={profileOpen} 
+        onClose={() => setProfileOpen(false)} 
+        onSuccess={() => setSuccessMessage('Profile updated successfully')} 
+      />
+      
+      <ChangePasswordDialog 
+        open={passwordOpen} 
+        onClose={() => setPasswordOpen(false)} 
+        onSuccess={() => setSuccessMessage('Password changed successfully')} 
+      />
+
+      <Snackbar 
+        open={!!successMessage} 
+        autoHideDuration={4000} 
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" onClose={() => setSuccessMessage('')} sx={{ boxShadow: 3 }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </AppBar>
   );
 }
