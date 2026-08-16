@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ThemeRegistry from '@/components/ThemeRegistry';
+import GlobalNetworkError from '@/components/GlobalNetworkError';
 
 export const metadata: Metadata = {
   title: 'GYMatrix Admin',
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body suppressHydrationWarning style={{ margin: 0, padding: 0, fontFamily: "'Outfit', 'Inter', 'Roboto', sans-serif" }}>
         <ThemeRegistry>
           {children}
+          <GlobalNetworkError />
         </ThemeRegistry>
       </body>
     </html>
