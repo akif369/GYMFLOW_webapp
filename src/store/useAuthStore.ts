@@ -25,6 +25,18 @@ interface AuthState {
   logout: () => void;
 }
 
+/** Set a lightweight auth presence cookie readable by Next.js middleware (Edge runtime). */
+function setAuthCookie(authenticated: boolean) {
+  if (typeof document === 'undefined') return;
+  if (authenticated) {
+    // Session cookie — no explicit expiry, cleared when browser closes OR on logout
+    document.cookie = 'gymflow_auth=true; path=/; SameSite=Strict';
+  } else {
+    // Clear by setting expiry in the past
+    document.cookie = 'gymflow_auth=; path=/; SameSite=Strict; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -33,15 +45,19 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
-        set({ user, accessToken, refreshToken, isAuthenticated: true }),
+      setAuth: (user, accessToken, refreshToken) => {
+        setAuthCookie(true);
+        set({ user, accessToken, refreshToken, isAuthenticated: true });
+      },
 
       setAccessToken: (token) => set({ accessToken: token }),
 
       setUser: (user) => set({ user }),
 
-      logout: () =>
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
+      logout: () => {
+        setAuthCookie(false);
+        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+      },
     }),
     {
       name: 'gymatrix-auth',
@@ -51,6 +67,10 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      // Re-sync the cookie whenever the store is rehydrated from localStorage
+      onRehydrateStorage: () => (state) => {
+        if (state?.isAuthenticated) setAuthCookie(true);
+      },
     },
   ),
 );
