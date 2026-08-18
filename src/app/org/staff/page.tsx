@@ -233,14 +233,6 @@ export default function StaffPage() {
                       <Chip label={staffMember.status} size="small" color={staffMember.status === 'ACTIVE' ? 'success' : 'default'} />
                     </Box>
                   </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary"  sx={{ mb: 0.5,display:"block" }}>Permissions</Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                      {staffMember.permissions.map(p => (
-                        <Chip key={p} label={p} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
-                      ))}
-                    </Box>
-                  </Box>
                   <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
                     <Button size="small" variant="outlined" onClick={() => { setEditStaff({...staffMember}); setEditOpen(true); }}>Edit</Button>
                     <Button size="small" variant="outlined" color="warning" onClick={() => handleResetPassword(staffMember.id)}>Reset Password</Button>
