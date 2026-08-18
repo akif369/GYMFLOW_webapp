@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   Box, Grid, Card, CardContent, Typography, Chip, Stack,
   LinearProgress, alpha, Button, Avatar, Divider, Skeleton,
+  Select, MenuItem, FormControl,
 } from '@mui/material';
 import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
@@ -19,26 +20,12 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
+import useSWR from 'swr';
+import { api } from '@/lib/api';
 
-// ── Mocked org-level data ─────────────────────────────────────────────────────
-// In production, replace with: const { data } = useSWR('/org/dashboard/stats', fetcher)
+const fetcher = (url: string) => api.get(url).then(res => res.data);
 
-const ORG_STATS = {
-  totalRevenue: 842500,
-  monthRevenue: 94300,
-  revenueGrowth: 12.4,
-  totalMembers: 2847,
-  activeMembers: 2241,
-  memberGrowth: 8.2,
-  totalBranches: 4,
-  activeBranches: 4,
-  totalStaff: 38,
-  activeTrainers: 14,
-  totalPtSessions: 312,
-  avgOccupancy: 68,
-  expiredMemberships: 187,
-  pendingAmount: 42000,
-};
+// ORG_STATS replaced by API data
 
 const BRANCH_PERFORMANCE = [
   { name: 'Koramangala', members: 820, revenue: 28400, growth: 15.2, occupancy: 82, status: 'ACTIVE' },
@@ -188,16 +175,21 @@ function BranchRow({ branch }: { branch: typeof BRANCH_PERFORMANCE[0] }) {
 
 export default function OrgDashboardPage() {
   const { user } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('ALL');
 
-  useEffect(() => {
-    // Simulate API call — replace with real fetch
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
-  }, []);
+  const { data: branchesData } = useSWR('/branches', fetcher);
+  const branches = branchesData?.branches || [];
 
-  const fmt = (n: number) => n.toLocaleString('en-IN');
-  const fmtCurrency = (n: number) => `₹${(n / 1000).toFixed(0)}K`;
+  const { data: dashboardData, isLoading: loading } = useSWR(
+    `/dashboard${selectedBranchId !== 'ALL' ? `?branchId=${selectedBranchId}` : ''}`,
+    fetcher
+  );
+
+  const fmt = (n: number) => n?.toLocaleString('en-IN') ?? '0';
+  const fmtCurrency = (n: number) => `₹${((n ?? 0) / 1000).toFixed(0)}K`;
+
+  const stats = dashboardData?.stats || {};
+  const recentActivity = dashboardData?.recentLogs || [];
 
   return (
     <Box>
@@ -211,29 +203,48 @@ export default function OrgDashboardPage() {
             Welcome back, {user?.firstName}
           </Typography>
           <Typography sx={{ mt: 0.75, fontSize: '0.85rem', color: 'text.secondary' }}>
-            Here's the consolidated view across all {ORG_STATS.totalBranches} branches.
+            Here's the consolidated view across all branches.
           </Typography>
         </Box>
-        <Button
-          component={Link} href="/org/reports"
-          variant="outlined" size="small"
-          sx={{ borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b', '&:hover': { borderColor: '#f59e0b', bgcolor: 'rgba(245,158,11,0.08)' } }}
-        >
-          Full Report
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <Select
+              value={selectedBranchId}
+              onChange={(e) => setSelectedBranchId(e.target.value)}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 1.5,
+                fontSize: '0.85rem',
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
+              }}
+            >
+              <MenuItem value="ALL">All Branches</MenuItem>
+              {branches.map((b: any) => (
+                <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            component={Link} href="/org/reports"
+            variant="outlined" size="small"
+            sx={{ borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b', '&:hover': { borderColor: '#f59e0b', bgcolor: 'rgba(245,158,11,0.08)' } }}
+          >
+            Full Report
+          </Button>
+        </Box>
       </Box>
 
       {/* KPI Grid */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { title: 'Monthly Revenue', value: fmtCurrency(ORG_STATS.monthRevenue), sub: `₹${fmt(ORG_STATS.totalRevenue)} lifetime`, icon: AttachMoneyRoundedIcon, color: '#f59e0b', trend: ORG_STATS.revenueGrowth, sparkData: MONTHLY_REVENUE },
-          { title: 'Active Members', value: fmt(ORG_STATS.activeMembers), sub: `${fmt(ORG_STATS.totalMembers)} total`, icon: PeopleRoundedIcon, color: '#10b981', trend: ORG_STATS.memberGrowth, sparkData: MEMBER_GROWTH },
-          { title: 'Total Branches', value: ORG_STATS.activeBranches, sub: 'All operational', icon: StorefrontRoundedIcon, color: '#8b5cf6' },
-          { title: 'Staff Members', value: ORG_STATS.totalStaff, sub: `${ORG_STATS.activeTrainers} trainers`, icon: GroupRoundedIcon, color: '#06b6d4' },
-          { title: 'PT Sessions (Month)', value: ORG_STATS.totalPtSessions, sub: 'Across all branches', icon: FitnessCenterRoundedIcon, color: '#ec4899' },
-          { title: 'Avg Occupancy', value: `${ORG_STATS.avgOccupancy}%`, sub: 'Across all branches', icon: TrendingUpRoundedIcon, color: '#f97316' },
-          { title: 'Expired Memberships', value: fmt(ORG_STATS.expiredMemberships), sub: 'Renewal opportunity', icon: WarningAmberRoundedIcon, color: '#f43f5e' },
-          { title: 'Pending Collections', value: fmtCurrency(ORG_STATS.pendingAmount), sub: 'Overdue payments', icon: AccountBalanceRoundedIcon, color: '#eab308' },
+          { title: 'Monthly Revenue', value: fmtCurrency(stats.monthRevenue), sub: `₹${fmtCurrency(stats.todaysRevenue)} today`, icon: AttachMoneyRoundedIcon, color: '#f59e0b', sparkData: dashboardData?.revenueChart?.map((r:any) => r.revenue) || MONTHLY_REVENUE },
+          { title: 'Active Members', value: fmt(stats.activeMembers), sub: `${fmt(stats.newMembersMonth)} new this month`, icon: PeopleRoundedIcon, color: '#10b981', sparkData: MEMBER_GROWTH },
+          { title: 'Total Branches', value: branches.length, sub: 'All operational', icon: StorefrontRoundedIcon, color: '#8b5cf6' },
+          { title: 'Trainers', value: stats.totalTrainers, sub: `${stats.trainersWorking} active`, icon: GroupRoundedIcon, color: '#06b6d4' },
+          { title: 'PT Sessions (Today)', value: stats.todaysPtSessions, sub: 'Across all branches', icon: FitnessCenterRoundedIcon, color: '#ec4899' },
+          { title: 'Currently Inside', value: stats.currentlyInside, sub: `${stats.todaysCheckins} total check-ins today`, icon: TrendingUpRoundedIcon, color: '#f97316' },
+          { title: 'Expired Memberships', value: fmt(stats.expiredMemberships), sub: `${stats.expiringIn7Days} expiring soon`, icon: WarningAmberRoundedIcon, color: '#f43f5e' },
+          { title: 'Pending Collections', value: fmtCurrency(stats.pendingAmount), sub: 'Overdue payments', icon: AccountBalanceRoundedIcon, color: '#eab308' },
         ].map((kpi) => (
           <Grid item xs={12} sm={6} md={3} key={kpi.title}>
             {loading
@@ -264,16 +275,16 @@ export default function OrgDashboardPage() {
                 ? <Skeleton variant="rounded" height={220} />
                 : (
                   <BarChart
-                    xAxis={[{ data: MONTHLY_LABELS, scaleType: 'band' }]}
+                    xAxis={[{ data: dashboardData?.revenueChart?.map((r:any) => r.month) || ['Jan'], scaleType: 'band' }]}
                     series={[{
-                      data: MONTHLY_REVENUE,
+                      data: dashboardData?.revenueChart?.map((r:any) => r.revenue) || [0],
                       color: '#f59e0b',
                       label: 'Revenue (₹)',
                     }]}
                     height={220}
                     sx={{
                       '& .MuiChartsAxis-root': { '& text': { fill: 'rgba(255,255,255,0.4)', fontSize: 11 } },
-                      '& .MuiChartsGrid-line': { stroke: 'rgba(255,255,255,0.05)' },
+                      '& .MuiGrid-line': { stroke: 'rgba(255,255,255,0.05)' },
                     }}
                   />
                 )}
@@ -317,24 +328,22 @@ export default function OrgDashboardPage() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
-                    Member Growth
+                    Attendance Trend
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                    Total members across all branches
+                    Check-ins over the last 7 days
                   </Typography>
                 </Box>
-                <Chip label="+{ORG_STATS.memberGrowth}% MoM" size="small"
-                  sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 700 }} />
               </Box>
               {loading
                 ? <Skeleton variant="rounded" height={200} />
                 : (
                   <LineChart
-                    xAxis={[{ data: MONTHLY_LABELS, scaleType: 'band' }]}
+                    xAxis={[{ data: dashboardData?.attendanceChart?.map((a:any) => a.day) || ['Mon'], scaleType: 'band' }]}
                     series={[{
-                      data: MEMBER_GROWTH,
+                      data: dashboardData?.attendanceChart?.map((a:any) => a.count) || [0],
                       color: '#10b981',
-                      label: 'Total Members',
+                      label: 'Check-ins',
                       area: true,
                     }]}
                     height={200}
@@ -362,28 +371,20 @@ export default function OrgDashboardPage() {
                 />
               </Box>
               <Stack spacing={0}>
-                {RECENT_ACTIVITY.map((activity, idx) => {
-                  const severityColor: Record<string, string> = {
-                    success: '#10b981', info: '#3b82f6', warning: '#f59e0b', error: '#f43f5e',
-                  };
-                  const color = severityColor[activity.severity] ?? '#6b7280';
+                {recentActivity.map((activity: any, idx: number) => {
                   return (
-                    <Box key={activity.id} sx={{ display: 'flex', gap: 1.5, py: 1.25, borderBottom: idx < RECENT_ACTIVITY.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                    <Box key={activity.id} sx={{ display: 'flex', gap: 1.5, py: 1.25, borderBottom: idx < recentActivity.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                       <Box sx={{
                         width: 7, height: 7, borderRadius: '50%', mt: 0.75, flexShrink: 0,
-                        bgcolor: color, boxShadow: `0 0 6px ${color}`,
+                        bgcolor: '#10b981', boxShadow: `0 0 6px #10b981`,
                       }} />
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography sx={{ fontSize: '0.8rem', color: 'text.primary', lineHeight: 1.4 }}>
-                          {activity.message}
+                          {activity.memberName} checked in
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.3 }}>
-                          <Chip label={activity.branch} size="small" sx={{
-                            height: 16, fontSize: '0.62rem', fontWeight: 600,
-                            bgcolor: 'rgba(255,255,255,0.05)', color: 'text.secondary',
-                          }} />
                           <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>
-                            {activity.time}
+                            {activity.checkIn}
                           </Typography>
                         </Box>
                       </Box>
