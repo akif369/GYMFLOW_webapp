@@ -1,41 +1,96 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import type { PortalType } from '@/store/useAuthStore';
 
-// Routes that don't require authentication
-const PUBLIC_PATHS = ['/login', '/reset-password', '/forgot-password'];
+// ── Route configuration ───────────────────────────────────────────────────────
 
-// Static asset prefixes to always allow through
+/** Routes accessible without authentication */
+const PUBLIC_PATHS = ['/login', '/reset-password', '/forgot-password', '/invite/accept'];
+
+/** Static assets and Next.js internals — always bypass */
 const STATIC_PREFIXES = ['/_next', '/favicon', '/logo', '/icons', '/site.webmanifest', '/apple-touch-icon'];
+
+/**
+ * Route group prefixes and which portal types are allowed to access them.
+ * Order matters — first match wins.
+ */
+const PORTAL_ROUTES: Array<{ prefix: string; allowedPortals: PortalType[] }> = [
+  // Org-owner portal — only org-level roles
+  { prefix: '/org', allowedPortals: ['org-owner'] },
+
+  // Trainer portal — only trainers (and org-owners for cross-portal visibility)
+  { prefix: '/trainer', allowedPortals: ['trainer', 'org-owner'] },
+
+  // Member portal — only members
+  { prefix: '/member', allowedPortals: ['member'] },
+
+  // Invite accept — public (handled above, but listed for documentation)
+  // All other routes fall through to the branch portal guard below
+];
+
+/** Post-login redirect for each portal type */
+function getPortalHome(portalType: PortalType | null): string {
+  switch (portalType) {
+    case 'org-owner': return '/org/dashboard';
+    case 'trainer':   return '/trainer/dashboard';
+    case 'member':    return '/member/dashboard';
+    case 'branch':
+    default:          return '/';
+  }
+}
+
+// ── Middleware ────────────────────────────────────────────────────────────────
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Always allow static assets and Next.js internals
+  // ── 1. Always allow static assets and Next.js internals ───────────────────
   if (STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
-  // Read auth state from the persisted Zustand localStorage key
-  // Next.js middleware runs on the Edge — localStorage is unavailable,
-  // so we rely on a lightweight auth cookie we set on login.
-  const authCookie = request.cookies.get('gymflow_auth')?.value;
-  const isAuthenticated = authCookie === 'true';
+  // ── 2. Read auth cookies (set by the client-side auth store on login) ─────
+  const isAuthenticated = request.cookies.get('gymflow_auth')?.value === 'true';
+  const portalType = (request.cookies.get('gymflow_portal')?.value ?? null) as PortalType | null;
 
   const isPublicPath = PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
 
-  // ── Already logged in → redirect away from login ──────────────────────────
-  if (isAuthenticated && isPublicPath) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // ── 3. Unauthenticated user ────────────────────────────────────────────────
+  if (!isAuthenticated) {
+    if (isPublicPath) return NextResponse.next(); // Allow login, reset-password, etc.
 
-  // ── Not logged in → redirect to login with return URL ─────────────────────
-  if (!isAuthenticated && !isPublicPath) {
+    // Redirect to login and remember the intended destination
     const loginUrl = new URL('/login', request.url);
-    // Preserve the intended destination so we can redirect back after login
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // ── 4. Authenticated user hitting a public path ───────────────────────────
+  if (isPublicPath) {
+    // Send them to their correct portal home (not necessarily '/')
+    return NextResponse.redirect(new URL(getPortalHome(portalType), request.url));
+  }
+
+  // ── 5. Enforce portal route access ────────────────────────────────────────
+  const portalRoute = PORTAL_ROUTES.find((r) => pathname.startsWith(r.prefix));
+  if (portalRoute) {
+    const allowed = portalType !== null && portalRoute.allowedPortals.includes(portalType);
+    if (!allowed) {
+      // Send to their correct portal — never show a 403 to a real user
+      return NextResponse.redirect(new URL(getPortalHome(portalType), request.url));
+    }
+  }
+
+  // ── 6. Branch portal — block trainer/member from accessing admin routes ───
+  // If a trainer or member tries to hit an unrecognised path (branch admin routes),
+  // redirect them to their portal home.
+  if (portalType === 'trainer' && !pathname.startsWith('/trainer')) {
+    return NextResponse.redirect(new URL('/trainer/dashboard', request.url));
+  }
+  if (portalType === 'member' && !pathname.startsWith('/member')) {
+    return NextResponse.redirect(new URL('/member/dashboard', request.url));
   }
 
   return NextResponse.next();

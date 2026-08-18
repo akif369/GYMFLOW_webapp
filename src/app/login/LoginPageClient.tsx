@@ -33,7 +33,8 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 // import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore, getPortalHome } from '@/store/useAuthStore';
+import type { PortalType } from '@/store/useAuthStore';
 
 const REMEMBERED_EMAIL_KEY = 'gymatrix:remembered-email';
 const DEFAULT_REDIRECT = '/';
@@ -53,7 +54,9 @@ interface LoginResponse {
     lastName: string;
     orgId: string;
     branchId: string | null;
+    memberId: string | null;
     permissions: string[];
+    portalType: PortalType;
   };
 }
 
@@ -88,14 +91,15 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const destination = sanitizeRedirect(redirectTo);
-  const { setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth, isAuthenticated, user } = useAuthStore();
 
-  // Redirect if already logged in (client-side guard as backup to middleware)
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace(destination);
+    if (isAuthenticated && user) {
+      // Redirect authenticated users to their portal home
+      const home = getPortalHome(user.portalType);
+      router.replace(home);
     }
-  }, [isAuthenticated, destination, router]);
+  }, [isAuthenticated, user, router]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -143,7 +147,8 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
         {
           id: user.id, email: user.email, firstName: user.firstName,
           lastName: user.lastName, role: user.role, orgId: user.orgId,
-          branchId: user.branchId, permissions: user.permissions,
+          branchId: user.branchId, memberId: user.memberId,
+          permissions: user.permissions, portalType: user.portalType,
         },
         accessToken,
         refreshToken,
@@ -151,7 +156,9 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
 
       localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
 
-      startTransition(() => { router.replace(destination); });
+      // Route to the correct portal based on role
+      const home = getPortalHome(user.portalType);
+      startTransition(() => { router.replace(home); });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

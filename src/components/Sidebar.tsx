@@ -1,10 +1,11 @@
 'use client';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Typography, Box, Divider, Avatar, IconButton, useTheme, useMediaQuery,
+  Tooltip,
 } from '@mui/material';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
@@ -21,12 +22,18 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useAuthStore } from '@/store/useAuthStore';
+import { getRoleLabel, getRoleColor } from '@/lib/roles';
+import { api } from '@/lib/api';
+
+// ── Nav section definitions with permission guards ────────────────────────────
 
 interface NavItem {
   name: string;
   icon: ReactNode;
   href: string;
   badge?: string;
+  /** If provided, user must have at least one of these permissions to see this item */
+  permissions?: string[];
 }
 
 interface NavSection {
@@ -34,7 +41,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-const navSections: NavSection[] = [
+const ALL_NAV_SECTIONS: NavSection[] = [
   {
     label: 'Overview',
     items: [
@@ -44,34 +51,77 @@ const navSections: NavSection[] = [
   {
     label: 'Members',
     items: [
-      { name: 'Members', icon: <PeopleRoundedIcon sx={{ fontSize: 18 }} />, href: '/members' },
-      { name: 'Attendance', icon: <AccessTimeRoundedIcon sx={{ fontSize: 18 }} />, href: '/attendance' },
-      { name: 'Memberships', icon: <CardMembershipRoundedIcon sx={{ fontSize: 18 }} />, href: '/memberships' },
+      {
+        name: 'Members', icon: <PeopleRoundedIcon sx={{ fontSize: 18 }} />, href: '/members',
+        permissions: ['member.view'],
+      },
+      {
+        name: 'Attendance', icon: <AccessTimeRoundedIcon sx={{ fontSize: 18 }} />, href: '/attendance',
+        permissions: ['attendance.view'],
+      },
+      {
+        name: 'Memberships', icon: <CardMembershipRoundedIcon sx={{ fontSize: 18 }} />, href: '/memberships',
+        permissions: ['member.view'],
+      },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { name: 'Payments', icon: <PaymentRoundedIcon sx={{ fontSize: 18 }} />, href: '/payments' },
+      {
+        name: 'Payments', icon: <PaymentRoundedIcon sx={{ fontSize: 18 }} />, href: '/payments',
+        permissions: ['payment.view'],
+      },
     ],
   },
   {
     label: 'Fitness',
     items: [
-      { name: 'Trainers', icon: <SportsRoundedIcon sx={{ fontSize: 18 }} />, href: '/trainers' },
-      { name: 'PT Sessions', icon: <EventNoteRoundedIcon sx={{ fontSize: 18 }} />, href: '/pt-sessions' },
-      { name: 'Workouts', icon: <FitnessCenterRoundedIcon sx={{ fontSize: 18 }} />, href: '/workouts' },
+      {
+        name: 'Trainers', icon: <SportsRoundedIcon sx={{ fontSize: 18 }} />, href: '/trainers',
+        permissions: ['trainer.view'],
+      },
+      {
+        name: 'PT Sessions', icon: <EventNoteRoundedIcon sx={{ fontSize: 18 }} />, href: '/pt-sessions',
+        permissions: ['pt.view'],
+      },
+      {
+        name: 'Workouts', icon: <FitnessCenterRoundedIcon sx={{ fontSize: 18 }} />, href: '/workouts',
+        permissions: ['workout.view'],
+      },
     ],
   },
   {
     label: 'Growth',
     items: [
-      { name: 'Leads & CRM', icon: <TrendingUpRoundedIcon sx={{ fontSize: 18 }} />, href: '/leads', badge: '5' },
-      { name: 'Reports', icon: <AssessmentRoundedIcon sx={{ fontSize: 18 }} />, href: '/reports' },
-      { name: 'Staff', icon: <GroupRoundedIcon sx={{ fontSize: 18 }} />, href: '/staff' },
+      {
+        name: 'Leads & CRM', icon: <TrendingUpRoundedIcon sx={{ fontSize: 18 }} />, href: '/leads',
+        badge: '5', permissions: ['lead.view'],
+      },
+      {
+        name: 'Reports', icon: <AssessmentRoundedIcon sx={{ fontSize: 18 }} />, href: '/reports',
+        permissions: ['report.view'],
+      },
+      {
+        name: 'Staff', icon: <GroupRoundedIcon sx={{ fontSize: 18 }} />, href: '/staff',
+        permissions: ['staff.view'],
+      },
     ],
   },
 ];
+
+function filterSections(sections: NavSection[], permissions: string[]): NavSection[] {
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) =>
+        !item.permissions?.length || item.permissions.some((p) => permissions.includes(p))
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -79,30 +129,43 @@ interface SidebarProps {
   drawerWidth?: number;
 }
 
-export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236 }: SidebarProps) {
-  const user = useAuthStore(state => state.user);
+export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220 }: SidebarProps) {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Staff User';
   const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : 'SU';
   const pathname = usePathname();
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
+  const roleLabel = user ? getRoleLabel(user.role) : 'Staff';
+  const roleColor = user ? getRoleColor(user.role) : '#6b7280';
+
+  // Filter nav sections by user permissions
+  const permissions = user?.permissions ?? [];
+  const navSections = filterSections(ALL_NAV_SECTIONS, permissions);
+
+  const canViewSettings = permissions.includes('settings.view') || permissions.includes('org.manage');
+
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+
+  const handleLogout = async () => {
+    try { await api.post('/auth/logout'); } catch { /* best effort */ }
+    logout();
+    router.replace('/login');
+  };
 
   const drawerContent = (
     <>
       {/* Logo */}
       <Box sx={{ px: 2.5, pt: 2.5, pb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Box
             component="img"
             src="/logo/primary_logo/logo_only.png"
             alt="GYMatrix Logo"
-            sx={{
-              width: 56, height: 56, borderRadius: 1,
-              flexShrink: 0, objectFit: 'contain'
-            }}
+            sx={{ width: 56, height: 56, borderRadius: 1, flexShrink: 0, objectFit: 'contain' }}
           />
           <Box>
             <Typography variant="body1" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
@@ -161,21 +224,19 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
                         {item.icon}
                       </ListItemIcon>
                       <ListItemText primary={<Typography sx={{
-                          fontSize: '0.82rem',
-                          fontWeight: active ? 600 : 500,
-                          color: 'inherit',
-                          lineHeight: 1.4,
-                        }}>{item.name}</Typography>} />
+                        fontSize: '0.82rem',
+                        fontWeight: active ? 600 : 500,
+                        color: 'inherit',
+                        lineHeight: 1.4,
+                      }}>{item.name}</Typography>} />
                       {item.badge && (
-                        <Box
-                          sx={{
-                            minWidth: 18, height: 18, borderRadius: 1,
-                            bgcolor: 'rgba(16,185,129,0.2)', color: '#34d399',
-                            fontSize: '0.65rem', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            px: 0.5,
-                          }}
-                        >
+                        <Box sx={{
+                          minWidth: 18, height: 18, borderRadius: 1,
+                          bgcolor: 'rgba(16,185,129,0.2)', color: '#34d399',
+                          fontSize: '0.65rem', fontWeight: 700,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          px: 0.5,
+                        }}>
                           {item.badge}
                         </Box>
                       )}
@@ -188,57 +249,63 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 236
           </Box>
         ))}
 
-        {/* Settings */}
-        <ListItem disablePadding sx={{ mb: 0.25 }}>
-          <ListItemButton
-            component={Link}
-            href="/settings"
-            onClick={!isMdUp ? onClose : undefined}
-            sx={{
-              borderRadius: 1.5, py: 0.85, px: 1.25,
-              color: isActive('/settings') ? '#34d399' : '#7d8590',
-              bgcolor: isActive('/settings') ? 'rgba(16,185,129,0.14)' : 'transparent',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#c9d1d9' },
-            }}
-          >
-            <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
-              <SettingsRoundedIcon sx={{ fontSize: 18 }} />
-            </ListItemIcon>
-            <ListItemText primary={<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'inherit' }}>Settings</Typography>} />
-          </ListItemButton>
-        </ListItem>
+        {/* Settings — only shown if user has settings permission */}
+        {canViewSettings && (
+          <ListItem disablePadding sx={{ mb: 0.25 }}>
+            <ListItemButton
+              component={Link}
+              href="/settings"
+              onClick={!isMdUp ? onClose : undefined}
+              sx={{
+                borderRadius: 1.5, py: 0.85, px: 1.25,
+                color: isActive('/settings') ? '#34d399' : '#7d8590',
+                bgcolor: isActive('/settings') ? 'rgba(16,185,129,0.14)' : 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#c9d1d9' },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
+                <SettingsRoundedIcon sx={{ fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText primary={<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'inherit' }}>Settings</Typography>} />
+            </ListItemButton>
+          </ListItem>
+        )}
       </Box>
 
       <Divider />
 
       {/* Profile Footer */}
       <Box sx={{ p: 1.5 }}>
-        <Box
-          sx={{
-            display: 'flex', alignItems: 'center', gap: 1.25,
-            p: 1.25, borderRadius: 2, cursor: 'pointer',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
-            transition: 'background 0.15s',
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 32, height: 32, fontSize: '0.75rem', fontWeight: 700,
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: '#000', flexShrink: 0,
-            }}
-          >
+        <Box sx={{
+          display: 'flex', alignItems: 'center', gap: 1.25,
+          p: 1.25, borderRadius: 2,
+          transition: 'background 0.15s',
+        }}>
+          <Avatar sx={{
+            width: 32, height: 32, fontSize: '0.75rem', fontWeight: 700,
+            background: `linear-gradient(135deg, ${roleColor}, ${roleColor}cc)`,
+            color: '#fff', flexShrink: 0,
+          }}>
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
               {displayName}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.68rem' }}>
-              {user?.role ?? 'Staff'}
+            <Typography variant="caption" sx={{ color: roleColor, fontSize: '0.68rem' }}>
+              {roleLabel}
             </Typography>
           </Box>
-          <LogoutRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+          <Tooltip title="Sign out" placement="top">
+            <IconButton
+              size="small"
+              onClick={handleLogout}
+              sx={{ color: '#7d8590', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}
+              aria-label="Sign out"
+            >
+              <LogoutRoundedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
     </>
