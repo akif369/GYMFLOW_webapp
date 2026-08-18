@@ -40,6 +40,30 @@ export default function OrgBranchesPage() {
     }
   };
 
+  const [editBranch, setEditBranch] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+
+  const handleEdit = async () => {
+    if (!editBranch) return;
+    setEditing(true);
+    try {
+      await api.patch(`/branches/${editBranch.id}`, {
+        name: editBranch.name,
+        city: editBranch.city,
+        address: editBranch.address,
+        phone: editBranch.phone,
+        capacity: editBranch.capacity,
+      });
+      await mutate();
+      setEditBranch(null);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to edit branch');
+    } finally {
+      setEditing(false);
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
@@ -63,7 +87,7 @@ export default function OrgBranchesPage() {
       {isLoading ? (
         <Grid container spacing={2}>
           {[1, 2, 3].map(i => (
-            <Grid item xs={12} md={6} key={i}>
+            <Grid size={{ xs: 12, md: 6 }} key={i}>
               <Skeleton variant="rounded" height={250} />
             </Grid>
           ))}
@@ -74,7 +98,7 @@ export default function OrgBranchesPage() {
             const occupancy = Math.round(((branch.members ?? 0) / (branch.capacity || 1)) * 100);
             const growthUp = (branch.growth ?? 0) >= 0;
             return (
-              <Grid item xs={12} md={6} key={branch.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={branch.id}>
                 <Card elevation={0} sx={{
                   height: '100%', transition: 'transform 0.18s, border-color 0.18s',
                   '&:hover': { transform: 'translateY(-2px)', borderColor: 'rgba(245,158,11,0.25)' },
@@ -142,7 +166,7 @@ export default function OrgBranchesPage() {
                     </Box>
 
                     <Button variant="outlined" size="small" fullWidth
-                      onClick={() => alert('Manage Branch clicked: ' + branch.id)}
+                      onClick={() => setEditBranch({ ...branch })}
                       sx={{ borderColor: 'rgba(245,158,11,0.25)', color: '#f59e0b', '&:hover': { borderColor: '#f59e0b', bgcolor: 'rgba(245,158,11,0.06)' } }}>
                       Manage Branch
                     </Button>
@@ -171,6 +195,29 @@ export default function OrgBranchesPage() {
           <Button variant="contained" disabled={adding || !formData.name || !formData.city} onClick={handleAdd}
             sx={{ bgcolor: '#f59e0b', color: '#000', '&:hover': { bgcolor: '#d97706' } }}>
             {adding ? 'Adding...' : 'Add Branch'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Branch Modal */}
+      <Dialog open={!!editBranch} onClose={() => setEditBranch(null)} PaperProps={{ sx: { bgcolor: '#1a1a1a', backgroundImage: 'none', minWidth: 400 } }}>
+        <DialogTitle sx={{ color: '#fff' }}>Edit Branch</DialogTitle>
+        <DialogContent>
+          {editBranch && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField label="Branch Name" size="small" fullWidth value={editBranch.name} onChange={e => setEditBranch({ ...editBranch, name: e.target.value })} />
+              <TextField label="City" size="small" fullWidth value={editBranch.city} onChange={e => setEditBranch({ ...editBranch, city: e.target.value })} />
+              <TextField label="Address" size="small" fullWidth multiline rows={2} value={editBranch.address} onChange={e => setEditBranch({ ...editBranch, address: e.target.value })} />
+              <TextField label="Phone" size="small" fullWidth value={editBranch.phone || ''} onChange={e => setEditBranch({ ...editBranch, phone: e.target.value })} />
+              <TextField label="Capacity (Members)" type="number" size="small" fullWidth value={editBranch.capacity} onChange={e => setEditBranch({ ...editBranch, capacity: parseInt(e.target.value) || 1000 })} />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setEditBranch(null)} sx={{ color: 'text.secondary' }}>Cancel</Button>
+          <Button variant="contained" disabled={editing || !editBranch?.name || !editBranch?.city} onClick={handleEdit}
+            sx={{ bgcolor: '#f59e0b', color: '#000', '&:hover': { bgcolor: '#d97706' } }}>
+            {editing ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
