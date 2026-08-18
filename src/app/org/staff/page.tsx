@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Alert, CircularProgress,
-  Select, FormControl,
+  Select, FormControl, InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '@/lib/api';
@@ -60,7 +60,7 @@ export default function StaffPage() {
           id: String(s.id),
           name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim() || String(s.name ?? ''),
           email: String(s.email ?? ''),
-          phone: String(s.phone ?? ''),
+          phone: String(s.phone ?? '').replace(/^\+91/, ''),
           role: String(s.role ?? ''),
           status: String(s.status ?? 'ACTIVE'),
           permissions: Array.isArray(s.permissions) ? s.permissions.map(String) : [],
@@ -93,7 +93,7 @@ export default function StaffPage() {
         firstName: nameInput.split(' ')[0] || nameInput,
         lastName: nameInput.split(' ').slice(1).join(' ') || '',
         email: emailInput,
-        phone: phoneInput,
+        phone: phoneInput ? `+91${phoneInput}` : undefined,
         role: selectedRole,
         branchId: inviteBranchId,
         permissions: invitePermissions,
@@ -103,7 +103,8 @@ export default function StaffPage() {
       setNameInput(''); setEmailInput(''); setPhoneInput(''); setInviteBranchId('');
       handleRoleChange('RECEPTIONIST');
     } catch (e: any) {
-      setAddError(e.response?.data?.error || 'Failed to invite staff member');
+      const err = e.response?.data?.error;
+      setAddError(typeof err === 'string' ? err : (err?.message || 'Failed to invite staff member'));
     } finally {
       setAddSubmitting(false);
     }
@@ -119,7 +120,7 @@ export default function StaffPage() {
       await api.patch(`/staff/${editStaff.id}`, {
         firstName: firstName || editStaff.name,
         lastName: lastNames.join(' ') || '',
-        phone: editStaff.phone,
+        phone: editStaff.phone ? `+91${editStaff.phone}` : undefined,
         role: editStaff.role,
       });
       // 2. Update permissions
@@ -129,7 +130,8 @@ export default function StaffPage() {
       fetchStaff();
       setEditOpen(false);
     } catch (e: any) {
-      setEditError(e.response?.data?.error || 'Failed to update staff member');
+      const err = e.response?.data?.error;
+      setEditError(typeof err === 'string' ? err : (err?.message || 'Failed to update staff member'));
     } finally {
       setEditSubmitting(false);
     }
@@ -217,7 +219,7 @@ export default function StaffPage() {
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
           {staff.map(staffMember => (
-            <Grid item xs={12} md={6} key={staffMember.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={staffMember.id}>
               <Card elevation={0}>
                 <CardContent>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -245,7 +247,6 @@ export default function StaffPage() {
                     <Button size="small" variant="outlined" color={staffMember.status === 'ACTIVE' ? 'error' : 'success'} onClick={() => handleToggleStatus(staffMember.id, staffMember.status)}>
                       {staffMember.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                     </Button>
-                    <Button size="small" variant="outlined" color="error" onClick={() => handleDeleteStaff(staffMember.id)}>Delete</Button>
                   </Box>
                 </CardContent>
               </Card>
@@ -263,7 +264,7 @@ export default function StaffPage() {
             { role: 'RECEPTIONIST', perms: ['member.create', 'payment.create', 'attendance.create'], desc: 'Daily operations only' },
             { role: 'TRAINER', perms: ['attendance.create'], desc: 'View own sessions only' },
           ].map(r => (
-            <Grid item xs={12} md={6} key={r.role}>
+            <Grid size={{ xs: 12, md: 6 }} key={r.role}>
               <Card elevation={0}>
                 <CardContent>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
@@ -288,25 +289,43 @@ export default function StaffPage() {
         <DialogContent>
           {addError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{addError}</Alert>}
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 An invitation link with a temporary password will be sent via Email and WhatsApp.
               </Typography>
             </Grid>
-            <Grid item xs={12}><TextField label="Full Name" fullWidth size="small" value={nameInput} onChange={e => setNameInput(e.target.value)} /></Grid>
-            <Grid item xs={12}><TextField label="Email" fullWidth size="small" value={emailInput} onChange={e => setEmailInput(e.target.value)} /></Grid>
-            <Grid item xs={12}><TextField label="Phone (WhatsApp)" fullWidth size="small" value={phoneInput} onChange={e => setPhoneInput(e.target.value)} /></Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12 }}><TextField label="Full Name" fullWidth size="small" value={nameInput} onChange={e => setNameInput(e.target.value)} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField type="email" label="Email" fullWidth size="small" value={emailInput} onChange={e => setEmailInput(e.target.value)} /></Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField 
+                label="Phone (WhatsApp)" fullWidth size="small" value={phoneInput} 
+                slotProps={{ input: { 
+                  startAdornment: (
+                    <InputAdornment position="start" sx={{ 
+                      bgcolor: 'rgba(255,255,255,0.05)', px: 1.5, py: 2.5, ml: -1.75, 
+                      borderRight: '1px solid rgba(255,255,255,0.1)', color: 'text.secondary', fontWeight: 600, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 
+                    }}>
+                      🇮🇳 +91
+                    </InputAdornment>
+                  )
+                }}}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (val.length <= 10) setPhoneInput(val);
+                }} 
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => handleRoleChange(e.target.value)}>
                 {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField label="Assign to Branch" select fullWidth size="small" value={inviteBranchId} onChange={e => setInviteBranchId(e.target.value)} required>
                 {branches.map((b: any) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                 {ALL_PERMISSIONS.map(p => (
@@ -327,7 +346,7 @@ export default function StaffPage() {
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
           <Button onClick={() => setAddOpen(false)} disabled={addSubmitting}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd} disabled={addSubmitting || !nameInput || !emailInput || !inviteBranchId}>
+          <Button variant="contained" onClick={handleAdd} disabled={addSubmitting || !nameInput || !emailInput || !emailInput.includes('@') || !inviteBranchId || (phoneInput.length > 0 && phoneInput.length !== 10)}>
             {addSubmitting ? <CircularProgress size={24} /> : 'Send Invite'}
           </Button>
         </DialogActions>
@@ -340,10 +359,28 @@ export default function StaffPage() {
           {editError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{editError}</Alert>}
           {editStaff && (
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              <Grid item xs={12}><TextField label="Full Name" fullWidth size="small" value={editStaff.name} onChange={e => setEditStaff({...editStaff, name: e.target.value})} /></Grid>
-              <Grid item xs={12}><TextField label="Email" fullWidth size="small" value={editStaff.email} disabled helperText="Email cannot be changed" /></Grid>
-              <Grid item xs={12}><TextField label="Phone (WhatsApp)" fullWidth size="small" value={editStaff.phone} onChange={e => setEditStaff({...editStaff, phone: e.target.value})} /></Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}><TextField label="Full Name" fullWidth size="small" value={editStaff.name} onChange={e => setEditStaff({...editStaff, name: e.target.value})} /></Grid>
+              <Grid size={{ xs: 12 }}><TextField label="Email" fullWidth size="small" value={editStaff.email} disabled helperText="Email cannot be changed" /></Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField 
+                  label="Phone (WhatsApp)" fullWidth size="small" value={editStaff.phone} 
+                  slotProps={{ input: { 
+                    startAdornment: (
+                      <InputAdornment position="start" sx={{ 
+                        bgcolor: 'rgba(255,255,255,0.05)', px: 1.5, py: 2.5, ml: -1.75, 
+                        borderRight: '1px solid rgba(255,255,255,0.1)', color: 'text.secondary', fontWeight: 600, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 
+                      }}>
+                        🇮🇳 +91
+                      </InputAdornment>
+                    )
+                  }}}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length <= 10) setEditStaff({...editStaff, phone: val});
+                  }} 
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
                 <TextField label="Role" select fullWidth size="small" value={editStaff.role} onChange={e => {
                   const newRole = e.target.value;
                   let newPerms = [...editStaff.permissions];
@@ -355,7 +392,7 @@ export default function StaffPage() {
                   {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {ALL_PERMISSIONS.map(p => (
@@ -382,7 +419,7 @@ export default function StaffPage() {
           <Button color="error" onClick={() => { setEditOpen(false); handleDeleteStaff(editStaff!.id); }}>Delete Staff</Button>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button onClick={() => setEditOpen(false)} disabled={editSubmitting}>Cancel</Button>
-            <Button variant="contained" onClick={handleEditSubmit} disabled={editSubmitting || !editStaff?.name}>
+            <Button variant="contained" onClick={handleEditSubmit} disabled={editSubmitting || !editStaff?.name || (editStaff?.phone ? editStaff.phone.length !== 10 : false)}>
               {editSubmitting ? <CircularProgress size={24} /> : 'Save Changes'}
             </Button>
           </Box>
