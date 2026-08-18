@@ -74,7 +74,7 @@ export function proxy(request: NextRequest) {
   }
 
   // ── 5. Enforce portal route access ────────────────────────────────────────
-  const portalRoute = PORTAL_ROUTES.find((r) => pathname.startsWith(r.prefix));
+  const portalRoute = PORTAL_ROUTES.find((r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`));
   if (portalRoute) {
     const allowed = portalType !== null && portalRoute.allowedPortals.includes(portalType);
     if (!allowed) {
@@ -86,10 +86,10 @@ export function proxy(request: NextRequest) {
   // ── 6. Branch portal — block trainer/member from accessing admin routes ───
   // If a trainer or member tries to hit an unrecognised path (branch admin routes),
   // redirect them to their portal home.
-  if (portalType === 'trainer' && !pathname.startsWith('/trainer')) {
+  if (portalType === 'trainer' && pathname !== '/trainer' && !pathname.startsWith('/trainer/')) {
     return NextResponse.redirect(new URL('/trainer/dashboard', request.url));
   }
-  if (portalType === 'member' && !pathname.startsWith('/member')) {
+  if (portalType === 'member' && pathname !== '/member' && !pathname.startsWith('/member/')) {
     return NextResponse.redirect(new URL('/member/dashboard', request.url));
   }
 
