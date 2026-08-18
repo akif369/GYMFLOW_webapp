@@ -16,7 +16,7 @@ const ALL_PERMISSIONS = [
   'attendance.correct', 'payment.create', 'payment.refund', 'revenue.view',
   'trainer.manage', 'report.export',
 ];
-type StaffRow = { id: string; name: string; email: string; phone: string; role: string; status: string; permissions: string[]; joinDate: string; branch: string };
+type StaffRow = { id: string; name: string; email: string; phone: string; role: string; status: string; permissions: string[]; joinDate: string; branch: string; branchId: string; };
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -36,8 +36,15 @@ export default function StaffPage() {
   const [emailInput, setEmailInput] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
   const [inviteBranchId, setInviteBranchId] = useState('');
+  const [invitePermissions, setInvitePermissions] = useState<string[]>(['member.create', 'payment.create', 'attendance.create']);
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addError, setAddError] = useState('');
+
+  // Edit Staff State
+  const [editOpen, setEditOpen] = useState(false);
+  const [editStaff, setEditStaff] = useState<StaffRow | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState('');
 
   // ── API state ────────────────────────────────────────────────────────────────
   const [apiStaff, setApiStaff] = useState<StaffRow[] | null>(null);
@@ -59,12 +66,24 @@ export default function StaffPage() {
           permissions: Array.isArray(s.permissions) ? s.permissions.map(String) : [],
           joinDate: String(s.joinDate ?? s.createdAt ?? '').split('T')[0],
           branch: String(s.branch ?? ''),
+          branchId: String(s.branchId ?? ''),
         })));
       })
       .catch(() => setApiStaff([]));
   };
 
   useEffect(() => { fetchStaff(); }, [selectedBranchId]);
+
+  const handleRoleChange = (newRole: string) => {
+    setSelectedRole(newRole);
+    if (newRole === 'MANAGER') setInvitePermissions(ALL_PERMISSIONS.filter(p => !p.includes('delete')));
+    else if (newRole === 'RECEPTIONIST') setInvitePermissions(['member.create', 'payment.create', 'attendance.create']);
+    else if (newRole === 'TRAINER') setInvitePermissions(['attendance.create']);
+  };
+
+  const togglePermission = (perm: string) => {
+    setInvitePermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
+  };
 
   const handleAdd = async () => {
     setAddError('');
@@ -77,14 +96,42 @@ export default function StaffPage() {
         phone: phoneInput,
         role: selectedRole,
         branchId: inviteBranchId,
+        permissions: invitePermissions,
       });
       fetchStaff();
       setAddOpen(false);
       setNameInput(''); setEmailInput(''); setPhoneInput(''); setInviteBranchId('');
+      handleRoleChange('RECEPTIONIST');
     } catch (e: any) {
       setAddError(e.response?.data?.error || 'Failed to invite staff member');
     } finally {
       setAddSubmitting(false);
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editStaff) return;
+    setEditError('');
+    setEditSubmitting(true);
+    try {
+      // 1. Update basic info
+      const [firstName, ...lastNames] = editStaff.name.split(' ');
+      await api.patch(`/staff/${editStaff.id}`, {
+        firstName: firstName || editStaff.name,
+        lastName: lastNames.join(' ') || '',
+        phone: editStaff.phone,
+        role: editStaff.role,
+      });
+      // 2. Update permissions
+      await api.patch(`/staff/${editStaff.id}/permissions`, {
+        permissions: editStaff.permissions,
+      });
+      fetchStaff();
+      setEditOpen(false);
+    } catch (e: any) {
+      setEditError(e.response?.data?.error || 'Failed to update staff member');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -121,7 +168,6 @@ export default function StaffPage() {
   };
 
   const staff = apiStaff ?? [];
-  const defaultPerms = selectedRole === 'MANAGER' ? ALL_PERMISSIONS.filter(p => !p.includes('delete')) : ['member.create', 'payment.create', 'attendance.create'];
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -194,7 +240,7 @@ export default function StaffPage() {
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
-                    <Button size="small" variant="outlined" onClick={() => alert('Edit permissions coming soon')}>Edit</Button>
+                    <Button size="small" variant="outlined" onClick={() => { setEditStaff({...staffMember}); setEditOpen(true); }}>Edit</Button>
                     <Button size="small" variant="outlined" color="warning" onClick={() => handleResetPassword(staffMember.id)}>Reset Password</Button>
                     <Button size="small" variant="outlined" color={staffMember.status === 'ACTIVE' ? 'error' : 'success'} onClick={() => handleToggleStatus(staffMember.id, staffMember.status)}>
                       {staffMember.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
@@ -251,7 +297,7 @@ export default function StaffPage() {
             <Grid item xs={12}><TextField label="Email" fullWidth size="small" value={emailInput} onChange={e => setEmailInput(e.target.value)} /></Grid>
             <Grid item xs={12}><TextField label="Phone (WhatsApp)" fullWidth size="small" value={phoneInput} onChange={e => setPhoneInput(e.target.value)} /></Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => setSelectedRole(e.target.value)}>
+              <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => handleRoleChange(e.target.value)}>
                 {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
               </TextField>
             </Grid>
@@ -268,9 +314,10 @@ export default function StaffPage() {
                     key={p}
                     label={p}
                     size="small"
+                    onClick={() => togglePermission(p)}
                     clickable
-                    variant={defaultPerms.includes(p) ? 'filled' : 'outlined'}
-                    color={defaultPerms.includes(p) ? 'primary' : 'default'}
+                    variant={invitePermissions.includes(p) ? 'filled' : 'outlined'}
+                    color={invitePermissions.includes(p) ? 'primary' : 'default'}
                     sx={{ fontSize: '0.65rem', height: 22 }}
                   />
                 ))}
@@ -283,6 +330,62 @@ export default function StaffPage() {
           <Button variant="contained" onClick={handleAdd} disabled={addSubmitting || !nameInput || !emailInput || !inviteBranchId}>
             {addSubmitting ? <CircularProgress size={24} /> : 'Send Invite'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Staff Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
+        <DialogTitle>Edit Staff Member</DialogTitle>
+        <DialogContent>
+          {editError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{editError}</Alert>}
+          {editStaff && (
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid item xs={12}><TextField label="Full Name" fullWidth size="small" value={editStaff.name} onChange={e => setEditStaff({...editStaff, name: e.target.value})} /></Grid>
+              <Grid item xs={12}><TextField label="Email" fullWidth size="small" value={editStaff.email} disabled helperText="Email cannot be changed" /></Grid>
+              <Grid item xs={12}><TextField label="Phone (WhatsApp)" fullWidth size="small" value={editStaff.phone} onChange={e => setEditStaff({...editStaff, phone: e.target.value})} /></Grid>
+              <Grid item xs={12}>
+                <TextField label="Role" select fullWidth size="small" value={editStaff.role} onChange={e => {
+                  const newRole = e.target.value;
+                  let newPerms = [...editStaff.permissions];
+                  if (newRole === 'MANAGER') newPerms = ALL_PERMISSIONS.filter(p => !p.includes('delete'));
+                  else if (newRole === 'RECEPTIONIST') newPerms = ['member.create', 'payment.create', 'attendance.create'];
+                  else if (newRole === 'TRAINER') newPerms = ['attendance.create'];
+                  setEditStaff({...editStaff, role: newRole, permissions: newPerms});
+                }}>
+                  {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {ALL_PERMISSIONS.map(p => (
+                    <Chip
+                      key={p}
+                      label={p}
+                      size="small"
+                      onClick={() => {
+                        const newPerms = editStaff.permissions.includes(p) ? editStaff.permissions.filter(perm => perm !== p) : [...editStaff.permissions, p];
+                        setEditStaff({...editStaff, permissions: newPerms});
+                      }}
+                      clickable
+                      variant={editStaff.permissions.includes(p) ? 'filled' : 'outlined'}
+                      color={editStaff.permissions.includes(p) ? 'primary' : 'default'}
+                      sx={{ fontSize: '0.65rem', height: 22 }}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
+          <Button color="error" onClick={() => { setEditOpen(false); handleDeleteStaff(editStaff!.id); }}>Delete Staff</Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button onClick={() => setEditOpen(false)} disabled={editSubmitting}>Cancel</Button>
+            <Button variant="contained" onClick={handleEditSubmit} disabled={editSubmitting || !editStaff?.name}>
+              {editSubmitting ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </Box>
