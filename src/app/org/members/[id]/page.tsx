@@ -1,7 +1,7 @@
 'use client';
 import { use, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import AppLayout from '@/components/AppLayout';
+
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   Tabs, Tab, Divider, Table, TableBody, TableCell, TableHead, TableRow,
@@ -561,26 +561,26 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <AppLayout>
+      <>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
           <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         </Box>
         <SkeletonProfile />
-      </AppLayout>
+      </>
     );
   }
 
   if (!member) {
     return (
-      <AppLayout>
+      <>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined" sx={{ mb: 3 }}>Back</Button>
         <Alert severity="error">Member not found or failed to load.</Alert>
-      </AppLayout>
+      </>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       {/* Back + Header */}
       <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, width: '100%', flexDirection: 'row' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
@@ -1589,6 +1589,6 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </DialogActions>
         </Box>
       </Dialog>
-    </AppLayout>
+    </>
   );
 }

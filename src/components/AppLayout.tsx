@@ -4,6 +4,7 @@ import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AuthGuard from './AuthGuard';
+import RoleGuard from './RoleGuard';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -16,7 +17,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <RoleGuard allowedPortals={['branch']}>
+        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
         <Sidebar 
           mobileOpen={mobileOpen} 
           onClose={() => setMobileOpen(false)} 
@@ -43,7 +45,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </Box>
         </Box>
-      </Box>
+        </Box>
+      </RoleGuard>
     </AuthGuard>
   );
 }
