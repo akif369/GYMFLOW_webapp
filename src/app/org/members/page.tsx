@@ -202,7 +202,7 @@ function MembersPageContent() {
       .finally(() => { if (!cancelled) setApiLoading(false); });
     return () => { cancelled = true; };
    
-  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger]);
+  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger, selectedBranchId]);
   const members = apiMembers ?? [];
   const totalCount = apiMembers ? apiTotal : 0;
 
@@ -274,7 +274,7 @@ function MembersPageContent() {
       setRenewMemberId(member.id);
       setRenewOpen(true);
     } else if (action === 'view') {
-      router.push(`/members/${member.id}`);
+      router.push(`/org/members/${member.id}`);
     } else if (action === 'attendance') {
       router.push(`/attendance?member=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}`);
       } else {
@@ -537,7 +537,7 @@ function MembersPageContent() {
               longPressTriggered.current = false;
               return;
             }
-            router.push(`/members/${params.row.id}`);
+            router.push(`/org/members/${params.row.id}`);
           }}
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
