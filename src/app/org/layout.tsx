@@ -1,12 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Box, Drawer, List, ListItem, ListItemButton, ListItemIcon,
   ListItemText, Typography, Avatar, Divider, IconButton,
-  useTheme, useMediaQuery, Tooltip,
+  useTheme, useMediaQuery, Tooltip, Chip,
 } from '@mui/material';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
@@ -27,7 +27,22 @@ import { api } from '@/lib/api';
 
 const DRAWER_WIDTH = 248;
 
-const NAV_SECTIONS = [
+type OrgMode = 'SINGLE_GYM' | 'MULTI_GYM';
+
+interface NavItem {
+  name: string;
+  icon: React.ReactNode;
+  href: string;
+  /** When true, this item is only rendered in MULTI_GYM mode */
+  multiGymOnly?: boolean;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Command Center',
     items: [
@@ -37,7 +52,7 @@ const NAV_SECTIONS = [
   {
     label: 'Operations',
     items: [
-      { name: 'Branches', icon: <StorefrontRoundedIcon sx={{ fontSize: 18 }} />, href: '/org/branches' },
+      { name: 'Branches', icon: <StorefrontRoundedIcon sx={{ fontSize: 18 }} />, href: '/org/branches', multiGymOnly: true },
       { name: 'Members', icon: <PeopleRoundedIcon sx={{ fontSize: 18 }} />, href: '/org/members' },
       { name: 'Staff', icon: <GroupRoundedIcon sx={{ fontSize: 18 }} />, href: '/org/staff' },
     ],
@@ -52,7 +67,15 @@ const NAV_SECTIONS = [
   },
 ];
 
-function OrgSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => void }) {
+function OrgSidebar({
+  mobileOpen,
+  onClose,
+  orgMode,
+}: {
+  mobileOpen: boolean;
+  onClose: () => void;
+  orgMode: OrgMode;
+}) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const pathname = usePathname();
@@ -69,6 +92,11 @@ function OrgSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () 
     logout();
     router.replace('/login');
   };
+
+  const filteredSections = NAV_SECTIONS.map(section => ({
+    ...section,
+    items: section.items.filter(item => !item.multiGymOnly || orgMode === 'MULTI_GYM'),
+  })).filter(section => section.items.length > 0);
 
   const drawerContent = (
     <>
@@ -102,11 +130,28 @@ function OrgSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () 
         )}
       </Box>
 
+      {/* Mode badge */}
+      <Box sx={{ px: 2.5, pb: 1 }}>
+        <Chip
+          label={orgMode === 'MULTI_GYM' ? 'Multi-Gym' : 'Single Gym'}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            bgcolor: orgMode === 'MULTI_GYM' ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)',
+            color: orgMode === 'MULTI_GYM' ? '#60a5fa' : '#34d399',
+            border: `1px solid ${orgMode === 'MULTI_GYM' ? 'rgba(59,130,246,0.3)' : 'rgba(16,185,129,0.3)'}`,
+          }}
+        />
+      </Box>
+
       <Divider sx={{ mx: 2, mb: 1, borderColor: 'rgba(245,158,11,0.15)' }} />
 
       {/* Nav */}
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: 1.5, py: 1 }}>
-        {NAV_SECTIONS.map((section) => (
+        {filteredSections.map((section) => (
           <Box key={section.label} sx={{ mb: 0.5 }}>
             <Typography variant="caption" sx={{
               px: 1, mb: 0.5, display: 'block',
@@ -228,10 +273,23 @@ function OrgSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () 
 
 export default function OrgOwnerLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [orgMode, setOrgMode] = useState<OrgMode>('SINGLE_GYM');
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
+
+  // Fetch organization mode on mount so sidebar adapts
+  useEffect(() => {
+    api.get('/org')
+      .then(res => {
+        const mode = res.data?.org?.organizationMode ?? res.data?.organizationMode;
+        if (mode === 'MULTI_GYM' || mode === 'SINGLE_GYM') {
+          setOrgMode(mode);
+        }
+      })
+      .catch(() => { /* default stays SINGLE_GYM */ });
+  }, []);
 
   const handleLogout = async () => {
     try { await api.post('/auth/logout'); } catch { /* best effort */ }
@@ -246,6 +304,7 @@ export default function OrgOwnerLayout({ children }: { children: React.ReactNode
           <OrgSidebar
             mobileOpen={mobileOpen}
             onClose={() => setMobileOpen(false)}
+            orgMode={orgMode}
           />
 
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
