@@ -85,11 +85,13 @@ export default function StaffPage() {
     setInvitePermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
   };
 
+  const [generatedInvite, setGeneratedInvite] = useState<string | null>(null);
+
   const handleAdd = async () => {
     setAddError('');
     setAddSubmitting(true);
     try {
-      await api.post('/staff/invite', {
+      const res = await api.post('/staff/invite', {
         firstName: nameInput.split(' ')[0] || nameInput,
         lastName: nameInput.split(' ').slice(1).join(' ') || '',
         email: emailInput,
@@ -99,7 +101,11 @@ export default function StaffPage() {
         permissions: invitePermissions,
       });
       fetchStaff();
-      setAddOpen(false);
+      if (res.data?.inviteLink) {
+        setGeneratedInvite(res.data.inviteLink);
+      } else {
+        setAddOpen(false);
+      }
       setNameInput(''); setEmailInput(''); setPhoneInput(''); setInviteBranchId('');
       handleRoleChange('RECEPTIONIST');
     } catch (e: any) {
@@ -276,71 +282,105 @@ export default function StaffPage() {
       </TabPanel>
 
       {/* Invite Staff Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
-        <DialogTitle>Invite Staff Member</DialogTitle>
+      <Dialog open={addOpen} onClose={() => { setAddOpen(false); setGeneratedInvite(null); }} maxWidth="sm" fullWidth sx={{bgcolor: 'background.paper'}} slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
+        <DialogTitle>{generatedInvite ? 'Staff Invited Successfully' : 'Invite Staff Member'}</DialogTitle>
         <DialogContent>
-          {addError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{addError}</Alert>}
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                An invitation link with a temporary password will be sent via Email and WhatsApp.
+          {generatedInvite ? (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                The staff member has been created. Please copy the secure invite link below and send it to them so they can set up their password.
               </Typography>
-            </Grid>
-            <Grid size={{ xs: 12 }}><TextField label="Full Name" fullWidth size="small" value={nameInput} onChange={e => setNameInput(e.target.value)} /></Grid>
-            <Grid size={{ xs: 12 }}><TextField type="email" label="Email" fullWidth size="small" value={emailInput} onChange={e => setEmailInput(e.target.value)} /></Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField 
-                label="Phone (WhatsApp)" fullWidth size="small" value={phoneInput} 
-                slotProps={{ input: { 
-                  startAdornment: (
-                    <InputAdornment position="start" sx={{ 
-                      bgcolor: 'rgba(255,255,255,0.05)', px: 1.5, py: 2.5, ml: -1.75, 
-                      borderRight: '1px solid rgba(255,255,255,0.1)', color: 'text.secondary', fontWeight: 600, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 
-                    }}>
-                      🇮🇳 +91
-                    </InputAdornment>
-                  )
-                }}}
-                onChange={e => {
-                  const val = e.target.value.replace(/\D/g, '');
-                  if (val.length <= 10) setPhoneInput(val);
-                }} 
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => handleRoleChange(e.target.value)}>
-                {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField label="Assign to Branch" select fullWidth size="small" value={inviteBranchId} onChange={e => setInviteBranchId(e.target.value)} required>
-                {branches.map((b: any) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {ALL_PERMISSIONS.map(p => (
-                  <Chip
-                    key={p}
-                    label={p}
-                    size="small"
-                    onClick={() => togglePermission(p)}
-                    clickable
-                    variant={invitePermissions.includes(p) ? 'filled' : 'outlined'}
-                    color={invitePermissions.includes(p) ? 'primary' : 'default'}
-                    sx={{ fontSize: '0.65rem', height: 22 }}
-                  />
-                ))}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1.5, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Typography variant="body2" sx={{ flex: 1, wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                  {generatedInvite}
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedInvite);
+                    // optionally could show a toast here
+                  }}
+                >
+                  Copy
+                </Button>
               </Box>
-            </Grid>
-          </Grid>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                This link will expire in 7 days and can only be used once.
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {addError && <Alert severity="error" sx={{ mt: 1, mb: 2 }}>{addError}</Alert>}
+              <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    An invitation link with a temporary password will be sent via Email and WhatsApp.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12 }}><TextField label="Full Name" fullWidth size="small" value={nameInput} onChange={e => setNameInput(e.target.value)} /></Grid>
+                <Grid size={{ xs: 12 }}><TextField type="email" label="Email" fullWidth size="small" value={emailInput} onChange={e => setEmailInput(e.target.value)} /></Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField 
+                    label="Phone (WhatsApp)" fullWidth size="small" value={phoneInput} 
+                    slotProps={{ input: { 
+                      startAdornment: (
+                        <InputAdornment position="start" sx={{ 
+                          bgcolor: 'rgba(255,255,255,0.05)', px: 1.5, py: 2.5, ml: -1.75, 
+                          borderRight: '1px solid rgba(255,255,255,0.1)', color: 'text.secondary', fontWeight: 600, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 
+                        }}>
+                          🇮🇳 +91
+                        </InputAdornment>
+                      )
+                    }}}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 10) setPhoneInput(val);
+                    }} 
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => handleRoleChange(e.target.value)}>
+                    {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField label="Assign to Branch" select fullWidth size="small" value={inviteBranchId} onChange={e => setInviteBranchId(e.target.value)} required>
+                    {branches.map((b: any) => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="caption" color="text.secondary"  sx={{ mb: 1,display:"block" }}>Permissions</Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {ALL_PERMISSIONS.map(p => (
+                      <Chip
+                        key={p}
+                        label={p}
+                        size="small"
+                        onClick={() => togglePermission(p)}
+                        clickable
+                        variant={invitePermissions.includes(p) ? 'filled' : 'outlined'}
+                        color={invitePermissions.includes(p) ? 'primary' : 'default'}
+                        sx={{ fontSize: '0.65rem', height: 22 }}
+                      />
+                    ))}
+                  </Box>
+                </Grid>
+              </Grid>
+            </>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setAddOpen(false)} disabled={addSubmitting}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd} disabled={addSubmitting || !nameInput || !emailInput || !emailInput.includes('@') || !inviteBranchId || (phoneInput.length > 0 && phoneInput.length !== 10)}>
-            {addSubmitting ? <CircularProgress size={24} /> : 'Send Invite'}
-          </Button>
+          {generatedInvite ? (
+            <Button onClick={() => { setAddOpen(false); setGeneratedInvite(null); }}>Close</Button>
+          ) : (
+            <>
+              <Button onClick={() => setAddOpen(false)} disabled={addSubmitting}>Cancel</Button>
+              <Button variant="contained" onClick={handleAdd} disabled={addSubmitting || !nameInput || !emailInput || !emailInput.includes('@') || !inviteBranchId || (phoneInput.length > 0 && phoneInput.length !== 10)}>
+                {addSubmitting ? <CircularProgress size={24} /> : 'Send Invite'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 
