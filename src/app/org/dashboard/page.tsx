@@ -27,24 +27,13 @@ const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 // ORG_STATS replaced by API data
 
-const BRANCH_PERFORMANCE = [
-  { name: 'Koramangala', members: 820, revenue: 28400, growth: 15.2, occupancy: 82, status: 'ACTIVE' },
-  { name: 'Indiranagar', members: 710, revenue: 24100, growth: 9.8, occupancy: 71, status: 'ACTIVE' },
-  { name: 'HSR Layout', members: 648, revenue: 21800, growth: 6.4, occupancy: 64, status: 'ACTIVE' },
-  { name: 'Whitefield', members: 669, revenue: 20000, growth: -1.2, occupancy: 55, status: 'ACTIVE' },
-];
+type BranchPerf = { id: string; name: string; members: number; revenue: number; growth: number; occupancy: number; status: string };
 
 const MONTHLY_REVENUE = [62000, 71000, 68500, 74000, 80200, 85000, 91000, 94300];
 const MONTHLY_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
 const MEMBER_GROWTH = [2100, 2180, 2240, 2310, 2450, 2600, 2720, 2847];
 
-const RECENT_ACTIVITY = [
-  { id: '1', type: 'new_member', message: 'New member joined at Koramangala', time: '2 min ago', branch: 'Koramangala', severity: 'success' },
-  { id: '2', type: 'payment', message: 'Payment of ₹8,000 received at Indiranagar', time: '12 min ago', branch: 'Indiranagar', severity: 'info' },
-  { id: '3', type: 'expiry', message: '23 memberships expiring in 3 days — Whitefield', time: '1 hr ago', branch: 'Whitefield', severity: 'warning' },
-  { id: '4', type: 'staff', message: 'New trainer onboarded at HSR Layout', time: '2 hr ago', branch: 'HSR Layout', severity: 'success' },
-  { id: '5', type: 'alert', message: 'Attendance down 18% vs last week — Whitefield', time: '3 hr ago', branch: 'Whitefield', severity: 'error' },
-];
+
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
@@ -94,13 +83,13 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#f59e0b', trend, spar
             </Box>
           )}
         </Stack>
-        <Typography sx={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.05em', color: 'text.primary', lineHeight: 1 }}>
+        <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.6rem' }, fontWeight: 800, letterSpacing: '-0.05em', color: 'text.primary', lineHeight: 1 }}>
           {value}
         </Typography>
-        <Typography sx={{ fontSize: '0.73rem', color: 'text.secondary', mt: 0.5, fontWeight: 500 }}>
+        <Typography sx={{ fontSize: { xs: '0.65rem', sm: '0.73rem' }, color: 'text.secondary', mt: 0.5, fontWeight: 500 }} noWrap>
           {title}
         </Typography>
-        {sub && <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled', mt: 0.25 }}>{sub}</Typography>}
+        {sub && <Typography sx={{ fontSize: { xs: '0.6rem', sm: '0.68rem' }, color: 'text.disabled', mt: 0.25 }} noWrap>{sub}</Typography>}
         {sparkData && (
           <Box sx={{ mt: 1.5, height: 36 }}>
             <SparkLineChart data={sparkData} color={color} height={36} showTooltip showHighlight />
@@ -113,45 +102,46 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#f59e0b', trend, spar
 
 // ── Branch Performance Row ────────────────────────────────────────────────────
 
-function BranchRow({ branch }: { branch: typeof BRANCH_PERFORMANCE[0] }) {
+function BranchRow({ branch }: { branch: BranchPerf }) {
   const growthUp = branch.growth >= 0;
   return (
-    <Box sx={{
-      display: 'flex', alignItems: 'center', gap: 2,
-      py: 1.5, px: 2,
-      borderRadius: 2, cursor: 'pointer',
-      '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' },
-      transition: 'background 0.15s',
+    <Grid container alignItems="center" spacing={2} sx={{
+      py: 1.5, px: 2, borderRadius: 2, cursor: 'pointer',
+      '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' }, transition: 'background 0.15s',
     }}>
-      <Avatar sx={{
-        width: 36, height: 36, fontSize: '0.82rem', fontWeight: 700,
-        bgcolor: 'rgba(245,158,11,0.15)', color: '#f59e0b', flexShrink: 0,
-      }}>
-        {branch.name[0]}
-      </Avatar>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.primary' }}>
-          {branch.name}
-        </Typography>
-        <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
-          {branch.members.toLocaleString()} members
-        </Typography>
-      </Box>
-      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+      <Grid size={{ xs: 12, sm: 5 }} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar sx={{
+          width: 36, height: 36, fontSize: '0.82rem', fontWeight: 700,
+          bgcolor: 'rgba(245,158,11,0.15)', color: '#f59e0b', flexShrink: 0,
+        }}>
+          {branch.name[0]}
+        </Avatar>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.primary' }} noWrap>
+            {branch.name}
+          </Typography>
+          <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
+            {branch.members.toLocaleString()} members
+          </Typography>
+        </Box>
+      </Grid>
+
+      <Grid size={{ xs: 6, sm: 4 }} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: 'text.primary' }}>
           ₹{branch.revenue.toLocaleString()}
         </Typography>
         <Typography sx={{
           fontSize: '0.7rem', fontWeight: 600,
           color: growthUp ? '#4ade80' : '#f87171',
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.25,
+          display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, gap: 0.25,
         }}>
           {growthUp ? <ArrowUpwardRoundedIcon sx={{ fontSize: 10 }} /> : <ArrowDownwardRoundedIcon sx={{ fontSize: 10 }} />}
           {Math.abs(branch.growth)}%
         </Typography>
-      </Box>
-      <Box sx={{ width: 80, flexShrink: 0 }}>
-        <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled', mb: 0.4 }}>
+      </Grid>
+
+      <Grid size={{ xs: 6, sm: 3 }}>
+        <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled', mb: 0.4, textAlign: 'right' }}>
           {branch.occupancy}% capacity
         </Typography>
         <LinearProgress
@@ -166,8 +156,8 @@ function BranchRow({ branch }: { branch: typeof BRANCH_PERFORMANCE[0] }) {
             },
           }}
         />
-      </Box>
-    </Box>
+      </Grid>
+    </Grid>
   );
 }
 
@@ -235,7 +225,7 @@ export default function OrgDashboardPage() {
       </Box>
 
       {/* KPI Grid */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
         {[
           { title: 'Monthly Revenue', value: fmtCurrency(stats.monthRevenue), sub: `₹${fmtCurrency(stats.todaysRevenue)} today`, icon: AttachMoneyRoundedIcon, color: '#f59e0b', sparkData: dashboardData?.revenueChart?.map((r:any) => r.revenue) || MONTHLY_REVENUE },
           { title: 'Active Members', value: fmt(stats.activeMembers), sub: `${fmt(stats.newMembersMonth)} new this month`, icon: PeopleRoundedIcon, color: '#10b981', sparkData: MEMBER_GROWTH },
@@ -246,7 +236,7 @@ export default function OrgDashboardPage() {
           { title: 'Expired Memberships', value: fmt(stats.expiredMemberships), sub: `${stats.expiringIn7Days} expiring soon`, icon: WarningAmberRoundedIcon, color: '#f43f5e' },
           { title: 'Pending Collections', value: fmtCurrency(stats.pendingAmount), sub: 'Overdue payments', icon: AccountBalanceRoundedIcon, color: '#eab308' },
         ].map((kpi) => (
-          <Grid item xs={12} sm={6} md={3} key={kpi.title}>
+          <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }} key={kpi.title}>
             {loading
               ? <Skeleton variant="rounded" height={140} sx={{ borderRadius: 2 }} />
               : <KpiCard {...kpi} />}
@@ -255,9 +245,9 @@ export default function OrgDashboardPage() {
       </Grid>
 
       {/* Charts + Branch Performance */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
         {/* Revenue chart */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -281,7 +271,7 @@ export default function OrgDashboardPage() {
                       color: '#f59e0b',
                       label: 'Revenue (₹)',
                     }]}
-                    height={220}
+                    height={300}
                     sx={{
                       '& .MuiChartsAxis-root': { '& text': { fill: 'rgba(255,255,255,0.4)', fontSize: 11 } },
                       '& .MuiGrid-line': { stroke: 'rgba(255,255,255,0.05)' },
@@ -293,7 +283,7 @@ export default function OrgDashboardPage() {
         </Grid>
 
         {/* Branch performance */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -311,7 +301,7 @@ export default function OrgDashboardPage() {
                 </Button>
               </Box>
               <Stack divider={<Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />}>
-                {BRANCH_PERFORMANCE.map((branch) => (
+                {(dashboardData?.branchPerformance || []).map((branch: BranchPerf) => (
                   <BranchRow key={branch.name} branch={branch} />
                 ))}
               </Stack>
@@ -321,8 +311,8 @@ export default function OrgDashboardPage() {
       </Grid>
 
       {/* Member growth + Activity feed */}
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={7}>
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -346,7 +336,7 @@ export default function OrgDashboardPage() {
                       label: 'Check-ins',
                       area: true,
                     }]}
-                    height={200}
+                    height={300}
                     sx={{
                       '& .MuiChartsAxis-root': { '& text': { fill: 'rgba(255,255,255,0.4)', fontSize: 11 } },
                       '& .MuiAreaElement-root': { fill: 'url(#memberGrowthGradient)', opacity: 0.15 },
@@ -358,7 +348,7 @@ export default function OrgDashboardPage() {
         </Grid>
 
         {/* Activity Feed */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
