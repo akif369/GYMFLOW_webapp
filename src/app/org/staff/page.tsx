@@ -24,7 +24,7 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
-const roleColor: Record<string, ChipColor> = { OWNER: 'error', MANAGER: 'warning', RECEPTIONIST: 'info', TRAINER: 'success' };
+const roleColor: Record<string, ChipColor> = { OWNER: 'error', BRANCH_OWNER: 'secondary', MANAGER: 'warning', RECEPTIONIST: 'info', TRAINER: 'success' };
 
 export default function StaffPage() {
   const [tab, setTab] = useState(0);
@@ -76,7 +76,8 @@ export default function StaffPage() {
 
   const handleRoleChange = (newRole: string) => {
     setSelectedRole(newRole);
-    if (newRole === 'MANAGER') setInvitePermissions(ALL_PERMISSIONS.filter(p => !p.includes('delete')));
+    if (newRole === 'BRANCH_OWNER') setInvitePermissions(ALL_PERMISSIONS);
+    else if (newRole === 'MANAGER') setInvitePermissions(ALL_PERMISSIONS.filter(p => !p.includes('delete')));
     else if (newRole === 'RECEPTIONIST') setInvitePermissions(['member.create', 'payment.create', 'attendance.create']);
     else if (newRole === 'TRAINER') setInvitePermissions(['attendance.create']);
   };
@@ -258,6 +259,7 @@ export default function StaffPage() {
         <Grid container spacing={2}>
           {[
             { role: 'OWNER', perms: ALL_PERMISSIONS, desc: 'Full access to everything' },
+            { role: 'BRANCH_OWNER', perms: ALL_PERMISSIONS, desc: 'Full access to assigned branch' },
             { role: 'MANAGER', perms: ALL_PERMISSIONS.filter(p => !p.includes('delete')), desc: 'All except delete' },
             { role: 'RECEPTIONIST', perms: ['member.create', 'payment.create', 'attendance.create'], desc: 'Daily operations only' },
             { role: 'TRAINER', perms: ['attendance.create'], desc: 'View own sessions only' },
@@ -341,7 +343,7 @@ export default function StaffPage() {
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField label="Role" select fullWidth size="small" value={selectedRole} onChange={e => handleRoleChange(e.target.value)}>
-                    {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                    {['BRANCH_OWNER', 'MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -416,12 +418,13 @@ export default function StaffPage() {
                 <TextField label="Role" select fullWidth size="small" value={editStaff.role} onChange={e => {
                   const newRole = e.target.value;
                   let newPerms = [...editStaff.permissions];
-                  if (newRole === 'MANAGER') newPerms = ALL_PERMISSIONS.filter(p => !p.includes('delete'));
+                  if (newRole === 'BRANCH_OWNER') newPerms = ALL_PERMISSIONS;
+                  else if (newRole === 'MANAGER') newPerms = ALL_PERMISSIONS.filter(p => !p.includes('delete'));
                   else if (newRole === 'RECEPTIONIST') newPerms = ['member.create', 'payment.create', 'attendance.create'];
                   else if (newRole === 'TRAINER') newPerms = ['attendance.create'];
                   setEditStaff({...editStaff, role: newRole, permissions: newPerms});
                 }}>
-                  {['MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                  {['BRANCH_OWNER', 'MANAGER', 'RECEPTIONIST', 'TRAINER'].map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
                 </TextField>
               </Grid>
               <Grid size={{ xs: 12 }}>
