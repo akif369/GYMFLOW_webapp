@@ -28,14 +28,14 @@ export default function PageSkeleton() {
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={2}>
           {[1, 2, 3, 4, 5, 6].map((item) => (
-            <Grid item xs={6} sm={4} md={4} lg={2} key={item}>
+            <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={item}>
               <Box sx={{ 
                 p: 2, 
                 borderRadius: 2, 
                 border: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
                 bgcolor: alpha(theme.palette.background.paper, 0.3)
               }}>
-                <Stack direction="row" justifyContent="space-between" mb={1.5}>
+                <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 1.5 }}>
                   <Skeleton variant="rectangular" width={34} height={34} sx={{ borderRadius: 1.5, bgcolor: alpha(theme.palette.text.primary, 0.08) }} />
                 </Stack>
                 <Skeleton variant="text" width="60%" height={24} sx={{ bgcolor: alpha(theme.palette.text.primary, 0.08) }} />
@@ -48,10 +48,10 @@ export default function PageSkeleton() {
 
       {/* ─── Main Content Area Skeleton ─────────────────────────────────────── */}
       <Grid container spacing={3}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 3, bgcolor: alpha(theme.palette.background.paper, 0.3) }} />
         </Grid>
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 3, bgcolor: alpha(theme.palette.background.paper, 0.3) }} />
         </Grid>
       </Grid>
