@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { api } from '@/lib/api';
+import PageSkeleton from '@/components/PageSkeleton';
 
 interface TabPanelProps { children?: ReactNode; value: number; index: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -63,9 +64,11 @@ export default function MembershipsPage() {
   const [events, setEvents] = useState<MembershipEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     setPlansLoading(true);
-    api.get('/membership-plans', { params: { pageSize: '50' } })
+    const p1 = api.get('/membership-plans', { params: { pageSize: '50' } })
       .then(res => {
         const items = res.data?.plans ?? res.data?.items ?? [];
         setPlans(items.map((p: Record<string, unknown>) => ({
@@ -83,7 +86,7 @@ export default function MembershipsPage() {
       .finally(() => setPlansLoading(false));
 
     setEventsLoading(true);
-    api.get('/membership-events', { params: { pageSize: '50' } })
+    const p2 = api.get('/membership-events', { params: { pageSize: '50' } })
       .then(res => {
         const items = res.data?.items ?? [];
         setEvents(items.map((e: Record<string, unknown>) => ({
@@ -99,6 +102,8 @@ export default function MembershipsPage() {
       })
       .catch(() => setEvents([]))
       .finally(() => setEventsLoading(false));
+
+    Promise.allSettled([p1, p2]).finally(() => setLoading(false));
   }, [fetchTrigger]);
 
   // ── Create Plan Dialog ─────────────────────────────────────────────────────
@@ -259,14 +264,21 @@ export default function MembershipsPage() {
     { op: 'Cancel', desc: 'Cancel and record reason', color: 'error' },
   ];
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <PageSkeleton />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      {/* Page Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Memberships & Plans</Typography>
+        <Typography variant="body2" color="text.secondary">Configure subscription tiers and view recent operations</Typography>
+      </Box>
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Membership Management</Typography>
-          <Typography variant="body2" color="text.secondary">Plans, events, and membership operations</Typography>
-        </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setPlanOpen(true); setPlanError(''); }} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           Create Plan
         </Button>

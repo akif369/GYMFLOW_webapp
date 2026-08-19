@@ -13,8 +13,8 @@ import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
-import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
 import { useAuthStore } from '@/store/useAuthStore';
+import PageSkeleton from '@/components/PageSkeleton';
 
 // ── Mock data (replace with /member/me/dashboard API call) ───────────────────
 
@@ -99,6 +99,10 @@ export default function MemberDashboardPage() {
   const expiryColor = membershipPct > 30 ? '#10b981' : membershipPct > 10 ? '#f59e0b' : '#f43f5e';
   const ptPct = Math.round((ptSessions.completed / ptSessions.total) * 100);
 
+  if (loading) {
+    return <PageSkeleton />;
+  }
+
   return (
     <Box>
       {/* Welcome */}
@@ -119,8 +123,7 @@ export default function MemberDashboardPage() {
         <Grid item xs={12} md={8}>
           <Stack spacing={2}>
             {/* Membership card */}
-            {loading ? <Skeleton variant="rounded" height={180} sx={{ borderRadius: 2 }} /> : (
-              <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)', border: '1px solid rgba(16,185,129,0.2)' }}>
+            <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)', border: '1px solid rgba(16,185,129,0.2)' }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box>
@@ -173,11 +176,9 @@ export default function MemberDashboardPage() {
                   )}
                 </CardContent>
               </Card>
-            )}
 
             {/* Attendance stats */}
-            {loading ? <Skeleton variant="rounded" height={160} sx={{ borderRadius: 2 }} /> : (
-              <Card elevation={0}>
+            <Card elevation={0}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
@@ -211,11 +212,9 @@ export default function MemberDashboardPage() {
                   <AttendanceStrip />
                 </CardContent>
               </Card>
-            )}
 
             {/* PT Sessions card */}
-            {loading ? <Skeleton variant="rounded" height={150} sx={{ borderRadius: 2 }} /> : (
-              <Card elevation={0}>
+            <Card elevation={0}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
@@ -265,7 +264,6 @@ export default function MemberDashboardPage() {
                   </Box>
                 </CardContent>
               </Card>
-            )}
           </Stack>
         </Grid>
 
@@ -273,8 +271,7 @@ export default function MemberDashboardPage() {
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
             {/* QR Check-in card */}
-            {loading ? <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} /> : (
-              <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.04) 100%)', border: '1px solid rgba(16,185,129,0.15)' }}>
+            <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.04) 100%)', border: '1px solid rgba(16,185,129,0.15)' }}>
                 <CardContent sx={{ p: 2.5, textAlign: 'center' }}>
                   <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary', mb: 1.5 }}>
                     Quick Check-in
@@ -294,11 +291,9 @@ export default function MemberDashboardPage() {
                     sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 700, letterSpacing: '0.05em' }} />
                 </CardContent>
               </Card>
-            )}
 
             {/* Recent visits */}
-            {loading ? <Skeleton variant="rounded" height={280} sx={{ borderRadius: 2 }} /> : (
-              <Card elevation={0}>
+            <Card elevation={0}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>
@@ -327,7 +322,6 @@ export default function MemberDashboardPage() {
                   </Stack>
                 </CardContent>
               </Card>
-            )}
           </Stack>
         </Grid>
       </Grid>

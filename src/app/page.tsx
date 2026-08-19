@@ -27,6 +27,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import Link from 'next/link';
 import AddMemberDialog from '@/components/AddMemberDialog';
+import PageSkeleton from '@/components/PageSkeleton';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 type DashboardStats = {
@@ -399,6 +400,14 @@ export default function Dashboard() {
   };
 
   const isCollapsed = (card: keyof typeof expandedCards) => isMobile && !expandedCards[card];
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <PageSkeleton />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

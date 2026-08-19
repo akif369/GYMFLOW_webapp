@@ -1,7 +1,8 @@
 'use client';
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import PageSkeleton from '@/components/PageSkeleton';
 import AppLayout from '@/components/AppLayout';
-import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip,
   Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
@@ -72,7 +73,7 @@ function PaymentsPageContent() {
   const [refundError, setRefundError] = useState('');
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(true);
   const [invoiceTotal, setInvoiceTotal] = useState(0);
   const [invoicePage, setInvoicePage] = useState(0);
   const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(10);
@@ -86,7 +87,7 @@ function PaymentsPageContent() {
 
   // ── API payments ─────────────────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -169,6 +170,14 @@ function PaymentsPageContent() {
   const visibleInvoices = memberIdParam
     ? invoices.filter(invoice => invoice.memberId === memberIdParam)
     : invoices;
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <PageSkeleton />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -563,10 +572,7 @@ function PaymentsPageContent() {
 function PaymentsPageFallback() {
   return (
     <AppLayout>
-      <Box sx={{ py: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Payments & Billing</Typography>
-        <Typography variant="body2" color="text.secondary">Loading payments…</Typography>
-      </Box>
+      <PageSkeleton />
     </AppLayout>
   );
 }

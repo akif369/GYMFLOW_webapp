@@ -15,6 +15,7 @@ import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
 import { SparkLineChart } from '@mui/x-charts';
 import { useAuthStore } from '@/store/useAuthStore';
+import PageSkeleton from '@/components/PageSkeleton';
 
 // ── Mock data (replace with /trainer/me/stats API call) ──────────────────────
 
@@ -113,6 +114,10 @@ export default function TrainerDashboardPage() {
   const completedToday = TODAY_SESSIONS.filter((s) => s.status === 'COMPLETED').length;
   const remainingToday = TODAY_SESSIONS.filter((s) => s.status === 'UPCOMING').length;
 
+  if (loading) {
+    return <PageSkeleton />;
+  }
+
   return (
     <Box>
       {/* Page header */}
@@ -130,14 +135,6 @@ export default function TrainerDashboardPage() {
 
       {/* Stats row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-            <Grid item xs={6} md={3} key={i}>
-              <Skeleton variant="rounded" height={120} sx={{ borderRadius: 2 }} />
-            </Grid>
-          ))
-          : (
-            <>
               <Grid item xs={6} md={3}>
                 <StatCard title="My Clients" value={TRAINER_STATS.activeClients} sub={`${TRAINER_STATS.totalClients} total`} icon={PeopleRoundedIcon} color="#ec4899" />
               </Grid>
@@ -150,8 +147,7 @@ export default function TrainerDashboardPage() {
               <Grid item xs={6} md={3}>
                 <StatCard title="Attendance Rate" value={`${TRAINER_STATS.clientAttendanceRate}%`} sub="Client avg" icon={TrendingUpRoundedIcon} color="#f59e0b" />
               </Grid>
-            </>
-          )}
+
       </Grid>
 
       {/* Today's schedule + Client list */}

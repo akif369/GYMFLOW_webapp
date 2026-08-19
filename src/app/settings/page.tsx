@@ -5,6 +5,8 @@ import {
   Box, Grid, Card, CardContent, Typography, Button, Tabs, Tab,
   TextField, MenuItem, Switch, Alert, Snackbar
 } from '@mui/material';
+import { useAuthStore } from '@/store/useAuthStore';
+import PageSkeleton from '@/components/PageSkeleton';
 import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
 
@@ -167,6 +169,14 @@ export default function SettingsPage() {
       setSavingSection(null);
     }
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <PageSkeleton />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
