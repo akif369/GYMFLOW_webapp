@@ -165,6 +165,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // ── Renew State ───────────────────────────────────────────────────────────────
   const [renewOpen, setRenewOpen] = useState(false);
   const [renewForm, setRenewForm] = useState({ planId: '', notes: '' });
@@ -491,11 +494,22 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       }, { headers: { 'Idempotency-Key': crypto.randomUUID() } });
       setPaymentOpen(false);
       setPaymentForm({ amount: '', paymentMethod: 'CASH', referenceId: '', description: '', notes: '' });
-      refresh();
+      setFetchTrigger(t => t + 1);
     } catch (err: any) {
-      setPaymentError(err.response?.data?.message || 'Could not record payment.');
-    } finally {
-      setPaymentLoading(false);
+      setPaymentError(err.response?.data?.message || 'Failed to record payment');
+    } finally { setPaymentLoading(false); }
+  };
+
+  const handleDeleteMember = async () => {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/members/${id}`);
+      router.push('/org/members');
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to delete member');
+      setDeleteLoading(false);
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -1211,13 +1225,29 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               <Grid size={12}><TextField label="Address" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} fullWidth size="small" multiline rows={2} /></Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={editLoading}>
-              {editLoading ? <CircularProgress size={24} /> : 'Save Changes'}
-            </Button>
+          <DialogActions sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between' }}>
+            <Button color="error" onClick={(e) => { e.preventDefault(); setDeleteConfirmOpen(true); }}>Delete Member</Button>
+            <Box>
+              <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={editLoading}>
+                {editLoading ? <CircularProgress size={24} /> : 'Save Changes'}
+              </Button>
+            </Box>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Member</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete <b>{member?.firstName} {member?.lastName}</b>? This action cannot be undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteLoading}>Cancel</Button>
+          <Button color="error" onClick={handleDeleteMember} disabled={deleteLoading} variant="contained">
+            {deleteLoading ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* ── Renew Membership Dialog ─────────────────────────────────────────────── */}
