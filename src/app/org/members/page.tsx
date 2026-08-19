@@ -596,6 +596,7 @@ function MembersPageContent() {
 
       <AddMemberDialog
         open={addOpen}
+        branches={branches}
         onClose={() => setAddOpen(false)}
         onSuccess={() => setFetchTrigger(t => t + 1)}
       />

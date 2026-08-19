@@ -17,10 +17,12 @@ export default function AddMemberDialog({
   open,
   onClose,
   onSuccess,
+  branches,
 }: {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  branches?: { id: string; name: string }[];
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -28,6 +30,7 @@ export default function AddMemberDialog({
   const [addForm, setAddForm] = useState({
     firstName: '', lastName: '', phone: '', email: '', gender: 'MALE',
     dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0],
+    branchId: '',
   });
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
@@ -37,8 +40,8 @@ export default function AddMemberDialog({
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.dob || !addForm.joinDate) {
-      setAddError('First Name, Last Name, Phone, Date of Birth, and Join Date are required.');
+    if (!addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.dob || !addForm.joinDate || (branches && branches.length > 0 && !addForm.branchId)) {
+      setAddError('First Name, Last Name, Phone, Date of Birth, Join Date, and Branch are required.');
       return;
     }
     if (!/^[6-9]\d{9}$/.test(addForm.phone)) {
@@ -48,8 +51,10 @@ export default function AddMemberDialog({
     setAddLoading(true);
     setAddError('');
     try {
-      await api.post('/members', { ...addForm, phone: `+91${addForm.phone}` });
-      setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: 'MALE', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0] });
+      const payload: any = { ...addForm, phone: `+91${addForm.phone}` };
+      if (!payload.branchId) delete payload.branchId;
+      await api.post('/members', payload);
+      setAddForm({ firstName: '', lastName: '', phone: '', email: '', gender: 'MALE', dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0], branchId: '' });
       onSuccess?.();
       onClose();
     } catch (err: any) {
@@ -152,6 +157,21 @@ export default function AddMemberDialog({
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Grid>
+              {branches && branches.length > 0 && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Branch"
+                    select
+                    required
+                    value={addForm.branchId}
+                    onChange={e => setAddForm({ ...addForm, branchId: e.target.value })}
+                    fullWidth
+                  >
+                    <MenuItem value=""><em>Select a branch</em></MenuItem>
+                    {branches.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+              )}
               <Grid item xs={12} sm={6}><TextField label="Fitness Goal" value={addForm.goal} onChange={e => setAddForm({ ...addForm, goal: e.target.value })} fullWidth placeholder="e.g. Weight Loss" /></Grid>
             </Grid>
           </Collapse>

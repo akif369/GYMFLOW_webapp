@@ -106,6 +106,7 @@ type MemberData = {
   experienceLevel: string;
   joinDate: string;
   status: string;
+  branchId: string;
   photoUrl: string | null;
   emergency: { name: string; phone: string; relation: string } | null;
   health: { medicalConditions: string; allergies: string; injuries: string; bloodGroup: string; medications?: string; notes?: string } | null;
@@ -156,11 +157,13 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   // Plans for renew
   const [apiPlans, setApiPlans] = useState<{ id: string; name: string; price: number; durationDays: number }[]>([]);
 
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+
   // ── Edit State ────────────────────────────────────────────────────────────────
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: '', lastName: '', phone: '', email: '',
-    gender: '', dob: '', address: '', goal: '',
+    gender: '', dob: '', address: '', goal: '', branchId: '',
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
@@ -249,6 +252,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           experienceLevel: String(m.experienceLevel ?? ''),
           joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
           status: String(m.status ?? 'ACTIVE'),
+          branchId: String(m.branchId ?? ''),
           photoUrl: m.photoUrl ?? null,
           emergency: m.emergency ? {
             name: String(m.emergency.name ?? ''),
@@ -382,6 +386,10 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         })));
       })
       .catch(() => setApiPlans([]));
+    // Branches
+    api.get('/branches')
+      .then(res => setBranches(res.data?.branches ?? []))
+      .catch(() => setBranches([]));
 
     return () => {};
      
@@ -626,6 +634,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             dob: member.dob,
             address: member.address,
             goal: member.goal,
+            branchId: member.branchId,
           });
           setEditError('');
           setEditOpen(true);
@@ -1191,7 +1200,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           setEditLoading(true);
           setEditError('');
           try {
-            await api.patch(`/members/${id}`, { ...editForm, phone: `+91${editForm.phone}` });
+            const payload: any = { ...editForm, phone: `+91${editForm.phone}` };
+            if (!payload.branchId) payload.branchId = null;
+            await api.patch(`/members/${id}`, payload);
             setEditOpen(false);
             refresh();
           } catch (err: any) {
@@ -1216,7 +1227,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   {['MALE', 'FEMALE', 'OTHER'].map(g => <MenuItem key={g} value={g}>{g}</MenuItem>)}
                 </TextField>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {branches && branches.length > 0 && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField label="Branch" select required value={editForm.branchId} onChange={e => setEditForm({ ...editForm, branchId: e.target.value })} fullWidth size="small">
+                    <MenuItem value=""><em>Select a branch</em></MenuItem>
+                    {branches.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+              )}
+              <Grid size={{ xs: 12, sm: branches && branches.length > 0 ? 12 : 6 }}>
                 <TextField label="Date of Birth" type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -1497,6 +1516,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             dob: member.dob,
             address: member.address,
             goal: member.goal,
+            branchId: member.branchId,
           });
           setEditError('');
           setEditOpen(true);
