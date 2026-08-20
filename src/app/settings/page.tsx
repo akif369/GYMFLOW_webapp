@@ -62,6 +62,10 @@ type TaxForm = {
   taxIncluded: boolean;
 };
 
+type MemberForm = {
+  daysBeforeInactive: string;
+};
+
 type InvoiceForm = {
   prefix: string;
   footer: string;
@@ -103,6 +107,7 @@ export default function SettingsPage() {
   const [branchForm, setBranchForm] = useState<BranchForm>(emptyBranch);
   const [attendanceForm, setAttendanceForm] = useState<AttendanceForm>({ autoCheckoutHours: '3', qrCheckIn: true, lateCheckoutAlert: true });
   const [taxForm, setTaxForm] = useState<TaxForm>({ taxRate: '18', taxIncluded: true });
+  const [memberForm, setMemberForm] = useState<MemberForm>({ daysBeforeInactive: '30' });
   const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
   const [notificationsForm, setNotificationsForm] = useState<NotificationsForm>({ attachInvoicePdf: false });
 
@@ -122,6 +127,7 @@ export default function SettingsPage() {
         const attendanceSetting = settingMap.attendance && typeof settingMap.attendance === 'object' ? settingMap.attendance as Record<string, unknown> : {};
         const taxSetting = settingMap.tax && typeof settingMap.tax === 'object' ? settingMap.tax as Record<string, unknown> : {};
         const invoiceSetting = settingMap.invoice && typeof settingMap.invoice === 'object' ? settingMap.invoice as Record<string, unknown> : {};
+        const memberSetting = settingMap.member && typeof settingMap.member === 'object' ? settingMap.member as Record<string, unknown> : {};
 
         if (branch) {
           setBranchForm({
@@ -135,6 +141,9 @@ export default function SettingsPage() {
           autoCheckoutHours: String(attendanceSetting.autoCheckoutHours ?? '3'),
           qrCheckIn: attendanceSetting.qrCheckIn !== false,
           lateCheckoutAlert: attendanceSetting.lateCheckoutAlert !== false,
+        });
+        setMemberForm({
+          daysBeforeInactive: String(memberSetting.daysBeforeInactive ?? '30'),
         });
         setTaxForm({ taxRate: String(taxSetting.taxRate ?? '18'), taxIncluded: taxSetting.taxIncluded !== false });
         setInvoiceForm({
@@ -250,6 +259,9 @@ export default function SettingsPage() {
             <SettingRow label="Capacity" desc="Maximum members allowed simultaneously">
               <TextField size="small" type="number" value={branchForm.capacity} onChange={e => setBranchForm({ ...branchForm, capacity: e.target.value })} disabled={loading} sx={{ width: 100 }} />
             </SettingRow>
+            <SettingRow label="Days Before Inactive" desc="Number of days after membership expiry before member is marked INACTIVE">
+              <TextField size="small" type="number" value={memberForm.daysBeforeInactive} onChange={e => setMemberForm({ ...memberForm, daysBeforeInactive: e.target.value })} disabled={loading} sx={{ width: 100 }} />
+            </SettingRow>
             <Box sx={{ mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !branchForm.name.trim()} onClick={() => {
                 const branchRequest = branchForm.id
@@ -258,7 +270,8 @@ export default function SettingsPage() {
                 save('branch', branchRequest.then(async response => {
                   const branch = response.data?.branch;
                   if (branch?.id) setBranchForm(form => ({ ...form, id: String(branch.id) }));
-                  return api.patch('/settings/branch', { branchId: branch?.id ?? branchForm.id, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime });
+                  await api.patch('/settings/branch', { branchId: branch?.id ?? branchForm.id, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime });
+                  return api.patch('/settings/member', { daysBeforeInactive: Number(memberForm.daysBeforeInactive) });
                 }), 'Could not save branch settings.');
               }}>{branchForm.id ? 'Save Branch Settings' : 'Create Branch'}</Button>
             </Box>
