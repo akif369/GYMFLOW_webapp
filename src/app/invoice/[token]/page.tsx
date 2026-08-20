@@ -11,7 +11,9 @@ type InvoiceData = {
   date: string;
   dueDate: string;
   status: string;
-  totalAmount: number;
+  totalAmount: number | string;
+  subtotal: number | string;
+  gstAmount: number | string;
   taxIncluded: boolean;
   memberId: string | null;
   memberName: string | null;
@@ -143,19 +145,8 @@ export default function InvoicePage({ params }: { params: Promise<{ token: strin
   const totalNumeric = parseFloat(invoice.totalAmount as any);
   const amountInWords = Number.isFinite(totalNumeric) ? numberToWordsINR(totalNumeric) : null;
 
-  // Calculate subtotals like backend
-  let gstAmount = 0;
-  let subtotal = totalNumeric;
-  
-  if (taxIncluded) {
-    gstAmount = lineItems.reduce((acc, item) => {
-      const itemTotal = Number(item.totalAmount);
-      const gst = Number(item.gstPercent) || 0;
-      const itemTaxable = itemTotal / (1 + (gst / 100));
-      return acc + (itemTotal - itemTaxable);
-    }, 0);
-    subtotal = totalNumeric - gstAmount;
-  }
+  const subtotal = parseFloat(invoice.subtotal as any) || 0;
+  const gstAmount = parseFloat(invoice.gstAmount as any) || 0;
 
   const isCancelled = invoice.status.toLowerCase() === 'cancelled' || invoice.status.toLowerCase() === 'canceled';
 
