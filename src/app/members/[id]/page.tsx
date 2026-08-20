@@ -292,7 +292,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     // Attendance (member-scoped)
     api.get('/attendance', { params: { memberId: id, pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setAttendance(items.map((l: Record<string, unknown>) => ({
           id: String(l.id),
           date: toISTDate(String(l.checkInAt ?? '')),
@@ -309,7 +309,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     // Payments
     api.get('/payments', { params: { memberId: id, pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setPayments(items.map((p: Record<string, unknown>) => ({
           id: String(p.id),
           amount: Number(p.totalAmount ?? p.amount ?? 0),
@@ -325,7 +325,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     // PT Sessions
     api.get('/pt/sessions', { params: { memberId: id, pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setPtSessions(items.map((s: Record<string, unknown>) => ({
           id: String(s.id),
           trainer: String(s.trainerName ?? `${s.trainerFirstName ?? ''} ${s.trainerLastName ?? ''}`.trim()),
@@ -370,7 +370,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     // Plans (for renew/create)
     api.get('/membership-plans', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.plans ?? res.data?.items ?? [];
+        const items = res.data?.plans ?? (res.data?.data ?? res.data?.items) ?? [];
         setApiPlans(items.map((p: Record<string, unknown>) => ({
           id: String(p.id),
           name: String(p.name ?? ''),

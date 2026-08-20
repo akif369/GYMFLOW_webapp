@@ -29,7 +29,7 @@ export default function WorkoutsPage() {
   useEffect(() => {
     api.get('/exercises', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setApiExercises(items.map((e: Record<string, unknown>) => ({
           id: String(e.id),
           name: String(e.name ?? ''),
@@ -44,7 +44,7 @@ export default function WorkoutsPage() {
 
     api.get('/workout-templates', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setApiTemplates(items.map((t: Record<string, unknown>) => ({
           id: String(t.id),
           name: String(t.name ?? ''),

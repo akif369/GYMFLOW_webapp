@@ -74,7 +74,7 @@ export default function ReportsPage() {
   useEffect(() => {
     api.get('/attendance', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setAttendanceLogs(items.map((l: Record<string, unknown>) => ({
           id: String(l.id), member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
           memberId: String(l.memberId ?? ''), date: String(l.checkInTime ?? '').split('T')[0],
@@ -87,7 +87,7 @@ export default function ReportsPage() {
 
     api.get('/payments', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setPayments(items.map((p: Record<string, unknown>) => ({
           id: String(p.id), member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
           memberId: String(p.memberId ?? ''), amount: Number(p.amount ?? 0),
@@ -99,7 +99,7 @@ export default function ReportsPage() {
 
     api.get('/members', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setMembers(items.map((m: Record<string, unknown>) => ({
           id: String(m.id), memberId: String(m.memberNumber ?? ''),
           firstName: String(m.firstName ?? ''), lastName: String(m.lastName ?? ''),
@@ -118,7 +118,7 @@ export default function ReportsPage() {
 
     api.get('/trainers', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setTrainers(items.map((t: Record<string, unknown>) => ({
           id: String(t.id), name: `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() || String(t.name ?? ''),
           specialization: String(t.specialization ?? ''), email: String(t.email ?? ''),
@@ -132,7 +132,7 @@ export default function ReportsPage() {
 
     api.get('/pt/sessions', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setPtSessions(items.map((s: Record<string, unknown>) => ({
           id: String(s.id),
           member: `${s.memberFirstName ?? ''} ${s.memberLastName ?? ''}`.trim() || String(s.memberName ?? ''),

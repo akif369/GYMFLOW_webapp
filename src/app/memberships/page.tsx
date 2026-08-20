@@ -70,7 +70,7 @@ export default function MembershipsPage() {
     setPlansLoading(true);
     const p1 = api.get('/membership-plans', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.plans ?? res.data?.items ?? [];
+        const items = res.data?.plans ?? (res.data?.data ?? res.data?.items) ?? [];
         setPlans(items.map((p: Record<string, unknown>) => ({
           id: String(p.id),
           name: String(p.name ?? ''),
@@ -88,7 +88,7 @@ export default function MembershipsPage() {
     setEventsLoading(true);
     const p2 = api.get('/membership-events', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setEvents(items.map((e: Record<string, unknown>) => ({
           id: String(e.id),
           memberId: String(e.memberId ?? ''),

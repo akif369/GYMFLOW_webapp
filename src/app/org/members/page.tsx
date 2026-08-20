@@ -25,6 +25,7 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { api } from '@/lib/api';
 import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
+import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
 
@@ -86,14 +87,14 @@ function MembersPageContent() {
   const [apiTotal, setApiTotal] = useState(0);
   const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
 
   useEffect(() => {
     api.get('/membership-plans', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.plans ?? res.data?.items ?? [];
+        const items = res.data?.plans ?? (res.data?.data ?? res.data?.items) ?? [];
         setRenewPlans(items.map((plan: Record<string, unknown>) => ({
           id: String(plan.id),
           name: String(plan.name ?? ''),
@@ -125,7 +126,7 @@ function MembersPageContent() {
     api.get('/members', { params })
       .then(res => {
         if (cancelled) return;
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         const policyEnabled = res.data?.strictPaymentPolicy === true;
         setStrictPaymentPolicy(policyEnabled);
         // Normalize the API response for the table row shape.
@@ -447,7 +448,7 @@ function MembersPageContent() {
           { label: 'Active', value: counts.ACTIVE, filter: 'ACTIVE', color: '#10b981', icon: PeopleRoundedIcon },
           { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
-          { label: 'Pending Payment', value: counts.PAYMENT_PENDING, filter: 'PAYMENT_PENDING', color: '#f59e0b', icon: WarningAmberRoundedIcon },
+          { label: 'Inactive', value: counts.INACTIVE, filter: 'INACTIVE', color: '#64748b', icon: PersonOffRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card
@@ -545,8 +546,15 @@ function MembersPageContent() {
             }
             router.push(`/org/members/${params.row.id}`);
           }}
+          rowCount={apiTotal}
           pageSizeOptions={[10, 25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+          initialState={{ pagination: { paginationModel: { pageSize: defaultPageSize } } }}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          paginationMode="server"
+          loading={apiLoading}
+          disableRowSelectionOnClick
+          disableColumnMenu
           sx={{
             border: 0,
             '& .MuiDataGrid-columnHeaders': {

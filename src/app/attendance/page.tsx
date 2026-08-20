@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { api } from '@/lib/api';
 import MemberSearchField, { type MemberSearchResult } from '@/components/MemberSearchField';
+import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 
 /** Convert a UTC ISO string to HH:MM in Asia/Kolkata */
 function toISTTime(utcIso: string): string {
@@ -56,6 +57,7 @@ type AttendanceLog = {
 
 function AttendancePageContent() {
   const searchParams = useSearchParams();
+  const defaultPageSize = useResponsivePageSize();
   const memberParam = searchParams.get('member') ?? '';
   const [tab, setTab] = useState(0);
   const [checkInOpen, setCheckInOpen] = useState(() => Boolean(memberParam));
@@ -73,7 +75,7 @@ function AttendancePageContent() {
     api.get('/attendance/currently-inside')
       .then(res => {
         // Backend returns { members: [...], count }
-        const items = res.data?.members ?? res.data?.items ?? [];
+        const items = res.data?.members ?? (res.data?.data ?? res.data?.items) ?? [];
         setInsideMembers(items.map((m: Record<string, unknown>) => ({
           id: String(m.memberId ?? m.id ?? ''),
           name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
@@ -93,18 +95,19 @@ function AttendancePageContent() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState(memberParam);
   const [dateFilter, setDateFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const fetchHistory = useCallback((reset = true) => {
     setHistoryLoading(true);
-    const params: Record<string, string> = { pageSize: '50', page: String(reset ? 1 : page) };
+    const params: Record<string, string> = { pageSize: String(defaultPageSize) };
+    if (!reset && cursor) params.cursor = cursor;
     if (dateFilter) params.date = dateFilter;
     if (memberSearch) params.search = memberSearch;
 
     api.get('/attendance', { params })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         const mapped: AttendanceLog[] = items.map((l: Record<string, unknown>) => ({
           id: String(l.id),
           member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
@@ -117,18 +120,19 @@ function AttendancePageContent() {
             : 'Inside',
           method: String(l.checkInMethod ?? l.method ?? 'MANUAL'),
         }));
+        
         if (reset) {
           setHistoryLogs(mapped);
-          setPage(2);
         } else {
           setHistoryLogs(prev => [...prev, ...mapped]);
-          setPage(p => p + 1);
         }
-        setHasMore(items.length === 50);
+        
+        setCursor(res.data?.pagination?.nextCursor ?? null);
+        setHasMore(res.data?.pagination?.hasMore ?? false);
       })
       .catch(() => { if (reset) setHistoryLogs([]); })
       .finally(() => setHistoryLoading(false));
-  }, [dateFilter, memberSearch, page]);
+  }, [dateFilter, memberSearch, cursor, defaultPageSize]);
 
   // ── Peak hours analytics ──────────────────────────────────────────────────────
   const [peakHours, setPeakHours] = useState<{ hour: string; count: number; pct: number }[]>([]);

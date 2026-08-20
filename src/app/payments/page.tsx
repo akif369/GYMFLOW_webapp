@@ -15,6 +15,7 @@ import SendIcon from '@mui/icons-material/Send';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '@/lib/api';
 import MemberSearchField from '@/components/MemberSearchField';
+import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
@@ -49,6 +50,7 @@ type Invoice = {
 
 function PaymentsPageContent() {
   const searchParams = useSearchParams();
+  const defaultPageSize = useResponsivePageSize();
   const memberIdParam = searchParams.get('memberId') ?? '';
   const searchParam = searchParams.get('search') ?? '';
   const [addOpen, setAddOpen] = useState(() => Boolean(memberIdParam));
@@ -74,9 +76,10 @@ function PaymentsPageContent() {
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoiceLoading, setInvoiceLoading] = useState(true);
-  const [invoiceTotal, setInvoiceTotal] = useState(0);
+  const [invoiceTotal, setInvoiceTotal] = useState(-1);
   const [invoicePage, setInvoicePage] = useState(0);
-  const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(10);
+  const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(defaultPageSize);
+  const [invoiceCursors, setInvoiceCursors] = useState<string[]>(['']);
   const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
   const [invoiceNotice, setInvoiceNotice] = useState('');
   const [invoiceError, setInvoiceError] = useState('');
@@ -88,13 +91,16 @@ function PaymentsPageContent() {
   // ── API payments ─────────────────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(-1);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(defaultPageSize);
+  const [paymentCursors, setPaymentCursors] = useState<string[]>(['']);
 
   const fetchPayments = useCallback(() => {
     setLoading(true);
-    const params: Record<string, string> = { pageSize: String(rowsPerPage), page: String(page + 1) };
+    const params: Record<string, string> = { pageSize: String(rowsPerPage) };
+    const currentCursor = paymentCursors[page];
+    if (currentCursor) params.cursor = currentCursor;
     if (statusFilter !== 'ALL') params.status = statusFilter;
     if (memberIdParam) params.memberId = memberIdParam;
     if (searchParam) params.search = searchParam;
@@ -103,7 +109,7 @@ function PaymentsPageContent() {
 
     api.get('/payments', { params })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         const mapped: Payment[] = items.map((p: Record<string, unknown>) => ({
           id: String(p.id),
           member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
@@ -116,11 +122,18 @@ function PaymentsPageContent() {
           description: String(p.description ?? ''),
         }));
         setPayments(mapped);
-        setTotal(Number(res.data?.total ?? mapped.length));
+        setTotal(res.data?.pagination?.hasMore ? -1 : page * rowsPerPage + mapped.length);
+        if (res.data?.pagination?.nextCursor) {
+          setPaymentCursors(prev => {
+            const next = [...prev];
+            next[page + 1] = res.data.pagination.nextCursor;
+            return next;
+          });
+        }
       })
       .catch(() => setPayments([]))
       .finally(() => setLoading(false));
-  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page, rowsPerPage]);
+  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page, rowsPerPage, paymentCursors]);
 
   useEffect(() => {
     const timer = window.setTimeout(fetchPayments, 0);
@@ -141,10 +154,21 @@ function PaymentsPageContent() {
       .catch(() => undefined);
 
     setInvoiceLoading(true);
-    api.get('/invoices', { params: { pageSize: String(invoiceRowsPerPage), page: String(invoicePage + 1) } })
+    const invParams: Record<string, string> = { pageSize: String(invoiceRowsPerPage) };
+    const invCursor = invoiceCursors[invoicePage];
+    if (invCursor) invParams.cursor = invCursor;
+    
+    api.get('/invoices', { params: invParams })
       .then(res => {
-        const items = res.data?.items ?? [];
-        setInvoiceTotal(Number(res.data?.total ?? items.length));
+        const items = (res.data?.data ?? res.data?.items) ?? [];
+        setInvoiceTotal(res.data?.pagination?.hasMore ? -1 : invoicePage * invoiceRowsPerPage + items.length);
+        if (res.data?.pagination?.nextCursor) {
+          setInvoiceCursors(prev => {
+            const next = [...prev];
+            next[invoicePage + 1] = res.data.pagination.nextCursor;
+            return next;
+          });
+        }
         setInvoices(items.map((invoice: Record<string, unknown>) => ({
           id: String(invoice.id),
           invoiceNumber: String(invoice.invoiceNumber ?? ''),
@@ -159,7 +183,7 @@ function PaymentsPageContent() {
       })
       .catch(() => setInvoices([]))
       .finally(() => setInvoiceLoading(false));
-  }, [invoicePage, invoiceRowsPerPage]);
+  }, [invoicePage, invoiceRowsPerPage, invoiceCursors]);
 
   const filtered = payments.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
   const totalRevenue = filtered.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
@@ -231,24 +255,24 @@ function PaymentsPageContent() {
             size="small"
             color={statusFilter === f ? 'primary' : 'default'}
             variant={statusFilter === f ? 'filled' : 'outlined'}
-            onClick={() => { setStatusFilter(f); setPage(0); }}
+            onClick={() => { setStatusFilter(f); setPage(0); setPaymentCursors(['']); }}
           />
         ))}
         <Box sx={{ flex: 1 }} />
         <TextField
           size="small" label="From" type="date" value={dateFrom}
-          onChange={e => { setDateFrom(e.target.value); setPage(0); }}
+          onChange={e => { setDateFrom(e.target.value); setPage(0); setPaymentCursors(['']); }}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
         <TextField
           size="small" label="To" type="date" value={dateTo}
-          onChange={e => { setDateTo(e.target.value); setPage(0); }}
+          onChange={e => { setDateTo(e.target.value); setPage(0); setPaymentCursors(['']); }}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
         {(dateFrom || dateTo) && (
-          <Button size="small" variant="text" onClick={() => { setDateFrom(''); setDateTo(''); setPage(0); }}>Clear dates</Button>
+          <Button size="small" variant="text" onClick={() => { setDateFrom(''); setDateTo(''); setPage(0); setPaymentCursors(['']); }}>Clear dates</Button>
         )}
       </Box>
 
@@ -319,7 +343,7 @@ function PaymentsPageContent() {
           page={page}
           onPageChange={(_, nextPage) => setPage(nextPage)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); setPaymentCursors(['']); }}
           rowsPerPageOptions={[10, 25, 50]}
           labelRowsPerPage="Rows per page:"
           sx={{ borderTop: 1, borderColor: 'divider', '.MuiTablePagination-toolbar': { px: { xs: 1, sm: 2 } } }}
@@ -400,7 +424,7 @@ function PaymentsPageContent() {
           page={invoicePage}
           onPageChange={(_, nextPage) => setInvoicePage(nextPage)}
           rowsPerPage={invoiceRowsPerPage}
-          onRowsPerPageChange={event => { setInvoiceRowsPerPage(Number(event.target.value)); setInvoicePage(0); }}
+          onRowsPerPageChange={event => { setInvoiceRowsPerPage(Number(event.target.value)); setInvoicePage(0); setInvoiceCursors(['']); }}
           rowsPerPageOptions={[10, 25, 50]}
           labelRowsPerPage="Rows per page:"
           sx={{ borderTop: 1, borderColor: 'divider', '.MuiTablePagination-toolbar': { px: { xs: 1, sm: 2 } } }}

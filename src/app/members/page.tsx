@@ -23,6 +23,7 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { api } from '@/lib/api';
 import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
+import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 
 type MemberRow = {
   id: string; memberId: string; firstName: string; lastName: string; email: string; phone: string;
@@ -60,6 +61,7 @@ function MembersPageContent() {
   const searchParams = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const defaultPageSize = useResponsivePageSize();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState(() => {
     const filter = searchParams.get('filter');
@@ -80,14 +82,14 @@ function MembersPageContent() {
   const [apiTotal, setApiTotal] = useState(0);
   const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
 
   useEffect(() => {
     api.get('/membership-plans', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.plans ?? res.data?.items ?? [];
+        const items = res.data?.plans ?? (res.data?.data ?? res.data?.items) ?? [];
         setRenewPlans(items.map((plan: Record<string, unknown>) => ({
           id: String(plan.id),
           name: String(plan.name ?? ''),
@@ -116,7 +118,7 @@ function MembersPageContent() {
     api.get('/members', { params })
       .then(res => {
         if (cancelled) return;
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         const policyEnabled = res.data?.strictPaymentPolicy === true;
         setStrictPaymentPolicy(policyEnabled);
         // Normalize the API response for the table row shape.
@@ -421,7 +423,6 @@ function MembersPageContent() {
           { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
           { label: 'Inactive', value: counts.INACTIVE, filter: 'INACTIVE', color: '#64748b', icon: PersonOffRoundedIcon },
-          { label: 'Payment Pending', value: counts.PAYMENT_PENDING, filter: 'PAYMENT_PENDING', color: '#f59e0b', icon: PaymentsRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card
@@ -509,29 +510,36 @@ function MembersPageContent() {
           }}
         >
           <DataGrid
-          rows={filtered}
-          columns={columns}
-          rowHeight={60}
-          onRowClick={params => {
-            if (longPressTriggered.current) {
-              longPressTriggered.current = false;
-              return;
-            }
-            router.push(`/members/${params.row.id}`);
-          }}
-          pageSizeOptions={[10, 25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          sx={{
-            border: 0,
-            '& .MuiDataGrid-columnHeaders': {
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            },
-            '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7d8590' },
-            '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center' },
-            '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(16,185,129,0.04)', cursor: 'pointer' },
-            '& .MuiDataGrid-footerContainer': { borderTop: '1px solid rgba(255,255,255,0.06)' },
-          }}
+            rows={filtered}
+            columns={columns}
+            rowHeight={60}
+            onRowClick={params => {
+              if (longPressTriggered.current) {
+                longPressTriggered.current = false;
+                return;
+              }
+              router.push(`/members/${params.row.id}`);
+            }}
+            rowCount={apiTotal}
+            pageSizeOptions={[10, 25, 50, 100]}
+            initialState={{ pagination: { paginationModel: { pageSize: defaultPageSize } } }}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            paginationMode="server"
+            loading={apiLoading}
+            disableRowSelectionOnClick
+            disableColumnMenu
+            sx={{
+              border: 0,
+              '& .MuiDataGrid-columnHeaders': {
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              },
+              '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7d8590' },
+              '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center' },
+              '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(16,185,129,0.04)', cursor: 'pointer' },
+              '& .MuiDataGrid-footerContainer': { borderTop: '1px solid rgba(255,255,255,0.06)' },
+            }}
           />
         </Box>
       </Card>

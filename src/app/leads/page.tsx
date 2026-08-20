@@ -30,7 +30,7 @@ export default function LeadsPage() {
   useEffect(() => {
     api.get('/leads', { params: { pageSize: '100' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setApiLeads(items.map((l: Record<string, unknown>) => ({
           id: String(l.id),
           name: String(l.name ?? `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim()),

@@ -27,7 +27,7 @@ export default function TrainersPage() {
   useEffect(() => {
     api.get('/trainers')
       .then(res => {
-        const items = res.data?.items ?? res.data?.trainers ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? (res.data?.data ?? res.data?.trainers) ?? [];
         setApiTrainers(items.map((t: Record<string, unknown>) => ({
           id: String(t.id),
           name: `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() || String(t.name ?? ''),

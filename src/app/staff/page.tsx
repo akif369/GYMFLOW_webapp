@@ -42,7 +42,7 @@ export default function StaffPage() {
   const fetchStaff = () => {
     api.get('/staff')
       .then(res => {
-        const items = res.data?.items ?? res.data?.staff ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? (res.data?.data ?? res.data?.staff) ?? [];
         setApiStaff(items.map((s: Record<string, unknown>) => ({
           id: String(s.id),
           name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim() || String(s.name ?? ''),

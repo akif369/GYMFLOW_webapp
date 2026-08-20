@@ -32,7 +32,7 @@ export default function PtSessionsPage() {
   useEffect(() => {
     api.get('/pt/sessions', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setApiSessions(items.map((s: Record<string, unknown>) => ({
           id: String(s.id),
           member: `${s.memberFirstName ?? ''} ${s.memberLastName ?? ''}`.trim() || String(s.memberName ?? ''),
@@ -53,7 +53,7 @@ export default function PtSessionsPage() {
 
     api.get('/pt/packages', { params: { pageSize: '50' } })
       .then(res => {
-        const items = res.data?.items ?? [];
+        const items = (res.data?.data ?? res.data?.items) ?? [];
         setApiPackages(items.map((p: Record<string, unknown>) => ({
           id: String(p.id),
           name: String(p.name ?? ''),
