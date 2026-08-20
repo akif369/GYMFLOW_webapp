@@ -36,7 +36,7 @@ type MemberRow = {
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
   PAYMENT_PENDING: 'warning',
-  PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning',
+  PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', INACTIVE: 'default',
 };
 
 const FILTERS = [
@@ -44,6 +44,7 @@ const FILTERS = [
   { label: 'Active', value: 'ACTIVE', icon: '✅' },
   { label: 'Expiring Soon', value: 'EXPIRING', icon: '⏳' },
   { label: 'Expired', value: 'EXPIRED', icon: '❌' },
+  { label: 'Inactive', value: 'INACTIVE', icon: '😴' },
   { label: 'Payment Pending', value: 'PAYMENT_PENDING', icon: '💳' },
   { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
@@ -108,7 +109,7 @@ function MembersPageContent() {
     if (activeFilter !== 'ALL') {
       if (activeFilter === 'PAYMENT_PENDING') {
         params.paymentStatus = 'PENDING';
-      } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
+      } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED' || activeFilter === 'INACTIVE') {
         params.membershipStatus = activeFilter;
       }
     }
@@ -124,7 +125,7 @@ function MembersPageContent() {
           const membershipPlan = m.membershipPlan ?? latestMembership.planName ?? m.plan;
           const membershipStart = m.membershipStart ?? latestMembership.startDate;
           const membershipExpiry = m.membershipExpiry ?? latestMembership.endDate;
-          const membershipStatus = m.membershipStatus ?? latestMembership.status ?? m.status;
+          const membershipStatus = m.status === 'INACTIVE' ? 'INACTIVE' : (m.membershipStatus ?? latestMembership.status ?? m.status);
 
           const planName = membershipPlan ? String(membershipPlan) : '-';
           const startDate = membershipStart ? String(membershipStart).split('T')[0] : '-';
@@ -133,6 +134,10 @@ function MembersPageContent() {
 
           let calculatedMembershipStatus = membershipPlan ? (membershipStatus ? String(membershipStatus) : null) : 'INACTIVE';
           let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;
+
+          if (m.status === 'INACTIVE') {
+            calculatedMembershipStatus = 'INACTIVE';
+          }
 
           if (!membershipPlan || planName === '-') {
             calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
@@ -281,7 +286,8 @@ function MembersPageContent() {
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
     if (activeFilter === 'EXPIRING') matchFilter = m.membershipStatus === 'EXPIRING';
     if (activeFilter === 'EXPIRED') matchFilter = m.membershipStatus === 'EXPIRED';
-    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.paymentStatus !== 'PAID';
+    if (activeFilter === 'INACTIVE') matchFilter = m.membershipStatus === 'INACTIVE';
+    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.membershipStatus === 'PAYMENT_PENDING';
     if (activeFilter === 'NO_TRAINER') matchFilter = !m.trainer;
     return matchSearch && matchFilter;
   });
@@ -291,7 +297,8 @@ function MembersPageContent() {
     ACTIVE: members.filter(m => m.membershipStatus === 'ACTIVE').length,
     EXPIRING: members.filter(m => m.membershipStatus === 'EXPIRING').length,
     EXPIRED: members.filter(m => m.membershipStatus === 'EXPIRED').length,
-    PAYMENT_PENDING: members.filter(m => m.paymentStatus !== 'PAID').length,
+    INACTIVE: members.filter(m => m.membershipStatus === 'INACTIVE').length,
+    PAYMENT_PENDING: members.filter(m => m.membershipStatus === 'PAYMENT_PENDING').length,
     NO_TRAINER: members.filter(m => !m.trainer).length,
   };
 
@@ -413,7 +420,8 @@ function MembersPageContent() {
           { label: 'Active', value: counts.ACTIVE, filter: 'ACTIVE', color: '#10b981', icon: PeopleRoundedIcon },
           { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
-          { label: 'Pending Payment', value: counts.PAYMENT_PENDING, filter: 'PAYMENT_PENDING', color: '#f59e0b', icon: WarningAmberRoundedIcon },
+          { label: 'Inactive', value: counts.INACTIVE, filter: 'INACTIVE', color: '#64748b', icon: PersonOffRoundedIcon },
+          { label: 'Payment Pending', value: counts.PAYMENT_PENDING, filter: 'PAYMENT_PENDING', color: '#f59e0b', icon: PaymentsRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card
