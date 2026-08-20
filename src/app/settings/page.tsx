@@ -270,8 +270,9 @@ export default function SettingsPage() {
                 save('branch', branchRequest.then(async response => {
                   const branch = response.data?.branch;
                   if (branch?.id) setBranchForm(form => ({ ...form, id: String(branch.id) }));
-                  await api.patch('/settings/branch', { branchId: branch?.id ?? branchForm.id, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime });
-                  return api.patch('/settings/member', { daysBeforeInactive: Number(memberForm.daysBeforeInactive) });
+                  const currentBranchId = branch?.id ?? branchForm.id;
+                  await api.patch('/settings/branch', { branchId: currentBranchId, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime });
+                  return api.patch('/settings/member', { daysBeforeInactive: Number(memberForm.daysBeforeInactive), branchId: currentBranchId });
                 }), 'Could not save branch settings.');
               }}>{branchForm.id ? 'Save Branch Settings' : 'Create Branch'}</Button>
             </Box>
@@ -295,7 +296,7 @@ export default function SettingsPage() {
               <Switch checked={attendanceForm.lateCheckoutAlert} onChange={e => setAttendanceForm({ ...attendanceForm, lateCheckoutAlert: e.target.checked })} disabled={loading} />
             </SettingRow>
             <Box sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('attendance', api.patch('/settings/attendance', { ...attendanceForm, autoCheckoutHours: Number(attendanceForm.autoCheckoutHours) }), 'Could not save attendance settings.')}>Save Attendance Settings</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('attendance', api.patch('/settings/attendance', { ...attendanceForm, autoCheckoutHours: Number(attendanceForm.autoCheckoutHours), branchId: branchForm.id || null }), 'Could not save attendance settings.')}>Save Attendance Settings</Button>
             </Box>
           </CardContent>
         </Card>
