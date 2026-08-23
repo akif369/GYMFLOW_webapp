@@ -625,7 +625,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
           <Avatar
-            src={member.photoUrl ?? undefined}
+            src={member.photoUrl || undefined}
             sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}
           >
             {member.firstName[0]}{member.lastName[0]}
