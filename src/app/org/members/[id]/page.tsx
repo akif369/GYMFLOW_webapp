@@ -27,6 +27,7 @@ import PanToolIcon from '@mui/icons-material/PanTool';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AvatarUpload from '@/components/AvatarUpload';
+import { usePresignedUrl } from '@/hooks/usePresignedUrl';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -399,6 +400,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
 
   const refresh = () => setFetchTrigger(t => t + 1);
 
+  // Resolve the S3 key to a presigned URL for rendering the avatar.
+  const { url: resolvedPhotoUrl } = usePresignedUrl(member?.photoUrl ?? null);
+
   const trainerName = member?.trainer
     ? `${member.trainer.firstName} ${member.trainer.lastName}`
     : 'Unassigned';
@@ -646,8 +650,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Profile Card */}
       <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
-          <Avatar src={member.photoUrl || undefined} sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
-            {!member.photoUrl && `${member.firstName[0]}${member.lastName[0]}`}
+          <Avatar src={resolvedPhotoUrl ?? undefined} sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
+            {!resolvedPhotoUrl && `${member.firstName[0]}${member.lastName[0]}`}
           </Avatar>
           <Box flex={1}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1230,7 +1234,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, mt: 2 }}>
               <AvatarUpload 
-                initialImage={member.photoUrl} 
+                initialImage={resolvedPhotoUrl ?? null}
                 onImageSelected={setEditAvatarFile}
                 onDeleteRequested={async () => {
                   await api.delete(`/members/${id}/photo`);

@@ -23,9 +23,30 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import { api } from '@/lib/api';
+import { usePresignedUrl, prefetchPresignedUrls } from '@/hooks/usePresignedUrl';
 import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
+
+// ── MemberAvatar — resolves an S3 key to a presigned URL ──
+function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; firstName: string; lastName: string }) {
+  const key = typeof photoKey === 'string' && photoKey ? photoKey : null;
+  const { url } = usePresignedUrl(key);
+  const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`;
+  return (
+    <Avatar
+      src={url ?? undefined}
+      sx={{
+        width: 34, height: 34,
+        background: 'linear-gradient(135deg, #10b981, #059669)',
+        color: '#000', fontSize: '0.7rem', fontWeight: 800,
+        mt: 1.2,
+      }}
+    >
+      {!url && initials}
+    </Avatar>
+  );
+}
 
 const fetcher = (url: string) => api.get(url).then(res => res.data);
 
@@ -197,6 +218,8 @@ function MembersPageContent() {
           };
         }));
         setApiTotal(res.data?.total ?? items.length);
+        // Warm the presigned URL cache for all avatars on this page
+        prefetchPresignedUrls(items.map((m: Record<string, any>) => m.photoUrl ?? null));
       })
       .catch(() => {
         // Keep the directory empty when the API is unavailable.
@@ -321,17 +344,11 @@ function MembersPageContent() {
       sortable: false,
       disableColumnMenu: true,
       renderCell: (params) => (
-        <Avatar
-          src={params.row.photoUrl || undefined}
-          sx={{
-            width: 34, height: 34,
-            background: 'linear-gradient(135deg, #10b981, #059669)',
-            color: '#000', fontSize: '0.7rem', fontWeight: 800,
-            mt: 1.2,
-          }}
-        >
-          {!params.row.photoUrl && `${params.row.firstName[0]}${params.row.lastName[0]}`}
-        </Avatar>
+        <MemberAvatar
+          photoKey={params.row.photoUrl}
+          firstName={params.row.firstName}
+          lastName={params.row.lastName}
+        />
       ),
     },
     {

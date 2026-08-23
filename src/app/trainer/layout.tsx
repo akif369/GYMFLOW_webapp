@@ -21,6 +21,7 @@ import AuthGuard from '@/components/AuthGuard';
 import RoleGuard from '@/components/RoleGuard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
+import { usePresignedUrl } from '@/hooks/usePresignedUrl';
 
 const DRAWER_WIDTH = 232;
 
@@ -41,6 +42,7 @@ function TrainerSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
 
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Trainer';
   const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : 'TR';
+  const { url: resolvedPhotoUrl } = usePresignedUrl(user?.photoUrl ?? null);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -126,8 +128,8 @@ function TrainerSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
             background: 'linear-gradient(135deg, #ec4899, #be185d)',
             color: '#fff', flexShrink: 0,
           }}>
-            {user?.photoUrl ? undefined : initials}
-            {user?.photoUrl && <Box component="img" src={user.photoUrl} alt={displayName} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+            {!resolvedPhotoUrl && initials}
+            {resolvedPhotoUrl && <Box component="img" src={resolvedPhotoUrl} alt={displayName} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
