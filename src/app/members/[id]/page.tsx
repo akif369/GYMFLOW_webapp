@@ -27,6 +27,7 @@ import PanToolIcon from '@mui/icons-material/PanTool';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AvatarUpload from '@/components/AvatarUpload';
+import { usePresignedUrl } from '@/hooks/usePresignedUrl';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -389,6 +390,10 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
 
   const refresh = () => setFetchTrigger(t => t + 1);
 
+  // Resolve the S3 key (or legacy URL) stored in member.photoUrl to a presigned URL.
+  // Falls back to null while loading, or if the member has no photo.
+  const { url: resolvedPhotoUrl } = usePresignedUrl(member?.photoUrl ?? null);
+
   const trainerName = member?.trainer
     ? `${member.trainer.firstName} ${member.trainer.lastName}`
     : 'Unassigned';
@@ -625,7 +630,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
           <Avatar
-            src={member.photoUrl || undefined}
+            src={resolvedPhotoUrl ?? undefined}
             sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}
           >
             {member.firstName[0]}{member.lastName[0]}
@@ -1223,7 +1228,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             {/* Profile photo upload */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5, mt: 1 }}>
               <AvatarUpload
-                initialImage={member?.photoUrl ?? null}
+                initialImage={resolvedPhotoUrl ?? null}
                 onImageSelected={setEditAvatarFile}
                 onDeleteRequested={async () => {
                   await api.delete(`/members/${id}/photo`);
