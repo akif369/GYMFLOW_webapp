@@ -26,6 +26,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
+import AvatarUpload from '@/components/AvatarUpload';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -164,6 +165,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // ── Renew State ───────────────────────────────────────────────────────────────
   const [renewOpen, setRenewOpen] = useState(false);
@@ -621,7 +624,10 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Profile Card */}
       <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
-          <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
+          <Avatar
+            src={member.photoUrl ?? undefined}
+            sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}
+          >
             {member.firstName[0]}{member.lastName[0]}
           </Avatar>
           <Box flex={1}>
@@ -1163,7 +1169,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       </TabPanel>
 
       {/* ── Edit Profile Dialog ─────────────────────────────────────────────────── */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={editOpen} onClose={() => { setEditOpen(false); setEditAvatarFile(null); }} maxWidth="sm" fullWidth>
         <Box component="form" onSubmit={async (e) => {
           e.preventDefault();
           if (!editForm.firstName || !editForm.lastName || !editForm.phone) {
@@ -1177,7 +1183,29 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           setEditLoading(true);
           setEditError('');
           try {
+            // 1. Save text fields
             await api.patch(`/members/${id}`, { ...editForm, phone: `+91${editForm.phone}` });
+
+            // 2. Upload new photo if one was selected
+            if (editAvatarFile) {
+              setPhotoUploading(true);
+              try {
+                const fd = new FormData();
+                fd.append('photo', editAvatarFile);
+                await api.post(`/members/${id}/photo`, fd, {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                });
+              } catch {
+                setEditError('Profile saved, but the photo upload failed. Please try again.');
+                setPhotoUploading(false);
+                setEditLoading(false);
+                refresh();
+                return;
+              }
+              setPhotoUploading(false);
+            }
+
+            setEditAvatarFile(null);
             setEditOpen(false);
             refresh();
           } catch (err: any) {
@@ -1191,6 +1219,21 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </DialogTitle>
           <DialogContent>
             {editError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{editError}</Alert>}
+
+            {/* Profile photo upload */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5, mt: 1 }}>
+              <AvatarUpload
+                initialImage={member?.photoUrl ?? null}
+                onImageSelected={setEditAvatarFile}
+                onDeleteRequested={async () => {
+                  await api.delete(`/members/${id}/photo`);
+                  refresh();
+                }}
+                disabled={editLoading || photoUploading}
+                size={90}
+              />
+            </Box>
+
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
@@ -1212,9 +1255,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={editLoading}>
-              {editLoading ? <CircularProgress size={24} /> : 'Save Changes'}
+            <Button onClick={() => { setEditOpen(false); setEditAvatarFile(null); }}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={editLoading || photoUploading}>
+              {(editLoading || photoUploading) ? <CircularProgress size={24} /> : 'Save Changes'}
             </Button>
           </DialogActions>
         </Box>

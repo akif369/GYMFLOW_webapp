@@ -322,6 +322,7 @@ function MembersPageContent() {
       disableColumnMenu: true,
       renderCell: (params) => (
         <Avatar
+          src={params.row.photoUrl || undefined}
           sx={{
             width: 34, height: 34,
             background: 'linear-gradient(135deg, #10b981, #059669)',
@@ -329,7 +330,7 @@ function MembersPageContent() {
             mt: 1.2,
           }}
         >
-          {params.row.firstName[0]}{params.row.lastName[0]}
+          {!params.row.photoUrl && `${params.row.firstName[0]}${params.row.lastName[0]}`}
         </Avatar>
       ),
     },

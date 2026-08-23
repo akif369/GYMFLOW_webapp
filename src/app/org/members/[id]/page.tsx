@@ -26,6 +26,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
+import AvatarUpload from '@/components/AvatarUpload';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -165,6 +166,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     firstName: '', lastName: '', phone: '', email: '',
     gender: '', dob: '', address: '', goal: '', branchId: '',
   });
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
 
@@ -644,8 +646,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Profile Card */}
       <Card elevation={0} sx={{ mb: 3 }}>
         <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
-          <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
-            {member.firstName[0]}{member.lastName[0]}
+          <Avatar src={member.photoUrl || undefined} sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
+            {!member.photoUrl && `${member.firstName[0]}${member.lastName[0]}`}
           </Avatar>
           <Box flex={1}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1203,6 +1205,15 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             const payload: any = { ...editForm, phone: `+91${editForm.phone}` };
             if (!payload.branchId) payload.branchId = null;
             await api.patch(`/members/${id}`, payload);
+            
+            if (editAvatarFile) {
+              const formData = new FormData();
+              formData.append('photo', editAvatarFile);
+              await api.post(`/members/${id}/photo`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+            }
+            
             setEditOpen(false);
             refresh();
           } catch (err: any) {
@@ -1216,6 +1227,18 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           </DialogTitle>
           <DialogContent>
             {editError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{editError}</Alert>}
+            
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, mt: 2 }}>
+              <AvatarUpload 
+                initialImage={member.photoUrl} 
+                onImageSelected={setEditAvatarFile}
+                onDeleteRequested={async () => {
+                  await api.delete(`/members/${id}/photo`);
+                  refresh();
+                }}
+              />
+            </Box>
+
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="First Name" required value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} fullWidth size="small" /></Grid>
               <Grid size={{ xs: 12, sm: 6 }}><TextField label="Last Name" required value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} fullWidth size="small" /></Grid>
