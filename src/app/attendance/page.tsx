@@ -4,7 +4,7 @@ import AppLayout from '@/components/AppLayout';
 import { useSearchParams } from 'next/navigation';
 import {
   Box, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
-  Table, TableBody, TableCell, TableHead, TableRow, TextField, MenuItem,
+  Table, TableBody, TableCell, TableHead, TableRow, TextField,
   Dialog, DialogTitle, DialogContent, DialogActions, Grid, CircularProgress, Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -35,13 +35,13 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
 }
 
 type InsideMember = {
-  id: string;
+  id: string;         // member UUID (for checkout API)
   name: string;
-  memberId: string;
+  memberId: string;   // display member number
   plan: string;
   checkIn: string;
   trainer: string;
-  attendanceId: string;
+  attendanceLogId: string; // attendance record id (for display)
 };
 
 type AttendanceLog = {
@@ -69,6 +69,7 @@ function AttendancePageContent() {
   // ── Currently inside ─────────────────────────────────────────────────────────
   const [insideMembers, setInsideMembers] = useState<InsideMember[]>([]);
   const [insideLoading, setInsideLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   const fetchInside = useCallback(() => {
     setInsideLoading(true);
@@ -77,13 +78,13 @@ function AttendancePageContent() {
         // Backend returns { members: [...], count }
         const items = res.data?.members ?? (res.data?.data ?? res.data?.items) ?? [];
         setInsideMembers(items.map((m: Record<string, unknown>) => ({
-          id: String(m.memberId ?? m.id ?? ''),
+          id: String(m.memberId ?? ''),           // member UUID → used for checkout
           name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
-          memberId: String(m.memberNumber ?? m.memberId ?? ''),
+          memberId: String(m.memberNumber ?? ''), // display member number
           plan: String(m.planName ?? m.plan ?? ''),
           checkIn: toISTTime(String(m.checkInAt ?? m.checkInTime ?? '')),
           trainer: String(m.trainerName ?? ''),
-          attendanceId: String(m.attendanceId ?? m.id ?? ''),
+          attendanceLogId: String(m.id ?? ''),   // attendance log record id
         })));
       })
       .catch(() => setInsideMembers([]))
@@ -183,13 +184,16 @@ function AttendancePageContent() {
     }
   };
 
-  const handleCheckOut = async (attendanceId: string) => {
+  const handleCheckOut = async (memberId: string, memberName: string) => {
+    setCheckoutError('');
     try {
-      await api.post('/attendance/check-out', { attendanceId });
+      // Backend checkOutService expects { memberId }
+      await api.post('/attendance/check-out', { memberId });
       fetchInside();
       fetchHistory(true);
-    } catch {
-      // silently ignore
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data;
+      setCheckoutError(msg?.error ?? msg?.message ?? `Failed to check out ${memberName}`);
     }
   };
 
@@ -197,7 +201,7 @@ function AttendancePageContent() {
     <AppLayout>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Attendance</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Attendance</Typography>
           <Typography variant="body2" color="text.secondary">Live and historical gym attendance</Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -216,6 +220,9 @@ function AttendancePageContent() {
 
       {/* Tab 0: Currently Inside */}
       <TabPanel value={tab} index={0}>
+        {checkoutError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setCheckoutError('')}>{checkoutError}</Alert>
+        )}
         {insideLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress size={32} />
@@ -235,12 +242,12 @@ function AttendancePageContent() {
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Typography variant="subtitle2" fontWeight="bold">
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                           {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                         </Typography>
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight="bold" noWrap>{m.name || 'Unknown'}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold' }} noWrap>{m.name || 'Unknown'}</Typography>
                         <Typography variant="caption" color="text.secondary">{m.memberId}{m.plan ? ` · ${m.plan}` : ''}</Typography>
                       </Box>
                       <Chip label="Inside" color="success" size="small" />
@@ -248,7 +255,7 @@ function AttendancePageContent() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       <Box>
                         <Typography variant="caption" color="text.secondary">Check-in</Typography>
-                        <Typography variant="body2" fontWeight={600}>{m.checkIn || '—'}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.checkIn || '—'}</Typography>
                       </Box>
                       {m.trainer && (
                         <Box sx={{ textAlign: 'center' }}>
@@ -256,7 +263,7 @@ function AttendancePageContent() {
                           <Typography variant="body2">{m.trainer}</Typography>
                         </Box>
                       )}
-                      <Button variant="outlined" size="small" color="warning" onClick={() => handleCheckOut(m.attendanceId)}>
+                      <Button variant="outlined" size="small" color="warning" onClick={() => handleCheckOut(m.id, m.name)}>
                         Check Out
                       </Button>
                     </Box>
@@ -322,7 +329,7 @@ function AttendancePageContent() {
               ) : historyLogs.map(log => (
                 <TableRow key={log.id} sx={{ '&:hover': { bgcolor: 'rgba(16,185,129,0.03)' } }}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{log.member || log.memberId}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{log.member || log.memberId}</Typography>
                     <Typography variant="caption" color="text.secondary">{log.memberId}</Typography>
                   </TableCell>
                   <TableCell>{log.date}</TableCell>
@@ -359,7 +366,7 @@ function AttendancePageContent() {
                 <Card elevation={0}>
                   <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">{h.hour}</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{h.hour}</Typography>
                       <Typography variant="body2" color="text.secondary">{h.count} check-ins avg</Typography>
                     </Box>
                     <Box sx={{
@@ -367,7 +374,7 @@ function AttendancePageContent() {
                       borderColor: h.pct > 80 ? 'error.main' : h.pct > 60 ? 'warning.main' : 'primary.main',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Typography variant="caption" fontWeight="bold">{h.pct}%</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{h.pct}%</Typography>
                     </Box>
                   </CardContent>
                 </Card>
@@ -416,7 +423,7 @@ function AttendancePageFallback() {
   return (
     <AppLayout>
       <Box sx={{ py: 3 }}>
-        <Typography variant="h5" fontWeight="bold">Attendance</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Attendance</Typography>
         <Typography variant="body2" color="text.secondary">Loading attendance…</Typography>
       </Box>
     </AppLayout>

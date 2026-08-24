@@ -27,7 +27,7 @@ const DAY_LABELS = ['5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15',
 export default function MemberAttendancePage() {
   const totalHours = Math.round(VISITS.reduce((acc, v) => {
     const [h, m] = v.duration.replace('h ', ':').replace('m', '').split(':').map(Number);
-    return acc + h + (m ?? 0) / 60;
+    return acc + (h ?? 0) + (m ?? 0) / 60;
   }, 0));
 
   return (
@@ -49,7 +49,7 @@ export default function MemberAttendancePage() {
           { label: 'Total Hours', value: `${totalHours}h`, icon: AccessTimeRoundedIcon, color: '#8b5cf6' },
           { label: 'Total Visits', value: 147, icon: EmojiEventsRoundedIcon, color: '#f59e0b' },
         ].map((s) => (
-          <Grid item xs={6} sm={3} key={s.label}>
+          <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2, textAlign: 'center', '&:last-child': { pb: 2 } }}>
                 <s.icon sx={{ fontSize: 22, color: s.color, mb: 0.5 }} />
