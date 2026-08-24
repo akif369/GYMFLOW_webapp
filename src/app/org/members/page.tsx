@@ -86,6 +86,7 @@ function MembersPageContent() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [search, setSearch] = useState('');
+  const defaultPageSize = useResponsivePageSize();
   const [activeFilter, setActiveFilter] = useState(() => {
     const filter = searchParams.get('filter');
     return filter && FILTERS.some(option => option.value === filter) ? filter : 'ALL';
