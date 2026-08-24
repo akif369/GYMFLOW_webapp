@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '@/lib/api';
+import { useLeads } from '@/hooks/queries/leads';
 
 type LeadRow = {
   id: string; name: string; phone: string; email: string; source: string; status: string;
@@ -25,31 +26,22 @@ const stageColor: Record<string, 'default' | 'info' | 'primary' | 'secondary' | 
 
 export default function LeadsPage() {
   const [addOpen, setAddOpen] = useState(false);
-  const [apiLeads, setApiLeads] = useState<LeadRow[] | null>(null);
+  const { data: leadsData } = useLeads({ pageSize: '100' });
 
-  useEffect(() => {
-    api.get('/leads', { params: { pageSize: '100' } })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        setApiLeads(items.map((l: Record<string, unknown>) => ({
-          id: String(l.id),
-          name: String(l.name ?? `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim()),
-          phone: String(l.phone ?? ''),
-          email: String(l.email ?? ''),
-          source: String(l.source ?? ''),
-          status: String(l.status ?? 'New Lead'),
-          interestedIn: String(l.interestedIn ?? l.plan ?? ''),
-          assignedTo: String(l.assignedTo ?? l.assignedStaff ?? ''),
-          notes: String(l.notes ?? ''),
-          createdAt: String(l.createdAt ?? '').split('T')[0],
-          followUpDate: String(l.followUpDate ?? '').split('T')[0],
-          trialDate: String(l.trialDate ?? '').split('T')[0] || null,
-        })));
-      })
-      .catch(() => setApiLeads([]));
-  }, []);
-
-  const leads = apiLeads ?? [];
+  const leads = (leadsData?.data ?? leadsData?.items ?? []).map((l: Record<string, unknown>) => ({
+    id: String(l.id),
+    name: String(l.name ?? `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim()),
+    phone: String(l.phone ?? ''),
+    email: String(l.email ?? ''),
+    source: String(l.source ?? ''),
+    status: String(l.status ?? 'New Lead'),
+    interestedIn: String(l.interestedIn ?? l.plan ?? ''),
+    assignedTo: String(l.assignedTo ?? l.assignedStaff ?? ''),
+    notes: String(l.notes ?? ''),
+    createdAt: String(l.createdAt ?? '').split('T')[0],
+    followUpDate: String(l.followUpDate ?? '').split('T')[0],
+    trialDate: String(l.trialDate ?? '').split('T')[0] || null,
+  }));
   const byStage = (stage: string) => leads.filter(l => l.status === stage);
   const bySource = SOURCES.map(s => ({ source: s, count: leads.filter(l => l.source === s).length }));
 

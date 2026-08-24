@@ -20,10 +20,8 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
-import useSWR from 'swr';
-import { api } from '@/lib/api';
-
-const fetcher = (url: string) => api.get(url).then(res => res.data);
+import { useBranches } from '@/hooks/queries/branches';
+import { useDashboard } from '@/hooks/queries/dashboard';
 
 // ORG_STATS replaced by API data
 
@@ -167,12 +165,11 @@ export default function OrgDashboardPage() {
   const { user } = useAuthStore();
   const [selectedBranchId, setSelectedBranchId] = useState<string>('ALL');
 
-  const { data: branchesData } = useSWR('/branches', fetcher);
+  const { data: branchesData } = useBranches();
   const branches = branchesData?.branches || [];
 
-  const { data: dashboardData, isLoading: loading } = useSWR(
-    `/dashboard${selectedBranchId !== 'ALL' ? `?branchId=${selectedBranchId}` : ''}`,
-    fetcher
+  const { data: dashboardData, isLoading: loading } = useDashboard(
+    selectedBranchId !== 'ALL' ? { branchId: selectedBranchId } : {}
   );
 
   const fmt = (n: number) => n?.toLocaleString('en-IN') ?? '0';

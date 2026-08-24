@@ -6,10 +6,8 @@ import {
   Select, FormControl, InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '@/lib/api';
-import useSWR from 'swr';
-
-const fetcher = (url: string) => api.get(url).then(res => res.data);
+import { useStaff, useStaffMutations } from '@/hooks/queries/staff';
+import { useBranches } from '@/hooks/queries/branches';
 
 const ALL_PERMISSIONS = [
   'member.create', 'member.update', 'member.delete', 'attendance.create',
@@ -47,32 +45,13 @@ export default function StaffPage() {
   const [editError, setEditError] = useState('');
 
   // ── API state ────────────────────────────────────────────────────────────────
-  const [apiStaff, setApiStaff] = useState<StaffRow[] | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('ALL');
-  const { data: branchesData } = useSWR('/branches', fetcher);
+  
+  const { data: branchesData } = useBranches();
   const branches = branchesData?.branches || [];
 
-  const fetchStaff = () => {
-    api.get('/staff', { params: selectedBranchId !== 'ALL' ? { branchId: selectedBranchId } : {} })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? (res.data?.data ?? res.data?.staff) ?? [];
-        setApiStaff(items.map((s: Record<string, unknown>) => ({
-          id: String(s.id),
-          name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim() || String(s.name ?? ''),
-          email: String(s.email ?? ''),
-          phone: String(s.phone ?? '').replace(/^\+91/, ''),
-          role: String(s.role ?? ''),
-          status: String(s.status ?? 'ACTIVE'),
-          permissions: Array.isArray(s.permissions) ? s.permissions.map(String) : [],
-          joinDate: String(s.joinDate ?? s.createdAt ?? '').split('T')[0],
-          branch: String(s.branch ?? ''),
-          branchId: String(s.branchId ?? ''),
-        })));
-      })
-      .catch(() => setApiStaff([]));
-  };
-
-  useEffect(() => { fetchStaff(); }, [selectedBranchId]);
+  const { data: apiStaff, isLoading: staffLoading } = useStaff(selectedBranchId !== 'ALL' ? { branchId: selectedBranchId } : {});
+  const { inviteStaff, updateStaffInfo, updateStaffPermissions, updateStaffStatus, resetPassword } = useStaffMutations();
 
   const handleRoleChange = (newRole: string) => {
     setSelectedRole(newRole);
@@ -92,7 +71,7 @@ export default function StaffPage() {
     setAddError('');
     setAddSubmitting(true);
     try {
-      const res = await api.post('/staff/invite', {
+      const res = await inviteStaff.mutateAsync({
         firstName: nameInput.split(' ')[0] || nameInput,
         lastName: nameInput.split(' ').slice(1).join(' ') || '',
         email: emailInput,
@@ -101,7 +80,6 @@ export default function StaffPage() {
         branchId: inviteBranchId,
         permissions: invitePermissions,
       });
-      fetchStaff();
       if (res.data?.inviteLink) {
         setGeneratedInvite(res.data.inviteLink);
       } else {
@@ -124,17 +102,20 @@ export default function StaffPage() {
     try {
       // 1. Update basic info
       const [firstName, ...lastNames] = editStaff.name.split(' ');
-      await api.patch(`/staff/${editStaff.id}`, {
-        firstName: firstName || editStaff.name,
-        lastName: lastNames.join(' ') || '',
-        phone: editStaff.phone ? `+91${editStaff.phone}` : undefined,
-        role: editStaff.role,
+      await updateStaffInfo.mutateAsync({
+        staffId: editStaff.id,
+        data: {
+          firstName: firstName || editStaff.name,
+          lastName: lastNames.join(' ') || '',
+          phone: editStaff.phone ? `+91${editStaff.phone}` : undefined,
+          role: editStaff.role,
+        }
       });
       // 2. Update permissions
-      await api.patch(`/staff/${editStaff.id}/permissions`, {
+      await updateStaffPermissions.mutateAsync({
+        staffId: editStaff.id,
         permissions: editStaff.permissions,
       });
-      fetchStaff();
       setEditOpen(false);
     } catch (e: any) {
       const err = e.response?.data?.error;
@@ -146,8 +127,7 @@ export default function StaffPage() {
 
   const handleToggleStatus = async (staffId: string, currentStatus: string) => {
     try {
-      await api.patch(`/staff/${staffId}/status`, { status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
-      fetchStaff();
+      await updateStaffStatus.mutateAsync({ staffId, status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
     } catch (e) {
       console.error(e);
       alert('Failed to update status');
@@ -157,7 +137,7 @@ export default function StaffPage() {
   const handleResetPassword = async (staffId: string) => {
     if (!confirm('Are you sure you want to send a password reset link to this staff member?')) return;
     try {
-      await api.post(`/staff/${staffId}/reset-password`);
+      await resetPassword.mutateAsync(staffId);
       alert('Password reset link sent to email and WhatsApp');
     } catch (e) {
       console.error(e);

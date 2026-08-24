@@ -11,14 +11,12 @@ import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import Link from 'next/link';
-import useSWR from 'swr';
-import { api } from '@/lib/api';
+import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
 import { useState } from 'react';
 
-const fetcher = (url: string) => api.get(url).then(res => res.data);
-
 export default function OrgBranchesPage() {
-  const { data, error, isLoading, mutate } = useSWR('/branches', fetcher);
+  const { data, isLoading } = useBranches();
+  const { addBranch, updateBranch } = useBranchMutations();
   const branches = data?.branches || [];
 
   const [openAdd, setOpenAdd] = useState(false);
@@ -28,8 +26,7 @@ export default function OrgBranchesPage() {
   const handleAdd = async () => {
     setAdding(true);
     try {
-      await api.post('/branches', formData);
-      await mutate();
+      await addBranch.mutateAsync(formData);
       setOpenAdd(false);
       setFormData({ name: '', city: '', address: '', phone: '', capacity: 1000 });
     } catch (e) {
@@ -47,14 +44,16 @@ export default function OrgBranchesPage() {
     if (!editBranch) return;
     setEditing(true);
     try {
-      await api.patch(`/branches/${editBranch.id}`, {
-        name: editBranch.name,
-        city: editBranch.city,
-        address: editBranch.address,
-        phone: editBranch.phone,
-        capacity: editBranch.capacity,
+      await updateBranch.mutateAsync({
+        id: editBranch.id,
+        data: {
+          name: editBranch.name,
+          city: editBranch.city,
+          address: editBranch.address,
+          phone: editBranch.phone,
+          capacity: editBranch.capacity,
+        }
       });
-      await mutate();
       setEditBranch(null);
     } catch (e) {
       console.error(e);

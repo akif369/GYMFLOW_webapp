@@ -8,7 +8,6 @@ import {
   Tooltip, CircularProgress, Alert, Select, FormControl,
 } from '@mui/material';
 import { useMediaQuery, useTheme } from '@mui/material';
-import useSWR from 'swr';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -27,6 +26,8 @@ import { usePresignedUrl, prefetchPresignedUrls } from '@/hooks/usePresignedUrl'
 import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
+import { useMembers, useMembershipPlans, useMemberMutations } from '@/hooks/queries/members';
+import { useBranches } from '@/hooks/queries/branches';
 
 // ── MemberAvatar — resolves an S3 key to a presigned URL ──
 function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; firstName: string; lastName: string }) {
@@ -48,7 +49,6 @@ function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; fi
   );
 }
 
-const fetcher = (url: string) => api.get(url).then(res => res.data);
 
 type MemberRow = {
   id: string; memberId: string; firstName: string; lastName: string; email: string; phone: string;
@@ -92,7 +92,7 @@ function MembersPageContent() {
     return filter && FILTERS.some(option => option.value === filter) ? filter : 'ALL';
   });
   const [selectedBranchId, setSelectedBranchId] = useState<string>('ALL');
-  const { data: branchesData } = useSWR('/branches', fetcher);
+  const { data: branchesData } = useBranches();
   const branches = branchesData?.branches || [];
   const [addOpen, setAddOpen] = useState(false);
   const [actionAnchor, setActionAnchor] = useState<null | HTMLElement>(null);
@@ -100,138 +100,35 @@ function MembersPageContent() {
   const [actionMemberId, setActionMemberId] = useState<string | null>(null);
   const [renewOpen, setRenewOpen] = useState(false);
   const [renewMemberId, setRenewMemberId] = useState<string | null>(null);
-  const [renewPlans, setRenewPlans] = useState<RenewPlan[]>([]);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
 
-  // ── API state ────────────────────────────────────────────────────────────────
-  const [apiMembers, setApiMembers] = useState<MemberRow[] | null>(null);
-  const [apiTotal, setApiTotal] = useState(0);
-  const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
-  const [apiLoading, setApiLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
-  const [fetchTrigger, setFetchTrigger] = useState(0);
 
 
-  useEffect(() => {
-    api.get('/membership-plans', { params: { pageSize: '50' } })
-      .then(res => {
-        const items = res.data?.plans ?? (res.data?.data ?? res.data?.items) ?? [];
-        setRenewPlans(items.map((plan: Record<string, unknown>) => ({
-          id: String(plan.id),
-          name: String(plan.name ?? ''),
-          price: Number(plan.price ?? 0),
-          durationDays: Number(plan.durationDays ?? 30),
-        })));
-      })
-      .catch(() => setRenewPlans([]));
-  }, []);
+  const { data: plansData } = useMembershipPlans();
+  const renewPlans = plansData ?? [];
 
-  useEffect(() => {
-    let cancelled = false;
-    setApiLoading(true);
-    const params: Record<string, string> = {
-      page: String(paginationModel.page + 1),
-      pageSize: String(paginationModel.pageSize),
-    };
-    if (search) params.search = search;
-    if (activeFilter !== 'ALL') {
-      if (activeFilter === 'PAYMENT_PENDING') {
-        params.paymentStatus = 'PENDING';
-      } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
-        params.membershipStatus = activeFilter;
-      }
+  const queryParams: Record<string, string> = {
+    page: String(paginationModel.page + 1),
+    pageSize: String(paginationModel.pageSize),
+  };
+  if (search) queryParams.search = search;
+  if (activeFilter !== 'ALL') {
+    if (activeFilter === 'PAYMENT_PENDING') {
+      queryParams.paymentStatus = 'PENDING';
+    } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
+      queryParams.membershipStatus = activeFilter;
     }
-    if (selectedBranchId !== 'ALL') {
-      params.branchId = selectedBranchId;
-    }
-    api.get('/members', { params })
-      .then(res => {
-        if (cancelled) return;
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        const policyEnabled = res.data?.strictPaymentPolicy === true;
-        setStrictPaymentPolicy(policyEnabled);
-        // Normalize the API response for the table row shape.
-        setApiMembers(items.map((m: Record<string, any>) => {
-          const latestMembership = (m.latestMembership ?? {}) as Record<string, any>;
-          const membershipPlan = m.membershipPlan ?? latestMembership.planName ?? m.plan;
-          const membershipStart = m.membershipStart ?? latestMembership.startDate;
-          const membershipExpiry = m.membershipExpiry ?? latestMembership.endDate;
-          const membershipStatus = m.membershipStatus ?? latestMembership.status ?? m.status;
+  }
+  if (selectedBranchId !== 'ALL') {
+    queryParams.branchId = selectedBranchId;
+  }
 
-          const planName = membershipPlan ? String(membershipPlan) : '-';
-          const startDate = membershipStart ? String(membershipStart).split('T')[0] : '-';
-          const expiryDate = membershipExpiry ? String(membershipExpiry).split('T')[0] : '-';
-          const lastVisit = (m.lastVisit ?? m.lastCheckIn) ? String(m.lastVisit ?? m.lastCheckIn).split('T')[0] : '-';
-
-          let calculatedMembershipStatus = membershipPlan ? (membershipStatus ? String(membershipStatus) : null) : 'INACTIVE';
-          let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;
-
-          if (!membershipPlan || planName === '-') {
-            calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
-          } else {
-            if (!calculatedMembershipStatus && expiryDate !== '-') {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const exp = new Date(expiryDate);
-              if (exp < today) calculatedMembershipStatus = 'EXPIRED';
-              else {
-                const diffTime = exp.getTime() - today.getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                calculatedMembershipStatus = diffDays <= 7 ? 'EXPIRING' : 'ACTIVE';
-              }
-            } else if (!calculatedMembershipStatus) {
-              calculatedMembershipStatus = 'ACTIVE';
-            }
-            calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
-          }
-
-          if (policyEnabled && calculatedMembershipStatus === 'ACTIVE' && calculatedPaymentStatus !== 'PAID') {
-            calculatedMembershipStatus = 'PAYMENT_PENDING';
-          }
-
-          return {
-            id: String(m.id),
-            memberId: String(m.memberNumber ?? m.memberId ?? ''),
-            firstName: String(m.firstName ?? ''),
-            lastName: String(m.lastName ?? ''),
-            email: String(m.email ?? ''),
-            phone: String(m.phone ?? ''),
-            photoUrl: m.photoUrl ?? null,
-            joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
-            gender: String(m.gender ?? ''),
-            dob: String(m.dob ?? ''),
-            plan: planName,
-            startDate,
-            expiryDate,
-            trainer: m.trainerName ? String(m.trainerName) : null,
-            lastVisit,
-            paymentStatus: calculatedPaymentStatus,
-            membershipStatus: calculatedMembershipStatus,
-            goal: String(m.goal ?? ''),
-            experience: String(m.experience ?? ''),
-            branch: String(m.branch ?? ''),
-            address: String(m.address ?? ''),
-            emergency: m.emergency ?? { name: '', phone: '', relation: '' },
-            medicalConditions: String(m.medicalConditions ?? 'None'),
-            allergies: String(m.allergies ?? 'None'),
-            injuries: String(m.injuries ?? 'None'),
-          };
-        }));
-        setApiTotal(res.data?.total ?? items.length);
-        // Warm the presigned URL cache for all avatars on this page
-        prefetchPresignedUrls(items.map((m: Record<string, any>) => m.photoUrl ?? null));
-      })
-      .catch(() => {
-        // Keep the directory empty when the API is unavailable.
-        if (!cancelled) setApiMembers(null);
-      })
-      .finally(() => { if (!cancelled) setApiLoading(false); });
-    return () => { cancelled = true; };
-   
-  }, [search, activeFilter, paginationModel.page, paginationModel.pageSize, fetchTrigger, selectedBranchId]);
-  const members = apiMembers ?? [];
-  const totalCount = apiMembers ? apiTotal : 0;
+  const { data: membersData, isLoading: apiLoading } = useMembers(queryParams);
+  const members = membersData?.items ?? [];
+  const totalCount = membersData?.total ?? 0;
+  const strictPaymentPolicy = membersData?.strictPaymentPolicy ?? false;
 
   const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
     event.stopPropagation();
@@ -306,6 +203,31 @@ function MembersPageContent() {
       router.push(`/attendance?member=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}`);
       } else {
       router.push(`/payments?memberId=${member.id}`);
+    }
+  };
+
+  const { updateStatus, deleteMember } = useMemberMutations();
+
+  const handleStatusChange = async () => {
+    if (!actionMemberId) return;
+    const member = members.find((m: any) => m.id === actionMemberId);
+    if (!member) return;
+    try {
+      const newStatus = member.membershipStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await updateStatus.mutateAsync({ memberId: actionMemberId, status: newStatus });
+      closeActions();
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!actionMemberId || !confirm('Are you sure you want to permanently delete this member?')) return;
+    try {
+      await deleteMember.mutateAsync(actionMemberId);
+      closeActions();
+    } catch (err) {
+      console.error('Failed to delete member', err);
     }
   };
 
@@ -422,7 +344,7 @@ function MembersPageContent() {
     },
   ];
 
-  if (apiMembers === null) {
+  if (apiLoading && members.length === 0) {
     return <PageSkeleton />;
   }
 
@@ -565,7 +487,7 @@ function MembersPageContent() {
             }
             router.push(`/org/members/${params.row.id}`);
           }}
-          rowCount={apiTotal}
+          rowCount={totalCount}
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: defaultPageSize } } }}
           paginationModel={paginationModel}
@@ -624,14 +546,12 @@ function MembersPageContent() {
           setRenewOpen(false);
           setRenewMemberId(null);
         }}
-        onSuccess={() => setFetchTrigger(trigger => trigger + 1)}
       />
 
       <AddMemberDialog
         open={addOpen}
         branches={branches}
         onClose={() => setAddOpen(false)}
-        onSuccess={() => setFetchTrigger(t => t + 1)}
       />
     </Box>
   );

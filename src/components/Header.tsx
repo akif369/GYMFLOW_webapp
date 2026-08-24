@@ -20,6 +20,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
 import ChangePasswordDialog from './profile/ChangePasswordDialog';
 import MyProfileDialog from './profile/MyProfileDialog';
+import { useGlobalSearch } from '@/hooks/queries/search';
+import { useDebounce } from '@/hooks/useDebounce';
 
 function getInitials(firstName?: string, lastName?: string) {
   if (!firstName && !lastName) return '??';
@@ -53,13 +55,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [userAnchor, setUserAnchor] = useState<null | HTMLElement>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedQuery = useDebounce(searchQuery, 250);
+  const normalizedQuery = debouncedQuery.trim();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState(false);
-  const [memberResults, setMemberResults] = useState<MemberResult[]>([]);
-  const [paymentResults, setPaymentResults] = useState<PaymentResult[]>([]);
   const [activeResult, setActiveResult] = useState(-1);
-  const [searchRefreshKey, setSearchRefreshKey] = useState(0);
+  const { data: searchData, isLoading: searchLoading, isError: searchError } = useGlobalSearch(normalizedQuery);
   const searchAnchorRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchAnchorWidth, setSearchAnchorWidth] = useState(320);
@@ -77,10 +77,9 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const initials = getInitials(user?.firstName, user?.lastName);
   const displayName = user ? `${user.firstName} ${user.lastName}` : 'Staff User';
   const roleLabel = ROLE_LABELS[user?.role ?? ''] ?? (user?.role ?? 'Staff');
-  const normalizedQuery = searchQuery.trim();
   const results = [
-    ...memberResults.map(item => ({ type: 'member' as const, item })),
-    ...paymentResults.map(item => ({ type: 'payment' as const, item })),
+    ...(searchData?.members ?? []).map((item: MemberResult) => ({ type: 'member' as const, item })),
+    ...(searchData?.payments ?? []).map((item: PaymentResult) => ({ type: 'payment' as const, item })),
   ];
 
   useEffect(() => {
@@ -94,40 +93,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     window.addEventListener('keydown', handleShortcut);
     return () => window.removeEventListener('keydown', handleShortcut);
   }, []);
-
-  useEffect(() => {
-    if (normalizedQuery.length < 2) {
-      setMemberResults([]);
-      setPaymentResults([]);
-      setSearchLoading(false);
-      setSearchError(false);
-      setActiveResult(-1);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setSearchLoading(true);
-      setSearchError(false);
-      try {
-        const response = await api.get('/search', { params: { q: normalizedQuery }, signal: controller.signal });
-        setMemberResults(response.data?.members ?? []);
-        setPaymentResults(response.data?.payments ?? []);
-        setActiveResult(-1);
-      } catch (error: any) {
-        if (error?.code !== 'ERR_CANCELED') {
-          setSearchError(true);
-        }
-      } finally {
-        if (!controller.signal.aborted) setSearchLoading(false);
-      }
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [normalizedQuery, searchRefreshKey]);
 
   const openSearchResult = (result: typeof results[number]) => {
     setSearchOpen(false);
@@ -221,7 +186,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             onChange={event => { setSearchQuery(event.target.value); setSearchOpen(true); }}
             onFocus={() => {
               setSearchOpen(true);
-              if (normalizedQuery.length >= 2) setSearchRefreshKey(key => key + 1);
             }}
             onKeyDown={handleSearchKeyDown}
             inputProps={{ 'aria-label': 'Search members and payments', autoComplete: 'off' }}

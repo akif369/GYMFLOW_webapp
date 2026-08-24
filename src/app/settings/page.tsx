@@ -9,6 +9,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import PageSkeleton from '@/components/PageSkeleton';
 import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
+import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
+import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -55,6 +57,7 @@ type AttendanceForm = {
   autoCheckoutHours: string;
   qrCheckIn: boolean;
   lateCheckoutAlert: boolean;
+  allowExpiredCheckin: boolean;
 };
 
 type TaxForm = {
@@ -96,81 +99,78 @@ function errorMessage(error: unknown, fallback: string) {
 export default function SettingsPage() {
   const [tab, setTab] = useState(0);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
-  const [policyLoading, setPolicyLoading] = useState(true);
-  const [policySaving, setPolicySaving] = useState(false);
-  const [policyError, setPolicyError] = useState('');
-  const [loading, setLoading] = useState(true);
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState('');
+
+  const { data: orgData, isLoading: orgLoading } = useOrg();
+  const { data: branchesData, isLoading: branchesLoading } = useBranches();
+  const { data: settingsData, isLoading: settingsLoading } = useSettings();
+  const { updateSetting, updateOrg } = useSettingMutations();
+  const { addBranch, updateBranch } = useBranchMutations();
+
+  const loading = orgLoading || branchesLoading || settingsLoading;
+
   const [orgForm, setOrgForm] = useState<OrgForm>(emptyOrg);
   const [branchForm, setBranchForm] = useState<BranchForm>(emptyBranch);
-  const [attendanceForm, setAttendanceForm] = useState<AttendanceForm>({ autoCheckoutHours: '3', qrCheckIn: true, lateCheckoutAlert: true });
+  const [attendanceForm, setAttendanceForm] = useState<AttendanceForm>({ autoCheckoutHours: '3', qrCheckIn: true, lateCheckoutAlert: true, allowExpiredCheckin: false });
   const [taxForm, setTaxForm] = useState<TaxForm>({ taxRate: '18', taxIncluded: true });
   const [memberForm, setMemberForm] = useState<MemberForm>({ daysBeforeInactive: '30' });
   const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
   const [notificationsForm, setNotificationsForm] = useState<NotificationsForm>({ attachInvoicePdf: false });
+  const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.get('/org'), api.get('/branches'), api.get('/settings')])
-      .then(([orgResponse, branchesResponse, settingsResponse]) => {
-        const org = orgResponse.data?.org ?? {};
-        setOrgForm({
-          name: String(org.name ?? ''), email: String(org.email ?? ''), phone: String(org.phone ?? ''),
-          address: String(org.address ?? ''), city: String(org.city ?? ''), state: String(org.state ?? ''),
-          gstNumber: String(org.gstNumber ?? ''), currency: String(org.currency ?? 'INR'), timezone: String(org.timezone ?? 'Asia/Kolkata'),
-        });
+    if (orgData?.org) {
+      const org = orgData.org;
+      setOrgForm({
+        name: String(org.name ?? ''), email: String(org.email ?? ''), phone: String(org.phone ?? ''),
+        address: String(org.address ?? ''), city: String(org.city ?? ''), state: String(org.state ?? ''),
+        gstNumber: String(org.gstNumber ?? ''), currency: String(org.currency ?? 'INR'), timezone: String(org.timezone ?? 'Asia/Kolkata'),
+      });
+    }
 
-        const branch = (branchesResponse.data?.branches ?? [])[0];
-        const settingMap = settingsResponse.data?.settings ?? {};
-        const branchSetting = settingMap.branch && typeof settingMap.branch === 'object' ? settingMap.branch as Record<string, unknown> : {};
-        const attendanceSetting = settingMap.attendance && typeof settingMap.attendance === 'object' ? settingMap.attendance as Record<string, unknown> : {};
-        const taxSetting = settingMap.tax && typeof settingMap.tax === 'object' ? settingMap.tax as Record<string, unknown> : {};
-        const invoiceSetting = settingMap.invoice && typeof settingMap.invoice === 'object' ? settingMap.invoice as Record<string, unknown> : {};
-        const memberSetting = settingMap.member && typeof settingMap.member === 'object' ? settingMap.member as Record<string, unknown> : {};
+    if (branchesData?.branches?.length) {
+      const branch = branchesData.branches[0];
+      const settingMap = settingsData?.settings ?? {};
+      const branchSetting = settingMap.branch && typeof settingMap.branch === 'object' ? settingMap.branch as Record<string, unknown> : {};
+      setBranchForm({
+        id: String(branch.id), name: String(branch.name ?? ''), address: String(branch.address ?? ''), city: String(branch.city ?? ''),
+        phone: String(branch.phone ?? ''), email: String(branch.email ?? ''), capacity: branch.capacity == null ? '' : String(branch.capacity),
+        status: branch.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+        openingTime: String(branchSetting.openingTime ?? '06:00'), closingTime: String(branchSetting.closingTime ?? '22:00'),
+      });
+    }
 
-        if (branch) {
-          setBranchForm({
-            id: String(branch.id), name: String(branch.name ?? ''), address: String(branch.address ?? ''), city: String(branch.city ?? ''),
-            phone: String(branch.phone ?? ''), email: String(branch.email ?? ''), capacity: branch.capacity == null ? '' : String(branch.capacity),
-            status: branch.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-            openingTime: String(branchSetting.openingTime ?? '06:00'), closingTime: String(branchSetting.closingTime ?? '22:00'),
-          });
-        }
-        setAttendanceForm({
-          autoCheckoutHours: String(attendanceSetting.autoCheckoutHours ?? '3'),
-          qrCheckIn: attendanceSetting.qrCheckIn !== false,
-          lateCheckoutAlert: attendanceSetting.lateCheckoutAlert !== false,
-        });
-        setMemberForm({
-          daysBeforeInactive: String(memberSetting.daysBeforeInactive ?? '30'),
-        });
-        setTaxForm({ taxRate: String(taxSetting.taxRate ?? '18'), taxIncluded: taxSetting.taxIncluded !== false });
-        setInvoiceForm({
-          prefix: String(invoiceSetting.prefix ?? 'GYM'),
-          footer: String(invoiceSetting.footer ?? ''),
-          dueDays: String(invoiceSetting.dueDays ?? 0),
-          autoSendOnRenewal: invoiceSetting.autoSendOnRenewal !== false,
-        });
-        setNotificationsForm({
-          attachInvoicePdf: invoiceSetting.attachInvoicePdf === true,
-        });
-        const policy = settingMap['payment-policy'];
-        setStrictPaymentPolicy(typeof policy === 'object' && policy !== null && 'strictPaymentPolicy' in policy && policy.strictPaymentPolicy === true);
-      })
-      .catch(error => {
-        const message = errorMessage(error, 'Could not load settings.');
-        setSettingsError(message);
-        setPolicyError(message);
-      })
-      .finally(() => { setLoading(false); setPolicyLoading(false); });
-  }, []);
+    if (settingsData?.settings) {
+      const settingMap = settingsData.settings;
+      const attendanceSetting = settingMap.attendance && typeof settingMap.attendance === 'object' ? settingMap.attendance as Record<string, unknown> : {};
+      const taxSetting = settingMap.tax && typeof settingMap.tax === 'object' ? settingMap.tax as Record<string, unknown> : {};
+      const invoiceSetting = settingMap.invoice && typeof settingMap.invoice === 'object' ? settingMap.invoice as Record<string, unknown> : {};
+      const memberSetting = settingMap.member && typeof settingMap.member === 'object' ? settingMap.member as Record<string, unknown> : {};
+      
+      setAttendanceForm({
+        autoCheckoutHours: String(attendanceSetting.autoCheckoutHours ?? '3'),
+        qrCheckIn: attendanceSetting.qrCheckIn !== false,
+        lateCheckoutAlert: attendanceSetting.lateCheckoutAlert !== false,
+        allowExpiredCheckin: attendanceSetting.allowExpiredCheckin === true,
+      });
+      setMemberForm({ daysBeforeInactive: String(memberSetting.daysBeforeInactive ?? '30') });
+      setTaxForm({ taxRate: String(taxSetting.taxRate ?? '18'), taxIncluded: taxSetting.taxIncluded !== false });
+      setInvoiceForm({
+        prefix: String(invoiceSetting.prefix ?? 'GYM'), footer: String(invoiceSetting.footer ?? ''),
+        dueDays: String(invoiceSetting.dueDays ?? 0), autoSendOnRenewal: invoiceSetting.autoSendOnRenewal !== false,
+      });
+      setNotificationsForm({ attachInvoicePdf: invoiceSetting.attachInvoicePdf === true });
+      const policy = settingMap['payment-policy'];
+      setStrictPaymentPolicy(typeof policy === 'object' && policy !== null && 'strictPaymentPolicy' in policy && policy.strictPaymentPolicy === true);
+    }
+  }, [orgData, branchesData, settingsData]);
 
-  const save = async (section: string, request: Promise<unknown>, fallback: string) => {
+  const save = async (section: string, action: () => Promise<unknown>, fallback: string) => {
     setSavingSection(section);
     setSettingsError('');
     try {
-      await request;
+      await action();
       setSaveSuccess(true);
     } catch (error: unknown) {
       setSettingsError(errorMessage(error, fallback));
@@ -230,7 +230,7 @@ export default function SettingsPage() {
                 <MenuItem value="UTC">UTC</MenuItem>
               </TextField></Grid>
               <Grid size={12}>
-                <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('org', api.patch('/org', orgForm), 'Could not save gym profile.')}>Save Changes</Button>
+                <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('org', () => updateOrg.mutateAsync(orgForm), 'Could not save gym profile.')}>Save Changes</Button>
               </Grid>
             </Grid>
           </CardContent>
@@ -264,16 +264,18 @@ export default function SettingsPage() {
             </SettingRow>
             <Box sx={{ mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !branchForm.name.trim()} onClick={() => {
-                const branchRequest = branchForm.id
-                  ? api.patch(`/branches/${branchForm.id}`, { name: branchForm.name, address: branchForm.address, city: branchForm.city, phone: branchForm.phone, email: branchForm.email, capacity: branchForm.capacity ? Number(branchForm.capacity) : 0, status: branchForm.status })
-                  : api.post('/branches', { name: branchForm.name, address: branchForm.address, capacity: branchForm.capacity ? Number(branchForm.capacity) : 0, status: branchForm.status });
-                save('branch', branchRequest.then(async response => {
-                  const branch = response.data?.branch;
-                  if (branch?.id) setBranchForm(form => ({ ...form, id: String(branch.id) }));
-                  const currentBranchId = branch?.id ?? branchForm.id;
-                  await api.patch('/settings/branch', { branchId: currentBranchId, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime });
-                  return api.patch('/settings/member', { daysBeforeInactive: Number(memberForm.daysBeforeInactive), branchId: currentBranchId });
-                }), 'Could not save branch settings.');
+                save('branch', async () => {
+                  let currentBranchId = branchForm.id;
+                  if (currentBranchId) {
+                    await updateBranch.mutateAsync({ id: currentBranchId, data: { name: branchForm.name, address: branchForm.address, city: branchForm.city, phone: branchForm.phone, email: branchForm.email, capacity: branchForm.capacity ? Number(branchForm.capacity) : 0, status: branchForm.status } });
+                  } else {
+                    const res = await addBranch.mutateAsync({ name: branchForm.name, address: branchForm.address, capacity: branchForm.capacity ? Number(branchForm.capacity) : 0, status: branchForm.status });
+                    currentBranchId = String(res.branch?.id || res.id);
+                    setBranchForm(form => ({ ...form, id: currentBranchId }));
+                  }
+                  await updateSetting.mutateAsync({ key: 'branch', data: { branchId: currentBranchId, openingTime: branchForm.openingTime, closingTime: branchForm.closingTime } });
+                  await updateSetting.mutateAsync({ key: 'member', data: { daysBeforeInactive: Number(memberForm.daysBeforeInactive), branchId: currentBranchId } });
+                }, 'Could not save branch settings.');
               }}>{branchForm.id ? 'Save Branch Settings' : 'Create Branch'}</Button>
             </Box>
           </CardContent>
@@ -295,8 +297,11 @@ export default function SettingsPage() {
             <SettingRow label="Late Check-out Alert" desc="Notify staff if member stays past closing">
               <Switch checked={attendanceForm.lateCheckoutAlert} onChange={e => setAttendanceForm({ ...attendanceForm, lateCheckoutAlert: e.target.checked })} disabled={loading} />
             </SettingRow>
+            <SettingRow label="Allow Expired Check-in" desc="Allow members with expired plans to check in (shows warning)">
+              <Switch checked={attendanceForm.allowExpiredCheckin} onChange={e => setAttendanceForm({ ...attendanceForm, allowExpiredCheckin: e.target.checked })} disabled={loading} />
+            </SettingRow>
             <Box sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('attendance', api.patch('/settings/attendance', { ...attendanceForm, autoCheckoutHours: Number(attendanceForm.autoCheckoutHours), branchId: branchForm.id || null }), 'Could not save attendance settings.')}>Save Attendance Settings</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('attendance', () => updateSetting.mutateAsync({ key: 'attendance', data: { ...attendanceForm, autoCheckoutHours: Number(attendanceForm.autoCheckoutHours), branchId: branchForm.id || null } }), 'Could not save attendance settings.')}>Save Attendance Settings</Button>
             </Box>
           </CardContent>
         </Card>
@@ -315,7 +320,7 @@ export default function SettingsPage() {
               <Switch checked={taxForm.taxIncluded} onChange={e => setTaxForm({ ...taxForm, taxIncluded: e.target.checked })} disabled={loading} />
             </SettingRow>
             <Box sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('tax', api.patch('/settings/tax', { ...taxForm, taxRate: Number(taxForm.taxRate) }), 'Could not save tax settings.')}>Save Tax Settings</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('tax', () => updateSetting.mutateAsync({ key: 'tax', data: { ...taxForm, taxRate: Number(taxForm.taxRate) } }), 'Could not save tax settings.')}>Save Tax Settings</Button>
             </Box>
           </CardContent>
         </Card>
@@ -342,7 +347,7 @@ export default function SettingsPage() {
               <TextField fullWidth size="small" multiline minRows={3} value={invoiceForm.footer} onChange={e => setInvoiceForm({ ...invoiceForm, footer: e.target.value })} disabled={loading} inputProps={{ maxLength: 500 }} placeholder="Thank you for training with us." />
             </Box>
             <Box sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !invoiceForm.prefix.trim()} onClick={() => save('invoice', api.patch('/settings/invoice', { ...invoiceForm, dueDays: Number(invoiceForm.dueDays) }), 'Could not save invoice settings.')}>Save Invoice Settings</Button>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !invoiceForm.prefix.trim()} onClick={() => save('invoice', () => updateSetting.mutateAsync({ key: 'invoice', data: { ...invoiceForm, dueDays: Number(invoiceForm.dueDays) } }), 'Could not save invoice settings.')}>Save Invoice Settings</Button>
             </Box>
           </CardContent>
         </Card>
@@ -365,14 +370,14 @@ export default function SettingsPage() {
         <Card elevation={0}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Payment Policy</Typography>
-            {policyError && <Alert severity="error" sx={{ mb: 2 }}>{policyError}</Alert>}
+            {settingsError && <Alert severity="error" sx={{ mb: 2 }}>{settingsError}</Alert>}
             <SettingRow
               label="Strict payment access"
               desc="Only members with an active membership and a PAID payment can check in. When off, staff may check in members without a completed payment."
             >
               <Switch
                 checked={strictPaymentPolicy}
-                disabled={policyLoading || policySaving}
+                disabled={loading || savingSection !== null}
                 onChange={event => setStrictPaymentPolicy(event.target.checked)}
                 color="success"
               />
@@ -386,24 +391,10 @@ export default function SettingsPage() {
               <Button
                 variant="contained"
                 startIcon={<SaveIcon />}
-                disabled={policyLoading || policySaving}
-                onClick={async () => {
-                  setPolicySaving(true);
-                  setPolicyError('');
-                  try {
-                    await api.patch('/settings/payment-policy', { strictPaymentPolicy });
-                    setSaveSuccess(true);
-                  } catch (error: unknown) {
-                    const message = error && typeof error === 'object' && 'response' in error
-                      ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                      : undefined;
-                    setPolicyError(message || 'Could not save payment policy.');
-                  } finally {
-                    setPolicySaving(false);
-                  }
-                }}
+                disabled={loading || savingSection !== null}
+                onClick={() => save('payment-policy', () => updateSetting.mutateAsync({ key: 'payment-policy', data: { strictPaymentPolicy } }), 'Could not save payment policy.')}
               >
-                {policySaving ? 'Saving...' : 'Save Payment Policy'}
+                Save Payment Policy
               </Button>
             </Box>
           </CardContent>
@@ -434,10 +425,13 @@ export default function SettingsPage() {
                 disabled={loading || savingSection !== null}
                 onClick={() => save(
                   'notifications',
-                  api.patch('/settings/invoice', {
-                    ...invoiceForm,
-                    dueDays: Number(invoiceForm.dueDays),
-                    attachInvoicePdf: notificationsForm.attachInvoicePdf,
+                  () => updateSetting.mutateAsync({
+                    key: 'invoice',
+                    data: {
+                      ...invoiceForm,
+                      dueDays: Number(invoiceForm.dueDays),
+                      attachInvoicePdf: notificationsForm.attachInvoicePdf,
+                    }
                   }),
                   'Could not save notification settings.'
                 )}

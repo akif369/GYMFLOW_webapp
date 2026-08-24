@@ -8,6 +8,7 @@ import {
   InputAdornment,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { useStaff, useStaffMutations } from '@/hooks/queries/staff';
 import { api } from '@/lib/api';
 
 const ALL_PERMISSIONS = [
@@ -67,30 +68,9 @@ export default function StaffPage() {
   const [editStaff, setEditStaff] = useState<StaffRow | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState('');
-
   // ── Staff list ─────────────────────────────────────────────────────────────
-  const [apiStaff, setApiStaff] = useState<StaffRow[] | null>(null);
-
-  const fetchStaff = () => {
-    api.get('/staff')
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items ?? res.data?.staff) ?? [];
-        setApiStaff(items.map((s: Record<string, unknown>) => ({
-          id: String(s.id),
-          name: `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim() || String(s.name ?? ''),
-          email: String(s.email ?? ''),
-          phone: String(s.phone ?? '').replace(/^\+91/, ''),
-          role: String(s.role ?? ''),
-          status: String(s.status ?? 'ACTIVE'),
-          permissions: Array.isArray(s.permissions) ? s.permissions.map(String) : [],
-          joinDate: String(s.joinDate ?? s.createdAt ?? '').split('T')[0],
-          branch: String(s.branch ?? ''),
-        })));
-      })
-      .catch(() => setApiStaff([]));
-  };
-
-  useEffect(() => { fetchStaff(); }, []);
+  const { data: apiStaff, isLoading: staffLoading } = useStaff({});
+  const { inviteStaff, updateStaffInfo, updateStaffPermissions, updateStaffStatus, resetPassword, deleteStaff } = useStaffMutations();
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleRoleChange = (newRole: string) => {
@@ -108,7 +88,7 @@ export default function StaffPage() {
     setAddError('');
     setAddSubmitting(true);
     try {
-      const res = await api.post('/staff/invite', {
+      const res = await inviteStaff.mutateAsync({
         firstName: nameInput.split(' ')[0] || nameInput,
         lastName: nameInput.split(' ').slice(1).join(' ') || '',
         email: emailInput,
@@ -116,9 +96,8 @@ export default function StaffPage() {
         role: selectedRole,
         permissions: invitePermissions,
       });
-      fetchStaff();
-      if (res.data?.inviteLink) {
-        setGeneratedInvite(res.data.inviteLink);
+      if (res.inviteLink) {
+        setGeneratedInvite(res.inviteLink);
       } else {
         setAddOpen(false);
       }
@@ -138,16 +117,19 @@ export default function StaffPage() {
     setEditSubmitting(true);
     try {
       const [firstName, ...lastNames] = editStaff.name.split(' ');
-      await api.patch(`/staff/${editStaff.id}`, {
-        firstName: firstName || editStaff.name,
-        lastName: lastNames.join(' ') || '',
-        phone: editStaff.phone ? `+91${editStaff.phone}` : undefined,
-        role: editStaff.role,
+      await updateStaffInfo.mutateAsync({
+        staffId: editStaff.id,
+        data: {
+          firstName: firstName || editStaff.name,
+          lastName: lastNames.join(' ') || '',
+          phone: editStaff.phone ? `+91${editStaff.phone}` : undefined,
+          role: editStaff.role,
+        }
       });
-      await api.patch(`/staff/${editStaff.id}/permissions`, {
+      await updateStaffPermissions.mutateAsync({
+        staffId: editStaff.id,
         permissions: editStaff.permissions,
       });
-      fetchStaff();
       setEditOpen(false);
     } catch (e: any) {
       const err = e.response?.data?.error;
@@ -159,10 +141,7 @@ export default function StaffPage() {
 
   const handleToggleStatus = async (staffId: string, currentStatus: string) => {
     try {
-      await api.patch(`/staff/${staffId}/status`, {
-        status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
-      });
-      fetchStaff();
+      await updateStaffStatus.mutateAsync({ staffId, status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
     } catch (e) {
       console.error(e);
       alert('Failed to update status');
@@ -172,7 +151,7 @@ export default function StaffPage() {
   const handleResetPassword = async (staffId: string) => {
     if (!confirm('Send a password reset link to this staff member?')) return;
     try {
-      await api.post(`/staff/${staffId}/reset-password`);
+      await resetPassword.mutateAsync(staffId);
       alert('Password reset link sent to email and WhatsApp');
     } catch (e) {
       console.error(e);
@@ -183,8 +162,7 @@ export default function StaffPage() {
   const handleDeleteStaff = async (staffId: string) => {
     if (!confirm('Are you sure you want to delete this staff member? This cannot be undone.')) return;
     try {
-      await api.delete(`/staff/${staffId}`);
-      fetchStaff();
+      await deleteStaff.mutateAsync(staffId);
     } catch (e: any) {
       console.error(e);
       alert(e.response?.data?.error || 'Failed to delete staff member');

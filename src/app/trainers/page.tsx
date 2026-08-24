@@ -16,6 +16,7 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import SearchIcon from '@mui/icons-material/Search';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import { api } from '@/lib/api';
+import { useTrainers, useAssignedMembers, useTrainerMutations } from '@/hooks/queries/trainers';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type TrainerRow = {
@@ -101,8 +102,9 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function TrainersPage() {
-  // ── Data ────────────────────────────────────────────────────────────────────
-  const [trainers, setTrainers] = useState<TrainerRow[] | null>(null);
+  // ── Queries ─────────────────────────────────────────────────────────────────
+  const { data: trainersData, isLoading: trainersLoading } = useTrainers({ pageSize: '100' });
+  const { addTrainer, updateTrainer, updateTrainerStatus, assignMembers, removeMember } = useTrainerMutations();
 
   // ── Add / Edit Trainer Dialog ───────────────────────────────────────────────
   const [trainerDialogOpen, setTrainerDialogOpen] = useState(false);
@@ -121,8 +123,22 @@ export default function TrainersPage() {
 
   // ── View Members Dialog ─────────────────────────────────────────────────────
   const [membersTrainer, setMembersTrainer] = useState<TrainerRow | null>(null);
-  const [assignedMembers, setAssignedMembers] = useState<AssignedMember[] | null>(null);
+  const { data: assignedMembersData, isLoading: assignedMembersLoading } = useAssignedMembers(membersTrainer?.id || null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
+  const assignedMembers = membersTrainer && assignedMembersData
+    ? (assignedMembersData.members ?? assignedMembersData.data ?? []).map((row: any) => {
+        const m = (row.member ?? row);
+        return {
+          id: String(m.id),
+          name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.name ?? ''),
+          phone: String(m.phone ?? '').replace(/^\+91/, ''),
+          email: String(m.email ?? ''),
+          assignedAt: String((row.assignment)?.assignedAt ?? row.assignedAt ?? '').split('T')[0],
+        };
+      })
+    : null;
+
 
   // ── Assign Members Dialog ───────────────────────────────────────────────────
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -132,36 +148,7 @@ export default function TrainersPage() {
   const [assignError, setAssignError] = useState('');
   const memberSearch = useMemberSearch();
 
-  // ── Fetchers ─────────────────────────────────────────────────────────────────
-  const fetchTrainers = () => {
-    api.get('/trainers', { params: { pageSize: '100' } })
-      .then(res => {
-        const items = res.data?.data ?? res.data?.items ?? res.data?.trainers ?? [];
-        setTrainers(items.map(mapTrainer));
-      })
-      .catch(() => setTrainers([]));
-  };
 
-  const fetchAssignedMembers = (trainerId: string) => {
-    setAssignedMembers(null);
-    api.get(`/trainers/${trainerId}/members`)
-      .then(res => {
-        const items = res.data?.members ?? res.data?.data ?? [];
-        setAssignedMembers(items.map((row: Record<string, unknown>) => {
-          const m = (row.member ?? row) as Record<string, unknown>;
-          return {
-            id: String(m.id),
-            name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.name ?? ''),
-            phone: String(m.phone ?? '').replace(/^\+91/, ''),
-            email: String(m.email ?? ''),
-            assignedAt: String((row.assignment as Record<string, unknown>)?.assignedAt ?? row.assignedAt ?? '').split('T')[0],
-          };
-        }));
-      })
-      .catch(() => setAssignedMembers([]));
-  };
-
-  useEffect(() => { fetchTrainers(); }, []);
 
   // ── Add/Edit handlers ────────────────────────────────────────────────────────
   const openAddTrainer = () => {
@@ -191,11 +178,11 @@ export default function TrainersPage() {
         certifications: trainerForm.certifications.split(',').map(s => s.trim()).filter(Boolean),
       };
       if (editTrainer) {
-        await api.patch(`/trainers/${editTrainer.id}`, payload);
+        await updateTrainer.mutateAsync({ id: editTrainer.id, data: payload });
       } else {
-        await api.post('/trainers', payload);
+        await addTrainer.mutateAsync(payload);
       }
-      fetchTrainers(); setTrainerDialogOpen(false);
+      setTrainerDialogOpen(false);
     } catch (e: any) {
       const err = e.response?.data?.error;
       setTrainerError(typeof err === 'string' ? err : err?.message || 'Failed to save trainer');
@@ -206,8 +193,8 @@ export default function TrainersPage() {
   const handleStatusChange = async (trainer: TrainerRow, newStatus: string) => {
     setStatusSubmitting(true);
     try {
-      await api.patch(`/trainers/${trainer.id}/status`, { status: newStatus });
-      fetchTrainers(); setStatusTrainer(null);
+      await updateTrainerStatus.mutateAsync({ id: trainer.id, status: newStatus });
+      setStatusTrainer(null);
     } catch (e: any) {
       alert(e.response?.data?.error || 'Failed to update status');
     } finally { setStatusSubmitting(false); }
@@ -218,9 +205,7 @@ export default function TrainersPage() {
     if (!confirm('Remove this member from trainer?')) return;
     setRemovingMemberId(memberId);
     try {
-      await api.delete(`/trainers/${trainerId}/members/${memberId}`);
-      fetchAssignedMembers(trainerId);
-      fetchTrainers();
+      await removeMember.mutateAsync({ trainerId, memberId });
     } catch (e: any) {
       alert(e.response?.data?.error || 'Failed to remove member');
     } finally { setRemovingMemberId(null); }
@@ -231,12 +216,11 @@ export default function TrainersPage() {
     if (!assignTrainer || !selectedMembers.length) return;
     setAssignError(''); setAssignSubmitting(true);
     try {
-      await api.post(`/trainers/${assignTrainer.id}/assign-members`, {
+      await assignMembers.mutateAsync({
+        id: assignTrainer.id,
         memberIds: selectedMembers.map(m => m.id),
       });
       setSelectedMembers([]);
-      fetchTrainers();
-      if (membersTrainer?.id === assignTrainer.id) fetchAssignedMembers(assignTrainer.id);
       setAssignDialogOpen(false);
     } catch (e: any) {
       const err = e.response?.data?.error;
@@ -244,7 +228,7 @@ export default function TrainersPage() {
     } finally { setAssignSubmitting(false); }
   };
 
-  const trList = trainers ?? [];
+  const trList = trainersData ? (trainersData.data ?? trainersData.items ?? trainersData.trainers ?? []).map(mapTrainer) : [];
   const activeCount = trList.filter(t => t.status === 'ACTIVE').length;
   const totalSessions = trList.reduce((s, t) => s + t.sessionsThisMonth, 0);
 
@@ -255,7 +239,7 @@ export default function TrainersPage() {
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Trainer Management</Typography>
           <Typography variant="body2" color="text.secondary">
-            {trainers === null ? 'Loading…' : `${trList.length} trainer${trList.length !== 1 ? 's' : ''} · ${activeCount} active`}
+            {trainersLoading ? 'Loading…' : `${trList.length} trainer${trList.length !== 1 ? 's' : ''} · ${activeCount} active`}
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openAddTrainer}>Add Trainer</Button>
@@ -282,7 +266,7 @@ export default function TrainersPage() {
         </Grid>
       )}
 
-      {trainers === null ? (
+      {trainersLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>
       ) : trList.length === 0 ? (
         <EmptyState onAdd={openAddTrainer} />

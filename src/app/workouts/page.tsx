@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '@/lib/api';
+import { useExercises, useWorkoutTemplates } from '@/hooks/queries/workouts';
 
 type ExerciseRow = { id: string; name: string; muscleGroup: string; equipment: string; difficulty: string; active: boolean; description: string };
 type WorkoutTemplateRow = { id: string; name: string; exercises: number; trainer: string; members: number; description: string };
@@ -17,49 +18,34 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
 }
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-
 const difficultyColor: Record<string, ChipColor> = { Beginner: 'success', Intermediate: 'warning', Advanced: 'error' };
 
 export default function WorkoutsPage() {
   const [tab, setTab] = useState(0);
   const [addExOpen, setAddExOpen] = useState(false);
-  const [apiExercises, setApiExercises] = useState<ExerciseRow[] | null>(null);
-  const [apiTemplates, setApiTemplates] = useState<WorkoutTemplateRow[] | null>(null);
 
-  useEffect(() => {
-    api.get('/exercises', { params: { pageSize: '100' } })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        setApiExercises(items.map((e: Record<string, unknown>) => ({
-          id: String(e.id),
-          name: String(e.name ?? ''),
-          difficulty: String(e.difficulty ?? 'Intermediate'),
-          muscleGroup: String(e.muscleGroup ?? e.muscle ?? ''),
-          equipment: String(e.equipment ?? ''),
-          description: String(e.description ?? ''),
-          active: e.active !== false,
-        })));
-      })
-      .catch(() => setApiExercises([]));
+  const { data: exercisesData } = useExercises({ pageSize: '100' });
+  const { data: templatesData } = useWorkoutTemplates({ pageSize: '50' });
 
-    api.get('/workout-templates', { params: { pageSize: '50' } })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        setApiTemplates(items.map((t: Record<string, unknown>) => ({
-          id: String(t.id),
-          name: String(t.name ?? ''),
-          trainer: String(t.createdByName ?? t.createdBy ?? ''),
-          exercises: Number(t.exerciseCount ?? (Array.isArray(t.exercises) ? t.exercises.length : 0)),
-          difficulty: String(t.difficulty ?? 'Intermediate'),
-          members: Number(t.memberCount ?? t.members ?? 0),
-          description: String(t.description ?? ''),
-        })));
-      })
-      .catch(() => setApiTemplates([]));
-  }, []);
+  const exercises = (exercisesData?.data ?? exercisesData?.items ?? []).map((e: Record<string, unknown>) => ({
+    id: String(e.id),
+    name: String(e.name ?? ''),
+    difficulty: String(e.difficulty ?? 'Intermediate'),
+    muscleGroup: String(e.muscleGroup ?? e.muscle ?? ''),
+    equipment: String(e.equipment ?? ''),
+    description: String(e.description ?? ''),
+    active: e.active !== false,
+  }));
 
-  const exercises = apiExercises ?? [];
-  const templates = apiTemplates ?? [];
+  const templates = (templatesData?.data ?? templatesData?.items ?? []).map((t: Record<string, unknown>) => ({
+    id: String(t.id),
+    name: String(t.name ?? ''),
+    trainer: String(t.createdByName ?? t.createdBy ?? ''),
+    exercises: Number(t.exerciseCount ?? (Array.isArray(t.exercises) ? t.exercises.length : 0)),
+    difficulty: String(t.difficulty ?? 'Intermediate'),
+    members: Number(t.memberCount ?? t.members ?? 0),
+    description: String(t.description ?? ''),
+  }));
 
   return (
     <AppLayout>

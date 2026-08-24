@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import ThemeRegistry from '@/components/ThemeRegistry';
 import GlobalNetworkError from '@/components/GlobalNetworkError';
+import QueryProvider from '@/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: 'GYMatrix Admin',
@@ -28,10 +29,12 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning style={{ margin: 0, padding: 0, fontFamily: "'Outfit', 'Inter', 'Roboto', sans-serif" }}>
-        <ThemeRegistry>
-          {children}
-          <GlobalNetworkError />
-        </ThemeRegistry>
+        <QueryProvider>
+          <ThemeRegistry>
+            {children}
+            <GlobalNetworkError />
+          </ThemeRegistry>
+        </QueryProvider>
       </body>
     </html>
   );

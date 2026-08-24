@@ -16,6 +16,8 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '@/lib/api';
 import MemberSearchField from '@/components/MemberSearchField';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
+import { usePayments, useInvoices, usePaymentMutations, useInvoiceMutations } from '@/hooks/queries/payments';
+import { useSettings } from '@/hooks/queries/settings';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
@@ -74,116 +76,96 @@ function PaymentsPageContent() {
   const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [refundError, setRefundError] = useState('');
 
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [invoiceLoading, setInvoiceLoading] = useState(true);
-  const [invoiceTotal, setInvoiceTotal] = useState(-1);
-  const [invoicePage, setInvoicePage] = useState(0);
-  const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(defaultPageSize);
-  const [invoiceCursors, setInvoiceCursors] = useState<string[]>(['']);
-  const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
-  const [invoiceNotice, setInvoiceNotice] = useState('');
-  const [invoiceError, setInvoiceError] = useState('');
-  const [generateInvoiceOpen, setGenerateInvoiceOpen] = useState(false);
-  const [generateInvoiceSubmitting, setGenerateInvoiceSubmitting] = useState(false);
-  const [generateInvoiceForm, setGenerateInvoiceForm] = useState({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
-  const [taxSettings, setTaxSettings] = useState({ taxRate: 18, taxIncluded: true });
+  // ── Queries ─────────────────────────────────────────────────────────────────
+  const { recordPayment, refundPayment: refundMutation } = usePaymentMutations();
+  const { generateInvoice, sendInvoice } = useInvoiceMutations();
 
-  // ── API payments ─────────────────────────────────────────────────────────────
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(-1);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultPageSize);
   const [paymentCursors, setPaymentCursors] = useState<string[]>(['']);
+  
+  const { data: paymentsData, isLoading: loading, refetch: fetchPayments } = usePayments({
+    pageSize: rowsPerPage,
+    cursor: paymentCursors[page] || undefined,
+    status: statusFilter !== 'ALL' ? statusFilter : undefined,
+    memberId: memberIdParam || undefined,
+    search: searchParam || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
 
-  const fetchPayments = useCallback(() => {
-    setLoading(true);
-    const params: Record<string, string> = { pageSize: String(rowsPerPage) };
-    const currentCursor = paymentCursors[page];
-    if (currentCursor) params.cursor = currentCursor;
-    if (statusFilter !== 'ALL') params.status = statusFilter;
-    if (memberIdParam) params.memberId = memberIdParam;
-    if (searchParam) params.search = searchParam;
-    if (dateFrom) params.dateFrom = dateFrom;
-    if (dateTo) params.dateTo = dateTo;
+  const { data: settingsData } = useSettings();
+  
+  const [invoicePage, setInvoicePage] = useState(0);
+  const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(defaultPageSize);
+  const [invoiceCursors, setInvoiceCursors] = useState<string[]>(['']);
+  
+  const { data: invoicesData, isLoading: invoiceLoading } = useInvoices({
+    pageSize: invoiceRowsPerPage,
+    cursor: invoiceCursors[invoicePage] || undefined,
+  });
 
-    api.get('/payments', { params })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        const mapped: Payment[] = items.map((p: Record<string, unknown>) => ({
-          id: String(p.id),
-          member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
-          memberId: String(p.memberId ?? ''),
-          amount: Number(p.totalAmount ?? p.amount ?? 0),
-          method: String(p.paymentMethod ?? p.method ?? ''),
-          status: String(p.status ?? ''),
-          date: String(p.createdAt ?? p.date ?? '').split('T')[0],
-          refId: String(p.referenceId ?? p.refId ?? ''),
-          description: String(p.description ?? ''),
-        }));
-        setPayments(mapped);
-        setTotal(res.data?.pagination?.hasMore ? -1 : page * rowsPerPage + mapped.length);
-        if (res.data?.pagination?.nextCursor) {
-          setPaymentCursors(prev => {
-            const next = [...prev];
-            next[page + 1] = res.data.pagination.nextCursor;
-            return next;
-          });
-        }
-      })
-      .catch(() => setPayments([]))
-      .finally(() => setLoading(false));
-  }, [statusFilter, memberIdParam, searchParam, dateFrom, dateTo, page, rowsPerPage, paymentCursors]);
+  const payments = (paymentsData?.data ?? paymentsData?.items ?? []).map((p: Record<string, unknown>) => ({
+    id: String(p.id),
+    member: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || String(p.memberName ?? ''),
+    memberId: String(p.memberId ?? ''),
+    amount: Number(p.totalAmount ?? p.amount ?? 0),
+    method: String(p.paymentMethod ?? p.method ?? ''),
+    status: String(p.status ?? ''),
+    date: String(p.createdAt ?? p.date ?? '').split('T')[0],
+    refId: String(p.referenceId ?? p.refId ?? ''),
+    description: String(p.description ?? ''),
+  }));
+
+  const total = paymentsData?.pagination?.hasMore ? -1 : page * rowsPerPage + payments.length;
 
   useEffect(() => {
-    const timer = window.setTimeout(fetchPayments, 0);
-    return () => window.clearTimeout(timer);
-  }, [fetchPayments]);
+    if (paymentsData?.pagination?.nextCursor) {
+      setPaymentCursors(prev => {
+        const next = [...prev];
+        next[page + 1] = paymentsData.pagination.nextCursor;
+        return next;
+      });
+    }
+  }, [paymentsData?.pagination?.nextCursor, page]);
+
+  const invoices = (invoicesData?.data ?? invoicesData?.items ?? []).map((invoice: Record<string, unknown>) => ({
+    id: String(invoice.id),
+    invoiceNumber: String(invoice.invoiceNumber ?? ''),
+    memberId: String(invoice.memberId ?? ''),
+    memberName: String(invoice.memberName ?? ''),
+    totalAmount: Number(invoice.totalAmount ?? 0),
+    status: String(invoice.status ?? ''),
+    createdAt: String(invoice.createdAt ?? '').split('T')[0],
+    dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '',
+    publicViewUrl: String(invoice.publicViewUrl ?? ''),
+  }));
+
+  const invoiceTotal = invoicesData?.pagination?.hasMore ? -1 : invoicePage * invoiceRowsPerPage + invoices.length;
 
   useEffect(() => {
-    api.get('/settings')
-      .then(res => {
-        const tax = res.data?.settings?.tax;
-        if (tax && typeof tax === 'object') {
-          const taxRate = Number((tax as Record<string, unknown>).taxRate);
-          const taxIncluded = (tax as Record<string, unknown>).taxIncluded !== false;
-          setTaxSettings({ taxRate: Number.isFinite(taxRate) ? taxRate : 18, taxIncluded });
-          setGenerateInvoiceForm(form => ({ ...form, gstPercent: String(Number.isFinite(taxRate) ? taxRate : 18) }));
-        }
-      })
-      .catch(() => undefined);
+    if (invoicesData?.pagination?.nextCursor) {
+      setInvoiceCursors(prev => {
+        const next = [...prev];
+        next[invoicePage + 1] = invoicesData.pagination.nextCursor;
+        return next;
+      });
+    }
+  }, [invoicesData?.pagination?.nextCursor, invoicePage]);
 
-    setInvoiceLoading(true);
-    const invParams: Record<string, string> = { pageSize: String(invoiceRowsPerPage) };
-    const invCursor = invoiceCursors[invoicePage];
-    if (invCursor) invParams.cursor = invCursor;
-    
-    api.get('/invoices', { params: invParams })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        setInvoiceTotal(res.data?.pagination?.hasMore ? -1 : invoicePage * invoiceRowsPerPage + items.length);
-        if (res.data?.pagination?.nextCursor) {
-          setInvoiceCursors(prev => {
-            const next = [...prev];
-            next[invoicePage + 1] = res.data.pagination.nextCursor;
-            return next;
-          });
-        }
-        setInvoices(items.map((invoice: Record<string, unknown>) => ({
-          id: String(invoice.id),
-          invoiceNumber: String(invoice.invoiceNumber ?? ''),
-          memberId: String(invoice.memberId ?? ''),
-          memberName: String(invoice.memberName ?? ''),
-          totalAmount: Number(invoice.totalAmount ?? 0),
-          status: String(invoice.status ?? ''),
-          createdAt: String(invoice.createdAt ?? '').split('T')[0],
-          dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '',
-          publicViewUrl: String(invoice.publicViewUrl ?? ''),
-        })));
-      })
-      .catch(() => setInvoices([]))
-      .finally(() => setInvoiceLoading(false));
-  }, [invoicePage, invoiceRowsPerPage, invoiceCursors]);
+  const taxSettings = useMemo(() => {
+    const tax = settingsData?.settings?.tax;
+    if (tax && typeof tax === 'object') {
+      const taxRate = Number((tax as Record<string, unknown>).taxRate);
+      const taxIncluded = (tax as Record<string, unknown>).taxIncluded !== false;
+      return { taxRate: Number.isFinite(taxRate) ? taxRate : 18, taxIncluded };
+    }
+    return { taxRate: 18, taxIncluded: true };
+  }, [settingsData]);
+
+  useEffect(() => {
+    setGenerateInvoiceForm(form => ({ ...form, gstPercent: String(taxSettings.taxRate) }));
+  }, [taxSettings.taxRate]);
 
   const filtered = payments.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
   const totalRevenue = filtered.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
@@ -518,7 +500,7 @@ function PaymentsPageContent() {
               setAddSubmitting(true);
               setAddError('');
               try {
-                await api.post('/payments', {
+                await recordPayment.mutateAsync({
                   memberId: memberIdInput,
                   amount: Number(amountInput),
                   paymentMethod: methodInput,
@@ -530,7 +512,6 @@ function PaymentsPageContent() {
                 setRefIdInput('');
                 setDescInput('');
                 setPage(0);
-                fetchPayments();
               } catch (err: unknown) {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
                 setAddError(msg ?? 'Failed to record payment.');
@@ -573,9 +554,8 @@ function PaymentsPageContent() {
               if (!refundPayment) return;
               setRefundSubmitting(true); setRefundError('');
               try {
-                await api.post(`/payments/${refundPayment.id}/refund`, { reason: refundReason });
+                await refundMutation.mutateAsync({ id: refundPayment.id, reason: refundReason });
                 setRefundOpen(false);
-                fetchPayments();
               } catch (err: unknown) {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
                 setRefundError(msg ?? 'Failed to process refund.');

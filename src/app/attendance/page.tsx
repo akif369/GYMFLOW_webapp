@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -9,192 +9,86 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { api } from '@/lib/api';
 import MemberSearchField, { type MemberSearchResult } from '@/components/MemberSearchField';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
-
-/** Convert a UTC ISO string to HH:MM in Asia/Kolkata */
-function toISTTime(utcIso: string): string {
-  if (!utcIso) return '';
-  return new Date(utcIso).toLocaleTimeString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
-
-/** Convert a UTC ISO string to YYYY-MM-DD in Asia/Kolkata */
-function toISTDate(utcIso: string): string {
-  if (!utcIso) return '';
-  return new Date(utcIso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA → YYYY-MM-DD
-}
+import { useAttendanceInside, useAttendanceHistory, usePeakHours, useAttendanceMutations } from '@/hooks/queries/attendance';
+import Link from 'next/link';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
 
-type InsideMember = {
-  id: string;         // member UUID (for checkout API)
-  name: string;
-  memberId: string;   // display member number
-  plan: string;
-  checkIn: string;
-  trainer: string;
-  attendanceLogId: string; // attendance record id (for display)
-};
-
-type AttendanceLog = {
-  id: string;
-  member: string;
-  memberId: string;
-  date: string;
-  checkIn: string;
-  checkOut: string | null;
-  duration: string;
-  method: string;
-};
-
 function AttendancePageContent() {
   const searchParams = useSearchParams();
   const defaultPageSize = useResponsivePageSize();
   const memberParam = searchParams.get('member') ?? '';
+  
   const [tab, setTab] = useState(0);
   const [checkInOpen, setCheckInOpen] = useState(() => Boolean(memberParam));
   const [memberIdInput, setMemberIdInput] = useState('');
   const [selectedCheckInMember, setSelectedCheckInMember] = useState<MemberSearchResult | null>(null);
-  const [checkInSubmitting, setCheckInSubmitting] = useState(false);
-  const [checkInError, setCheckInError] = useState('');
-
-  // ── Currently inside ─────────────────────────────────────────────────────────
-  const [insideMembers, setInsideMembers] = useState<InsideMember[]>([]);
-  const [insideLoading, setInsideLoading] = useState(false);
-  const [checkoutError, setCheckoutError] = useState('');
-
-  const fetchInside = useCallback(() => {
-    setInsideLoading(true);
-    api.get('/attendance/currently-inside')
-      .then(res => {
-        // Backend returns { members: [...], count }
-        const items = res.data?.members ?? (res.data?.data ?? res.data?.items) ?? [];
-        setInsideMembers(items.map((m: Record<string, unknown>) => ({
-          id: String(m.memberId ?? ''),           // member UUID → used for checkout
-          name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
-          memberId: String(m.memberNumber ?? ''), // display member number
-          plan: String(m.planName ?? m.plan ?? ''),
-          checkIn: toISTTime(String(m.checkInAt ?? m.checkInTime ?? '')),
-          trainer: String(m.trainerName ?? ''),
-          attendanceLogId: String(m.id ?? ''),   // attendance log record id
-        })));
-      })
-      .catch(() => setInsideMembers([]))
-      .finally(() => setInsideLoading(false));
-  }, []);
-
-  // ── History logs ─────────────────────────────────────────────────────────────
-  const [historyLogs, setHistoryLogs] = useState<AttendanceLog[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  
   const [memberSearch, setMemberSearch] = useState(memberParam);
   const [dateFilter, setDateFilter] = useState('');
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
 
-  const fetchHistory = useCallback((reset = true) => {
-    setHistoryLoading(true);
-    const params: Record<string, string> = { pageSize: String(defaultPageSize) };
-    if (!reset && cursor) params.cursor = cursor;
-    if (dateFilter) params.date = dateFilter;
-    if (memberSearch) params.search = memberSearch;
+  const [checkoutError, setCheckoutError] = useState('');
+  const [checkInError, setCheckInError] = useState('');
 
-    api.get('/attendance', { params })
-      .then(res => {
-        const items = (res.data?.data ?? res.data?.items) ?? [];
-        const mapped: AttendanceLog[] = items.map((l: Record<string, unknown>) => ({
-          id: String(l.id),
-          member: `${l.firstName ?? ''} ${l.lastName ?? ''}`.trim() || String(l.memberName ?? ''),
-          memberId: String(l.memberNumber ?? l.memberId ?? ''),
-          date: toISTDate(String(l.checkInAt ?? l.date ?? '')),
-          checkIn: toISTTime(String(l.checkInAt ?? '')),
-          checkOut: l.checkOutAt ? toISTTime(String(l.checkOutAt)) : null,
-          duration: l.durationMinutes
-            ? `${Math.floor(Number(l.durationMinutes) / 60)}h ${Number(l.durationMinutes) % 60}m`
-            : 'Inside',
-          method: String(l.checkInMethod ?? l.method ?? 'MANUAL'),
-        }));
-        
-        if (reset) {
-          setHistoryLogs(mapped);
-        } else {
-          setHistoryLogs(prev => [...prev, ...mapped]);
-        }
-        
-        setCursor(res.data?.pagination?.nextCursor ?? null);
-        setHasMore(res.data?.pagination?.hasMore ?? false);
-      })
-      .catch(() => { if (reset) setHistoryLogs([]); })
-      .finally(() => setHistoryLoading(false));
-  }, [dateFilter, memberSearch, cursor, defaultPageSize]);
+  // ── Queries ─────────────────────────────────────────────────────────────────
+  const { data: insideMembers = [], isLoading: insideLoading, refetch: refetchInside } = useAttendanceInside();
+  
+  const { 
+    data: historyData, 
+    fetchNextPage: fetchHistoryNext, 
+    hasNextPage: hasMore, 
+    isFetching: historyLoading,
+    refetch: refetchHistory
+  } = useAttendanceHistory({
+    pageSize: defaultPageSize,
+    date: dateFilter || undefined,
+    search: memberSearch || undefined
+  });
 
-  // ── Peak hours analytics ──────────────────────────────────────────────────────
-  const [peakHours, setPeakHours] = useState<{ hour: string; count: number; pct: number }[]>([]);
+  const historyLogs = useMemo(() => historyData?.pages.flatMap(p => p.items) || [], [historyData]);
 
-  const fetchPeakHours = useCallback(() => {
-    api.get('/attendance/analytics/peak-hours')
-      .then(res => {
-        const rows = res.data?.peakHours ?? res.data?.rows ?? [];
-        const maxCount = Math.max(...rows.map((r: Record<string, unknown>) => Number(r.count ?? 0)), 1);
-        setPeakHours(rows.map((r: Record<string, unknown>) => ({
-          hour: String(r.hour ?? r.hourLabel ?? ''),
-          count: Number(r.count ?? 0),
-          pct: Math.round((Number(r.count ?? 0) / maxCount) * 100),
-        })));
-      })
-      .catch(() => setPeakHours([]));
-  }, []);
+  const { data: peakHours = [] } = usePeakHours();
 
-  useEffect(() => {
-    fetchInside();
-    fetchHistory(true);
-    fetchPeakHours();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Re-fetch history when filters change
-  useEffect(() => {
-    fetchHistory(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter, memberSearch]);
+  // ── Mutations ───────────────────────────────────────────────────────────────
+  const { checkIn, checkOut } = useAttendanceMutations();
 
   const handleCheckIn = async () => {
     if (!memberIdInput) return;
-    setCheckInSubmitting(true);
     setCheckInError('');
     try {
-      await api.post('/attendance/check-in', { memberId: memberIdInput });
+      await checkIn.mutateAsync({ memberId: memberIdInput });
       setCheckInOpen(false);
       setMemberIdInput('');
       setSelectedCheckInMember(null);
-      fetchInside();
-      fetchHistory(true);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setCheckInError(msg ?? 'Check-in failed. Please try again.');
-    } finally {
-      setCheckInSubmitting(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Check-in failed. Please try again.';
+      setCheckInError(msg);
     }
   };
 
   const handleCheckOut = async (memberId: string, memberName: string) => {
     setCheckoutError('');
     try {
-      // Backend checkOutService expects { memberId }
-      await api.post('/attendance/check-out', { memberId });
-      fetchInside();
-      fetchHistory(true);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data;
-      setCheckoutError(msg?.error ?? msg?.message ?? `Failed to check out ${memberName}`);
+      await checkOut.mutateAsync({ memberId });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? `Failed to check out ${memberName}`;
+      setCheckoutError(msg);
     }
+  };
+
+  const handleRefresh = () => {
+    refetchInside();
+    refetchHistory();
+  };
+
+  const getCardBorderColor = (status: string) => {
+    if (status === 'EXPIRED') return 'rgba(244,63,94,0.6)'; // red
+    if (status === 'EXPIRING') return 'rgba(245,158,11,0.6)'; // yellow
+    return 'rgba(16,185,129,0.2)'; // default green
   };
 
   return (
@@ -205,7 +99,7 @@ function AttendancePageContent() {
           <Typography variant="body2" color="text.secondary">Live and historical gym attendance</Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => { fetchInside(); fetchHistory(true); }} size="small">Refresh</Button>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} size="small">Refresh</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setCheckInOpen(true); setCheckInError(''); }}>Manual Check-in</Button>
         </Box>
       </Box>
@@ -236,41 +130,68 @@ function AttendancePageContent() {
           </Card>
         ) : (
           <Grid container spacing={2}>
-            {insideMembers.map((m, i) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                <Card elevation={0} sx={{ border: '1px solid rgba(16,185,129,0.2)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                          {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }} noWrap>{m.name || 'Unknown'}</Typography>
-                        <Typography variant="caption" color="text.secondary">{m.memberId}{m.plan ? ` · ${m.plan}` : ''}</Typography>
-                      </Box>
-                      <Chip label="Inside" color="success" size="small" />
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Check-in</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.checkIn || '—'}</Typography>
-                      </Box>
-                      {m.trainer && (
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" color="text.secondary">Trainer</Typography>
-                          <Typography variant="body2">{m.trainer}</Typography>
+            {insideMembers.map((m: any, i: number) => {
+              const cardBorder = getCardBorderColor(m.membershipStatus);
+              return (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+                  <Card elevation={0} sx={{ 
+                    border: `1px solid ${cardBorder}`, 
+                    transition: 'border-color 0.2s',
+                    '&:hover': { borderColor: cardBorder.replace('0.6', '1').replace('0.2', '0.5') }
+                  }}>
+                    <CardContent>
+                      <Box 
+                        component={Link} 
+                        href={`/members/${m.id}`}
+                        sx={{ 
+                          display: 'flex', alignItems: 'center', gap: 2, 
+                          textDecoration: 'none', color: 'inherit',
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: 'primary.dark', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#fff' }}>
+                            {m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                          </Typography>
                         </Box>
-                      )}
-                      <Button variant="outlined" size="small" color="warning" onClick={() => handleCheckOut(m.id, m.name)}>
-                        Check Out
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold' }} noWrap>{m.name || 'Unknown'}</Typography>
+                          <Typography variant="caption" color="text.secondary">{m.memberId}{m.plan ? ` · ${m.plan}` : ''}</Typography>
+                          {m.membershipStatus === 'EXPIRED' && (
+                            <Typography variant="caption" sx={{ display: 'block', color: 'error.main', fontWeight: 'bold' }}>Membership Expired</Typography>
+                          )}
+                          {m.membershipStatus === 'EXPIRING' && (
+                            <Typography variant="caption" sx={{ display: 'block', color: 'warning.main', fontWeight: 'bold' }}>Expiring Soon</Typography>
+                          )}
+                        </Box>
+                        <Chip label="Inside" color="success" size="small" />
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">Check-in</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.checkIn || '—'}</Typography>
+                        </Box>
+                        {m.trainer && (
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="caption" color="text.secondary">Trainer</Typography>
+                            <Typography variant="body2">{m.trainer}</Typography>
+                          </Box>
+                        )}
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          color="warning" 
+                          onClick={() => handleCheckOut(m.id, m.name)}
+                          disabled={checkOut.isPending}
+                        >
+                          {checkOut.isPending ? 'Wait...' : 'Check Out'}
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
       </TabPanel>
@@ -326,7 +247,7 @@ function AttendancePageContent() {
                     <Typography variant="caption" color="text.secondary">No attendance records found</Typography>
                   </TableCell>
                 </TableRow>
-              ) : historyLogs.map(log => (
+              ) : historyLogs.map((log: any) => (
                 <TableRow key={log.id} sx={{ '&:hover': { bgcolor: 'rgba(16,185,129,0.03)' } }}>
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{log.member || log.memberId}</Typography>
@@ -343,7 +264,7 @@ function AttendancePageContent() {
           </Table>
           {hasMore && historyLogs.length > 0 && (
             <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Button size="small" onClick={() => fetchHistory(false)} disabled={historyLoading}>
+              <Button size="small" onClick={() => fetchHistoryNext()} disabled={historyLoading}>
                 {historyLoading ? <CircularProgress size={16} /> : 'Load more'}
               </Button>
             </Box>
@@ -361,7 +282,7 @@ function AttendancePageContent() {
           </Card>
         ) : (
           <Grid container spacing={2}>
-            {peakHours.map(h => (
+            {peakHours.map((h: any) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={h.hour}>
                 <Card elevation={0}>
                   <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -398,7 +319,7 @@ function AttendancePageContent() {
                   helperText="Search by name or member number, then select the member"
                   onSelect={member => { setSelectedCheckInMember(member); setMemberIdInput(member?.id ?? ''); setCheckInError(''); }}
                 />
-                {selectedCheckInMember?.status === 'EXPIRED' && <Alert severity="warning" sx={{ mt: 1 }}>This membership is expired and cannot be checked in.</Alert>}
+                {selectedCheckInMember?.status === 'EXPIRED' && <Alert severity="warning" sx={{ mt: 1 }}>This membership is expired. Check in may be restricted.</Alert>}
               </Grid>
             </Grid>
           </DialogContent>
@@ -407,10 +328,10 @@ function AttendancePageContent() {
             <Button
               type="submit"
               variant="contained"
-              disabled={checkInSubmitting || !memberIdInput || selectedCheckInMember?.status === 'EXPIRED'}
-              startIcon={checkInSubmitting ? <CircularProgress size={14} color="inherit" /> : undefined}
+              disabled={checkIn.isPending || !memberIdInput}
+              startIcon={checkIn.isPending ? <CircularProgress size={14} color="inherit" /> : undefined}
             >
-              {checkInSubmitting ? 'Checking in…' : 'Check In'}
+              {checkIn.isPending ? 'Checking in…' : 'Check In'}
             </Button>
           </DialogActions>
         </Box>

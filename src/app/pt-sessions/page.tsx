@@ -18,6 +18,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import { api } from '@/lib/api';
+import { usePtSessions, useTodayPtSessions, usePtPackages, usePtMutations, usePtPackageMutations } from '@/hooks/queries/pt-sessions';
+import { useTrainers } from '@/hooks/queries/trainers';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type SessionRow = {
@@ -109,16 +111,25 @@ export default function PtSessionsPage() {
   const [tab, setTab] = useState(0);
   const today = new Date().toISOString().split('T')[0];
 
-  // ── Data State ─────────────────────────────────────────────────────────────
-  const [todaySessions, setTodaySessions] = useState<SessionRow[] | null>(null);
-  const [allSessions, setAllSessions] = useState<SessionRow[] | null>(null);
-  const [packages, setPackages] = useState<PackageRow[] | null>(null);
-  const [trainers, setTrainers] = useState<TrainerOption[]>([]);
+  // ── Queries ─────────────────────────────────────────────────────────────────
+  const { data: todayData, isLoading: todayLoading } = useTodayPtSessions();
+  const { data: packagesData, isLoading: pkgsLoading } = usePtPackages();
+  const { data: trainersData, isLoading: trainersLoading } = useTrainers({ pageSize: '100' });
 
   // ── All Sessions Filters ────────────────────────────────────────────────────
   const [filterTrainerId, setFilterTrainerId] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDate, setFilterDate] = useState('');
+
+  const { data: allData, isLoading: allLoading } = usePtSessions({
+    trainerId: filterTrainerId || undefined,
+    status: filterStatus || undefined,
+    date: filterDate || undefined,
+    pageSize: '100',
+  });
+
+  const { bookSession, completeSession: completeMutation, cancelSession: cancelMutation, missSession } = usePtMutations();
+  const { addPackage, updatePackage } = usePtPackageMutations();
 
   // ── Book Dialog ─────────────────────────────────────────────────────────────
   const [bookOpen, setBookOpen] = useState(false);
@@ -162,53 +173,21 @@ export default function PtSessionsPage() {
   const [pkgSubmitting, setPkgSubmitting] = useState(false);
   const [pkgError, setPkgError] = useState('');
 
-  // ── Fetchers ─────────────────────────────────────────────────────────────────
-  const fetchToday = () => {
-    api.get('/pt/sessions/today')
-      .then(res => setTodaySessions((res.data?.sessions ?? res.data?.data ?? []).map(mapSession)))
-      .catch(() => setTodaySessions([]));
-  };
-
-  const fetchAll = useCallback(() => {
-    const params: Record<string, string> = { pageSize: '100' };
-    if (filterTrainerId) params.trainerId = filterTrainerId;
-    if (filterStatus) params.status = filterStatus;
-    if (filterDate) params.date = filterDate;
-    api.get('/pt/sessions', { params })
-      .then(res => setAllSessions((res.data?.data ?? res.data?.items ?? []).map(mapSession)))
-      .catch(() => setAllSessions([]));
-  }, [filterTrainerId, filterStatus, filterDate]);
-
-  const fetchPackages = () => {
-    api.get('/pt/packages')
-      .then(res => {
-        const items = res.data?.packages ?? res.data?.data ?? res.data?.items ?? [];
-        setPackages(items.map((p: Record<string, unknown>) => ({
-          id: String(p.id),
-          name: String(p.name ?? ''),
-          sessionsCount: Number(p.sessionsCount ?? p.sessions ?? 0),
-          validityDays: Number(p.validityDays ?? 30),
-          price: Number(p.price ?? 0),
-          description: String(p.description ?? ''),
-        })));
-      })
-      .catch(() => setPackages([]));
-  };
-
-  const fetchTrainers = () => {
-    api.get('/trainers', { params: { pageSize: '100' } })
-      .then(res => {
-        const items = res.data?.data ?? res.data?.items ?? res.data?.trainers ?? [];
-        setTrainers(items.map((t: Record<string, unknown>) => ({
-          id: String(t.id),
-          name: `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() || String(t.name ?? ''),
-        })));
-      })
-      .catch(() => setTrainers([]));
-  };
-
-  useEffect(() => { fetchToday(); fetchPackages(); fetchTrainers(); }, []);
-  useEffect(() => { if (tab === 1) fetchAll(); }, [tab, fetchAll]);
+  // ── Mapped Data ─────────────────────────────────────────────────────────────
+  const todaySess = todayData ? (todayData.sessions ?? todayData.data ?? []).map(mapSession) : [];
+  const allSess = allData ? (allData.data ?? allData.items ?? []).map(mapSession) : [];
+  const pkgs = packagesData ? (packagesData.packages ?? packagesData.data ?? packagesData.items ?? []).map((p: Record<string, unknown>) => ({
+    id: String(p.id),
+    name: String(p.name ?? ''),
+    sessionsCount: Number(p.sessionsCount ?? p.sessions ?? 0),
+    validityDays: Number(p.validityDays ?? 30),
+    price: Number(p.price ?? 0),
+    description: String(p.description ?? ''),
+  })) : [];
+  const trainersOptions = trainersData ? (trainersData.data ?? trainersData.items ?? trainersData.trainers ?? []).map((t: Record<string, unknown>) => ({
+    id: String(t.id),
+    name: `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim() || String(t.name ?? ''),
+  })) : [];
 
   // ── Book handlers ────────────────────────────────────────────────────────────
   const resetBookForm = () => {
@@ -224,7 +203,7 @@ export default function PtSessionsPage() {
     try {
       if (bookMode === 'INDIVIDUAL') {
         if (!bookMember || !bookTrainerId || !bookDate || !bookTime) throw new Error('Fill all required fields');
-        await api.post('/pt/sessions', {
+        await bookSession.mutateAsync({
           memberId: bookMember.id, trainerId: bookTrainerId,
           scheduledAt: `${bookDate}T${bookTime}:00`,
           durationMinutes: bookDuration, sessionType: bookType, notes: bookNotes,
@@ -233,7 +212,7 @@ export default function PtSessionsPage() {
         if (!groupMembers.length || !bookTrainerId || !bookDate || !bookTime) throw new Error('Fill all required fields');
         setBookProgress({ done: 0, total: groupMembers.length });
         for (let i = 0; i < groupMembers.length; i++) {
-          await api.post('/pt/sessions', {
+          await bookSession.mutateAsync({
             memberId: groupMembers[i].id, trainerId: bookTrainerId,
             scheduledAt: `${bookDate}T${bookTime}:00`,
             durationMinutes: bookDuration, sessionType: bookType, notes: bookNotes,
@@ -246,14 +225,13 @@ export default function PtSessionsPage() {
         if (!dates.length) throw new Error('No sessions fall within the date range for the selected day');
         setBookProgress({ done: 0, total: dates.length });
         for (let i = 0; i < dates.length; i++) {
-          await api.post('/pt/sessions', {
+          await bookSession.mutateAsync({
             memberId: recurMember.id, trainerId: bookTrainerId,
             scheduledAt: dates[i], durationMinutes: bookDuration, sessionType: bookType, notes: bookNotes,
           });
           setBookProgress({ done: i + 1, total: dates.length });
         }
       }
-      fetchToday(); fetchAll();
       setBookOpen(false); resetBookForm();
     } catch (e: any) {
       const err = e.response?.data?.error;
@@ -267,8 +245,8 @@ export default function PtSessionsPage() {
     if (!completeSession) return;
     setActionError(''); setActionSubmitting(true);
     try {
-      await api.post(`/pt/sessions/${completeSession.id}/complete`, { notes: completeNotes });
-      fetchToday(); fetchAll(); setCompleteSession(null); setCompleteNotes('');
+      await completeMutation.mutateAsync({ id: completeSession.id, notes: completeNotes });
+      setCompleteSession(null); setCompleteNotes('');
     } catch (e: any) {
       setActionError(e.response?.data?.error?.message || e.response?.data?.error || 'Failed to complete session');
     } finally { setActionSubmitting(false); }
@@ -278,8 +256,8 @@ export default function PtSessionsPage() {
     if (!cancelSession) return;
     setActionError(''); setActionSubmitting(true);
     try {
-      await api.post(`/pt/sessions/${cancelSession.id}/cancel`, { reason: cancelReason || 'Cancelled' });
-      fetchToday(); fetchAll(); setCancelSession(null); setCancelReason('');
+      await cancelMutation.mutateAsync({ id: cancelSession.id, reason: cancelReason || 'Cancelled' });
+      setCancelSession(null); setCancelReason('');
     } catch (e: any) {
       setActionError(e.response?.data?.error?.message || e.response?.data?.error || 'Failed to cancel session');
     } finally { setActionSubmitting(false); }
@@ -288,8 +266,7 @@ export default function PtSessionsPage() {
   const handleMiss = async (sessionId: string) => {
     if (!confirm('Mark this session as missed?')) return;
     try {
-      await api.post(`/pt/sessions/${sessionId}/miss`);
-      fetchToday(); fetchAll();
+      await missSession.mutateAsync(sessionId);
     } catch (e: any) { alert(e.response?.data?.error || 'Failed'); }
   };
 
@@ -308,19 +285,15 @@ export default function PtSessionsPage() {
     setPkgError(''); setPkgSubmitting(true);
     try {
       if (editPkg) {
-        await api.patch(`/pt/packages/${editPkg.id}`, pkgForm);
+        await updatePackage.mutateAsync({ id: editPkg.id, data: pkgForm });
       } else {
-        await api.post('/pt/packages', pkgForm);
+        await addPackage.mutateAsync(pkgForm);
       }
-      fetchPackages(); setPkgOpen(false);
+      setPkgOpen(false);
     } catch (e: any) {
       setPkgError(e.response?.data?.error?.message || e.response?.data?.error || 'Failed to save package');
     } finally { setPkgSubmitting(false); }
   };
-
-  const allSess = allSessions ?? [];
-  const todaySess = todaySessions ?? [];
-  const pkgs = packages ?? [];
 
   const bookValid = (() => {
     if (!bookTrainerId) return false;
@@ -353,7 +326,7 @@ export default function PtSessionsPage() {
 
       {/* ── Tab 0: Today's Schedule ─────────────────────────────────────────── */}
       <TabPanel value={tab} index={0}>
-        {todaySessions === null ? (
+        {todayLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
         ) : todaySess.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -424,7 +397,7 @@ export default function PtSessionsPage() {
             value={filterTrainerId} onChange={e => setFilterTrainerId(e.target.value)}
           >
             <MenuItem value="">All Trainers</MenuItem>
-            {trainers.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+            {(trainersData?.data ?? trainersData?.items ?? []).map((t: any) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
           </TextField>
           <TextField
             label="Filter by Status" select size="small" sx={{ minWidth: 150 }}
@@ -441,10 +414,9 @@ export default function PtSessionsPage() {
           <Button variant="outlined" size="small" onClick={() => { setFilterTrainerId(''); setFilterStatus(''); setFilterDate(''); }}>
             Clear
           </Button>
-          <Button variant="contained" size="small" onClick={fetchAll}>Apply</Button>
         </Box>
 
-        {allSessions === null ? (
+        {allLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
         ) : (
           <Card elevation={0}>
@@ -515,7 +487,7 @@ export default function PtSessionsPage() {
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={openAddPkg}>New Package</Button>
         </Box>
-        {packages === null ? (
+        {pkgsLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
         ) : (
           <Grid container spacing={2}>
@@ -671,8 +643,9 @@ export default function PtSessionsPage() {
             {/* Shared: Trainer */}
             <Grid size={12}>
               <TextField label="Trainer *" select fullWidth size="small" value={bookTrainerId} onChange={e => setBookTrainerId(e.target.value)}>
-                {trainers.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
-              </TextField>
+                {trainersOptions.map(t => (
+                  <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+                ))}</TextField>
             </Grid>
 
             {/* Shared: Date (not for RECURRING which has start/end) */}
