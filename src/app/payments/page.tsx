@@ -76,6 +76,14 @@ function PaymentsPageContent() {
   const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [refundError, setRefundError] = useState('');
 
+  // Invoice state
+  const [generateInvoiceOpen, setGenerateInvoiceOpen] = useState(false);
+  const [generateInvoiceForm, setGenerateInvoiceForm] = useState({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
+  const [generateInvoiceSubmitting, setGenerateInvoiceSubmitting] = useState(false);
+  const [invoiceError, setInvoiceError] = useState('');
+  const [invoiceNotice, setInvoiceNotice] = useState('');
+  const [invoiceSendingId, setInvoiceSendingId] = useState<string | null>(null);
+
   // ── Queries ─────────────────────────────────────────────────────────────────
   const { recordPayment, refundPayment: refundMutation } = usePaymentMutations();
   const { generateInvoice, sendInvoice } = useInvoiceMutations();
@@ -100,7 +108,7 @@ function PaymentsPageContent() {
   const [invoiceRowsPerPage, setInvoiceRowsPerPage] = useState(defaultPageSize);
   const [invoiceCursors, setInvoiceCursors] = useState<string[]>(['']);
   
-  const { data: invoicesData, isLoading: invoiceLoading } = useInvoices({
+  const { data: invoicesData, isLoading: invoiceLoading, refetch: fetchInvoices } = useInvoices({
     pageSize: invoiceRowsPerPage,
     cursor: invoiceCursors[invoicePage] || undefined,
   });
@@ -445,7 +453,7 @@ function PaymentsPageContent() {
                 dueDate: generateInvoiceForm.dueDate || undefined,
               });
               const invoice = response.data?.invoice;
-              if (invoice) setInvoices(current => [{ id: String(invoice.id), invoiceNumber: String(invoice.invoiceNumber), memberId: String(invoice.memberId ?? ''), memberName: String(invoice.memberName ?? ''), totalAmount: Number(invoice.totalAmount ?? 0), status: String(invoice.status ?? 'DRAFT'), createdAt: String(invoice.createdAt ?? '').split('T')[0], dueDate: invoice.dueDate ? String(invoice.dueDate).split('T')[0] : '', publicViewUrl: String(invoice.publicViewUrl ?? '') }, ...current]);
+              if (invoice) fetchInvoices();
               setGenerateInvoiceOpen(false);
               setGenerateInvoiceForm({ memberId: memberIdParam, description: 'Membership fee', amount: '', gstPercent: '18', dueDate: '' });
               setInvoiceNotice('Invoice generated with a secure view link.');

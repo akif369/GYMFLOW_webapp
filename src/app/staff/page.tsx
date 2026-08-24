@@ -264,7 +264,6 @@ export default function StaffPage() {
       <TabPanel value={tab} index={1}>
         <Grid container spacing={2}>
           {[
-            { role: 'OWNER', perms: ALL_PERMISSIONS, desc: 'Full access to everything' },
             { role: 'MANAGER', perms: ALL_PERMISSIONS.filter(p => !p.includes('delete')), desc: 'All except delete' },
             { role: 'RECEPTIONIST', perms: ['member.create', 'payment.create', 'attendance.create'], desc: 'Daily operations only' },
             { role: 'TRAINER', perms: ['attendance.create'], desc: 'View own sessions only' },
