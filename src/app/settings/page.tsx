@@ -11,6 +11,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
 import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
+import { useBiometricDevices, useRegisterBiometricDevice, useDeleteBiometricDevice } from '@/hooks/queries/biometrics';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import { IconButton, Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from '@mui/material';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -107,6 +111,11 @@ export default function SettingsPage() {
   const { data: settingsData, isLoading: settingsLoading } = useSettings();
   const { updateSetting, updateOrg } = useSettingMutations();
   const { addBranch, updateBranch } = useBranchMutations();
+
+  const [deviceForm, setDeviceForm] = useState({ serialNumber: '', deviceName: '', deviceType: 'F09', purpose: 'ENTRY' });
+  const { data: devices, isLoading: devicesLoading, refetch: refetchDevices } = useBiometricDevices();
+  const registerDeviceMutation = useRegisterBiometricDevice();
+  const deleteDeviceMutation = useDeleteBiometricDevice();
 
   const loading = orgLoading || branchesLoading || settingsLoading;
 
@@ -357,10 +366,102 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={5}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>Hardware Integrations</Typography>
-            <Alert severity="info">
-              Hardware integrations are coming soon. Biometric devices, turnstiles, and receipt printers will be enabled after device discovery, secure pairing, and connection health checks are available.
-            </Alert>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Biometric Devices</Typography>
+              <Tooltip title="Refresh Device Status">
+                <IconButton size="small" onClick={() => refetchDevices()} disabled={devicesLoading}>
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            {settingsError && <Alert severity="error" sx={{ mb: 2 }}>{settingsError}</Alert>}
+            
+            <Grid container spacing={2} sx={{ mb: 4, alignItems: 'center' }}>
+              <Grid size={{ xs: 12, md: 2.5 }}>
+                <TextField label="Device Name" size="small" fullWidth value={deviceForm.deviceName} onChange={e => setDeviceForm({ ...deviceForm, deviceName: e.target.value })} disabled={loading || registerDeviceMutation.isPending} placeholder="e.g. Main Entrance" />
+              </Grid>
+              <Grid size={{ xs: 12, md: 2.5 }}>
+                <TextField label="Serial Number" size="small" fullWidth value={deviceForm.serialNumber} onChange={e => setDeviceForm({ ...deviceForm, serialNumber: e.target.value })} disabled={loading || registerDeviceMutation.isPending} placeholder="e.g. ABC123456" />
+              </Grid>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <TextField label="Type" select size="small" fullWidth value={deviceForm.deviceType} onChange={e => setDeviceForm({ ...deviceForm, deviceType: e.target.value })} disabled={loading || registerDeviceMutation.isPending}>
+                  <MenuItem value="F09">ZKTeco F09</MenuItem>
+                  <MenuItem value="OTHER">Other ZKTeco</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <TextField label="Purpose" select size="small" fullWidth value={deviceForm.purpose} onChange={e => setDeviceForm({ ...deviceForm, purpose: e.target.value })} disabled={loading || registerDeviceMutation.isPending}>
+                  <MenuItem value="ENTRY">Entry</MenuItem>
+                  <MenuItem value="EXIT">Exit</MenuItem>
+                  <MenuItem value="VIDEO">Video</MenuItem>
+                  <MenuItem value="OTHER">Other</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Button variant="contained" disabled={loading || registerDeviceMutation.isPending || !deviceForm.serialNumber || !deviceForm.deviceName || !branchForm.id} onClick={async () => {
+                  if (!branchForm.id) return setSettingsError('Please create a branch first');
+                  setSettingsError('');
+                  try {
+                    await registerDeviceMutation.mutateAsync({ branchId: branchForm.id, serialNumber: deviceForm.serialNumber, deviceName: deviceForm.deviceName, deviceType: deviceForm.deviceType, purpose: deviceForm.purpose });
+                    setDeviceForm({ serialNumber: '', deviceName: '', deviceType: 'F09', purpose: 'ENTRY' });
+                    setSaveSuccess(true);
+                  } catch (err) {
+                    setSettingsError(errorMessage(err, 'Failed to register device'));
+                  }
+                }}>Register Device</Button>
+              </Grid>
+            </Grid>
+
+            {devicesLoading ? (
+              <Typography variant="body2" color="text.secondary">Loading devices...</Typography>
+            ) : devices && devices.length > 0 ? (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Serial Number</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Purpose</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Last Seen</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {devices.map(device => (
+                    <TableRow key={device.id}>
+                      <TableCell>{device.deviceName}</TableCell>
+                      <TableCell>{device.serialNumber}</TableCell>
+                      <TableCell>{device.deviceType}</TableCell>
+                      <TableCell>
+                        <Chip size="small" label={device.purpose} variant="outlined" />
+                      </TableCell>
+                      <TableCell>
+                        <Chip size="small" label={device.status} color={device.status === 'ONLINE' ? 'success' : 'default'} />
+                      </TableCell>
+                      <TableCell>{device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : 'Never'}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" color="error" onClick={async () => {
+                          if (confirm('Are you sure you want to delete this device?')) {
+                            setSettingsError('');
+                            try {
+                              await deleteDeviceMutation.mutateAsync(device.id);
+                              setSaveSuccess(true);
+                            } catch (err) {
+                              setSettingsError(errorMessage(err, 'Failed to delete device'));
+                            }
+                          }
+                        }} disabled={deleteDeviceMutation.isPending}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <Alert severity="info">No biometric devices registered.</Alert>
+            )}
           </CardContent>
         </Card>
       </TabPanel>
