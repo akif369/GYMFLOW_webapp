@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+
 export function useAttendanceInside() {
   return useQuery({
     queryKey: ['attendance', 'inside'],
@@ -12,7 +13,7 @@ export function useAttendanceInside() {
         name: `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || String(m.memberName ?? ''),
         memberId: String(m.memberNumber ?? ''),
         plan: String(m.planName ?? m.plan ?? ''),
-        checkIn: String(m.checkInAt ?? m.checkInTime ?? ''), // Return raw iso
+        checkIn: toISTTime(String(m.checkInAt ?? m.checkInTime ?? '')),
         trainer: String(m.trainerName ?? ''),
         attendanceLogId: String(m.id ?? ''),
         membershipStatus: String(m.membershipStatus ?? ''),
@@ -21,7 +22,6 @@ export function useAttendanceInside() {
     refetchInterval: 30000, // Refresh every 30s
   });
 }
-
 function toISTTime(utcIso: string): string {
   if (!utcIso) return '';
   return new Date(utcIso).toLocaleTimeString('en-IN', {
