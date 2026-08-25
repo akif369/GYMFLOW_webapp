@@ -17,6 +17,31 @@ export interface BiometricDevice {
   createdAt: string;
 }
 
+export interface BiometricIdentity {
+  id: string;
+  memberId: string;
+  memberName?: string;
+  memberNumber?: string;
+  memberStatus?: string;
+  deviceId: string;
+  deviceName?: string;
+  deviceSerial?: string;
+  deviceUserId: string;
+  accessGroup: number; // 1 = Allowed / Active, 99 = Denied
+  syncStatus: 'PENDING' | 'SYNCED' | 'FAILED';
+  lastSyncedAt?: string;
+  createdAt: string;
+}
+
+export interface ReconcileResult {
+  totalMembersChecked: number;
+  devicesCount: number;
+  commandsQueued: number;
+  group1ActiveCount: number;
+  group99DeniedCount: number;
+  alreadyInSyncCount: number;
+}
+
 export function useBiometricDevices() {
   return useQuery({
     queryKey: ['biometric-devices'],
@@ -58,9 +83,37 @@ export function useSyncMemberToDevice() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { memberId: string; branchId: string; pin: string; name: string }) => {
+    mutationFn: async (payload: { memberId: string; branchId: string; pin: string; name: string; accessGroup?: number }) => {
       const { data } = await api.post('/biometrics/sync', payload);
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
+    },
+  });
+}
+
+export function useSyncMemberAccess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (memberId: string) => {
+      const { data } = await api.post(`/biometrics/sync-member/${memberId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
+    },
+  });
+}
+
+export function useReconcileBiometrics() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload?: { branchId?: string }) => {
+      const { data } = await api.post('/biometrics/reconcile', payload || {});
+      return data as ReconcileResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
@@ -73,7 +126,7 @@ export function useBiometricIdentities() {
     queryKey: ['biometric-identities'],
     queryFn: async () => {
       const { data } = await api.get('/biometrics/identities');
-      return data.data as { memberId: string; deviceId: string; deviceUserId: string }[];
+      return data.data as BiometricIdentity[];
     },
   });
 }

@@ -11,11 +11,15 @@ import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
 import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
-import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice } from '@/hooks/queries/biometrics';
+import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useReconcileBiometrics, type ReconcileResult } from '@/hooks/queries/biometrics';
 import { useMembers } from '@/hooks/queries/members';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { IconButton, Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from '@mui/material';
+import SyncIcon from '@mui/icons-material/Sync';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BlockIcon from '@mui/icons-material/Block';
+import SecurityIcon from '@mui/icons-material/Security';
+import { IconButton, Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, CircularProgress } from '@mui/material';
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
@@ -118,7 +122,11 @@ export default function SettingsPage() {
   const registerDeviceMutation = useRegisterBiometricDevice();
   const deleteDeviceMutation = useDeleteBiometricDevice();
   const syncMutation = useSyncMemberToDevice();
-  const { data: identities } = useBiometricIdentities();
+  const syncMemberAccessMutation = useSyncMemberAccess();
+  const reconcileMutation = useReconcileBiometrics();
+  const { data: identities, refetch: refetchIdentities } = useBiometricIdentities();
+  const [reconcileResult, setReconcileResult] = useState<ReconcileResult | null>(null);
+  const [syncingMemberId, setSyncingMemberId] = useState<string | null>(null);
   
   const { data: membersData, isLoading: membersLoading } = useMembers({ pageSize: 1000 });
   const membersList = membersData?.items || [];
@@ -376,8 +384,41 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={5}>
         <Card elevation={0} sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Hardware Settings</Typography>
-            <SettingRow label="Auto-Sync New Members" desc="When ON, creating a new member automatically assigns them a PIN and queues it to be pushed to the biometric device.">
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Access Control & Group Automation</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ZKTeco F09 biometric devices automatically assign <strong>Group 1 (Access Allowed)</strong> to active members with a valid membership, and <strong>Group 99 (Access Denied)</strong> to expired, inactive, frozen, or cancelled members.
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={reconcileMutation.isPending ? <CircularProgress size={16} /> : <SyncIcon />}
+                disabled={loading || reconcileMutation.isPending || !devices?.length}
+                onClick={async () => {
+                  setSettingsError('');
+                  try {
+                    const res = await reconcileMutation.mutateAsync({ branchId: branchForm.id || undefined });
+                    setReconcileResult(res);
+                    refetchIdentities();
+                  } catch (err) {
+                    setSettingsError(errorMessage(err, 'Failed to reconcile biometrics'));
+                  }
+                }}
+              >
+                {reconcileMutation.isPending ? 'Checking & Syncing...' : 'Reconcile Access Groups'}
+              </Button>
+            </Box>
+
+            {reconcileResult && (
+              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setReconcileResult(null)}>
+                <strong>Reconciliation Complete:</strong> Checked {reconcileResult.totalMembersChecked} members across {reconcileResult.devicesCount} devices.
+                Queued {reconcileResult.commandsQueued} update command(s) ({reconcileResult.group1ActiveCount} active in Group 1, {reconcileResult.group99DeniedCount} denied in Group 99). {reconcileResult.alreadyInSyncCount} members were already in sync and skipped (smart delta diff).
+              </Alert>
+            )}
+
+            <SettingRow label="Auto-Sync New Members" desc="When ON, creating a new member automatically computes their access group and queues it to be pushed to the biometric device.">
               <Switch checked={biometricsForm.autoSync} onChange={e => setBiometricsForm({ autoSync: e.target.checked })} disabled={loading} />
             </SettingRow>
             <Box sx={{ mt: 2 }}>
@@ -390,7 +431,7 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Manual Device Sync</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Manually map an existing GymFlow member to a PIN on your ZKTeco device, and queue the data to be pushed to the device.
+              Manually map an existing GymFlow member to a PIN on your ZKTeco device, and queue the access group data to be pushed to the device.
             </Typography>
             <Grid container spacing={2} sx={{ alignItems: 'center' }}>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -429,12 +470,108 @@ export default function SettingsPage() {
                     });
                     setManualSyncForm({ memberId: '', pin: '' });
                     setSaveSuccess(true);
+                    refetchIdentities();
                   } catch (err) {
                     setSettingsError(errorMessage(err, 'Failed to sync member'));
                   }
                 }}>Sync to Devices</Button>
               </Grid>
             </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Member Biometric Identities Table */}
+        <Card elevation={0} sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Member Device Permissions & Identities</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Real-time synchronization status and assigned access groups across all branch biometric terminals.
+                </Typography>
+              </Box>
+              <Tooltip title="Refresh Identities">
+                <IconButton size="small" onClick={() => refetchIdentities()}>
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            {identities && identities.length > 0 ? (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Member</TableCell>
+                    <TableCell>PIN</TableCell>
+                    <TableCell>Device</TableCell>
+                    <TableCell>Access Group</TableCell>
+                    <TableCell>Sync Status</TableCell>
+                    <TableCell>Last Synced</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {identities.map((identity: any) => (
+                    <TableRow key={identity.id || `${identity.deviceId}-${identity.memberId}`}>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{identity.memberName || 'Member'}</Typography>
+                        <Typography variant="caption" color="text.secondary">{identity.memberNumber}</Typography>
+                      </TableCell>
+                      <TableCell>{identity.deviceUserId}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{identity.deviceName || 'Device'}</Typography>
+                        <Typography variant="caption" color="text.secondary">{identity.deviceSerial}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        {identity.accessGroup === 1 ? (
+                          <Chip size="small" icon={<CheckCircleIcon fontSize="small" />} label="Group 1 (Allowed)" color="success" />
+                        ) : (
+                          <Chip size="small" icon={<BlockIcon fontSize="small" />} label="Group 99 (Denied)" color="error" />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={identity.syncStatus || 'PENDING'}
+                          color={identity.syncStatus === 'SYNCED' ? 'success' : identity.syncStatus === 'FAILED' ? 'error' : 'warning'}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {identity.lastSyncedAt ? new Date(identity.lastSyncedAt).toLocaleString() : 'Pending Device Sync'}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Force Sync Access Group">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              disabled={syncingMemberId === identity.memberId || syncMemberAccessMutation.isPending}
+                              onClick={async () => {
+                                setSyncingMemberId(identity.memberId);
+                                try {
+                                  await syncMemberAccessMutation.mutateAsync(identity.memberId);
+                                  setSaveSuccess(true);
+                                  refetchIdentities();
+                                } catch (err) {
+                                  setSettingsError(errorMessage(err, 'Failed to force sync member access'));
+                                } finally {
+                                  setSyncingMemberId(null);
+                                }
+                              }}
+                            >
+                              {syncingMemberId === identity.memberId ? <CircularProgress size={16} /> : <SyncIcon fontSize="small" />}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <Alert severity="info">No member identities mapped to devices yet.</Alert>
+            )}
           </CardContent>
         </Card>
 
