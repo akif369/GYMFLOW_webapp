@@ -11,7 +11,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
 import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
-import { useBiometricDevices, useRegisterBiometricDevice, useDeleteBiometricDevice } from '@/hooks/queries/biometrics';
+import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice } from '@/hooks/queries/biometrics';
+import { useMembers } from '@/hooks/queries/members';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { IconButton, Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from '@mui/material';
@@ -116,6 +117,11 @@ export default function SettingsPage() {
   const { data: devices, isLoading: devicesLoading, refetch: refetchDevices } = useBiometricDevices();
   const registerDeviceMutation = useRegisterBiometricDevice();
   const deleteDeviceMutation = useDeleteBiometricDevice();
+  const syncMutation = useSyncMemberToDevice();
+  const { data: identities } = useBiometricIdentities();
+  
+  const { data: membersData, isLoading: membersLoading } = useMembers({ pageSize: 1000 });
+  const membersList = membersData?.items || [];
 
   const loading = orgLoading || branchesLoading || settingsLoading;
 
@@ -127,6 +133,8 @@ export default function SettingsPage() {
   const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
   const [notificationsForm, setNotificationsForm] = useState<NotificationsForm>({ attachInvoicePdf: false });
   const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
+  const [biometricsForm, setBiometricsForm] = useState({ autoSync: true });
+  const [manualSyncForm, setManualSyncForm] = useState({ memberId: '', pin: '' });
 
   useEffect(() => {
     if (orgData?.org) {
@@ -172,6 +180,8 @@ export default function SettingsPage() {
       setNotificationsForm({ attachInvoicePdf: invoiceSetting.attachInvoicePdf === true });
       const policy = settingMap['payment-policy'];
       setStrictPaymentPolicy(typeof policy === 'object' && policy !== null && 'strictPaymentPolicy' in policy && policy.strictPaymentPolicy === true);
+      const bioSetting = settingMap.biometrics && typeof settingMap.biometrics === 'object' ? settingMap.biometrics as Record<string, unknown> : {};
+      setBiometricsForm({ autoSync: bioSetting.autoSync !== false });
     }
   }, [orgData, branchesData, settingsData]);
 
@@ -364,6 +374,70 @@ export default function SettingsPage() {
 
       {/* Hardware */}
       <TabPanel value={tab} index={5}>
+        <Card elevation={0} sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Hardware Settings</Typography>
+            <SettingRow label="Auto-Sync New Members" desc="When ON, creating a new member automatically assigns them a PIN and queues it to be pushed to the biometric device.">
+              <Switch checked={biometricsForm.autoSync} onChange={e => setBiometricsForm({ autoSync: e.target.checked })} disabled={loading} />
+            </SettingRow>
+            <Box sx={{ mt: 2 }}>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('biometrics', () => updateSetting.mutateAsync({ key: 'biometrics', data: biometricsForm }), 'Could not save hardware settings.')}>Save Hardware Settings</Button>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card elevation={0} sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Manual Device Sync</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Manually map an existing GymFlow member to a PIN on your ZKTeco device, and queue the data to be pushed to the device.
+            </Typography>
+            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField label="Select Member" select size="small" fullWidth value={manualSyncForm.memberId} onChange={e => {
+                  const mId = e.target.value;
+                  const member = membersList.find(m => m.id === mId);
+                  const existingIdentity = identities?.find((i: any) => i.memberId === mId);
+                  const autoPin = existingIdentity ? existingIdentity.deviceUserId : (member ? member.memberId.replace(/\D/g, '') : '');
+                  setManualSyncForm({ memberId: mId, pin: autoPin });
+                }} disabled={loading || membersLoading || syncMutation.isPending}>
+                  {membersList.map((m: any) => {
+                    const existingIdentity = identities?.find((i: any) => i.memberId === m.id);
+                    return (
+                      <MenuItem key={m.id} value={m.id}>
+                        {m.firstName} {m.lastName} ({m.memberId}) {existingIdentity ? `[Mapped to PIN: ${existingIdentity.deviceUserId}]` : ''}
+                      </MenuItem>
+                    );
+                  })}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <TextField label="Device PIN (Numeric)" size="small" fullWidth value={manualSyncForm.pin} onChange={e => setManualSyncForm({ ...manualSyncForm, pin: e.target.value.replace(/\D/g, '') })} disabled={loading || syncMutation.isPending} placeholder="e.g. 1001" />
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Button variant="contained" disabled={loading || syncMutation.isPending || !manualSyncForm.memberId || !manualSyncForm.pin || !branchForm.id} onClick={async () => {
+                  if (!branchForm.id) return setSettingsError('Please create a branch first');
+                  setSettingsError('');
+                  const member = membersList.find(m => m.id === manualSyncForm.memberId);
+                  if (!member) return;
+                  try {
+                    await syncMutation.mutateAsync({
+                      branchId: branchForm.id,
+                      memberId: member.id,
+                      pin: manualSyncForm.pin,
+                      name: `${member.firstName} ${member.lastName}`.trim().substring(0, 24)
+                    });
+                    setManualSyncForm({ memberId: '', pin: '' });
+                    setSaveSuccess(true);
+                  } catch (err) {
+                    setSettingsError(errorMessage(err, 'Failed to sync member'));
+                  }
+                }}>Sync to Devices</Button>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
         <Card elevation={0}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>

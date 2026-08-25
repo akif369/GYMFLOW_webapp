@@ -53,3 +53,27 @@ export function useDeleteBiometricDevice() {
     },
   });
 }
+
+export function useSyncMemberToDevice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { memberId: string; branchId: string; pin: string; name: string }) => {
+      const { data } = await api.post('/biometrics/sync', payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
+    },
+  });
+}
+
+export function useBiometricIdentities() {
+  return useQuery({
+    queryKey: ['biometric-identities'],
+    queryFn: async () => {
+      const { data } = await api.get('/biometrics/identities');
+      return data.data as { memberId: string; deviceId: string; deviceUserId: string }[];
+    },
+  });
+}
