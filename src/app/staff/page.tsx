@@ -178,7 +178,7 @@ export default function StaffPage() {
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Staff &amp; Permissions</Typography>
           <Typography variant="body2" color="text.secondary">
-            {apiStaff === null ? 'Loading…' : `${staff.length} staff member${staff.length !== 1 ? 's' : ''}`}
+            {staffLoading ? 'Loading…' : `${staff.length} staff member${staff.length !== 1 ? 's' : ''}`}
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
@@ -195,7 +195,7 @@ export default function StaffPage() {
 
       {/* Tab 0: Staff Members */}
       <TabPanel value={tab} index={0}>
-        {apiStaff === null ? (
+        {staffLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress />
           </Box>
