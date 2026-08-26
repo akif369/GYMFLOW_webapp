@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Tabs, Tab,
-  TextField, MenuItem, Switch, Alert, Snackbar
+  TextField, MenuItem, Switch, Alert, Snackbar,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody
 } from '@mui/material';
 import { useAuthStore } from '@/store/useAuthStore';
 import PageSkeleton from '@/components/PageSkeleton';
@@ -11,7 +16,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { api } from '@/lib/api';
 import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
-import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useReconcileBiometrics, type ReconcileResult } from '@/hooks/queries/biometrics';
+import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useDeleteBiometricIdentity, type ReconcileResult } from '@/hooks/queries/biometrics';
 import { useMembers } from '@/hooks/queries/members';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -19,8 +24,8 @@ import SyncIcon from '@mui/icons-material/Sync';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BlockIcon from '@mui/icons-material/Block';
 import SecurityIcon from '@mui/icons-material/Security';
-import { IconButton, Chip, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, CircularProgress } from '@mui/material';
-
+import { IconButton, Chip, Tooltip, CircularProgress } from '@mui/material';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
@@ -34,6 +39,7 @@ function SettingRow({ label, desc, children }: { label: string; desc?: string; c
       </Box>
       <Box sx={{ flexShrink: 0 }}>{children}</Box>
     </Box>
+    
   );
 }
 
@@ -123,10 +129,10 @@ export default function SettingsPage() {
   const deleteDeviceMutation = useDeleteBiometricDevice();
   const syncMutation = useSyncMemberToDevice();
   const syncMemberAccessMutation = useSyncMemberAccess();
-  const reconcileMutation = useReconcileBiometrics();
+  const deleteIdentityMutation = useDeleteBiometricIdentity();
   const { data: identities, refetch: refetchIdentities } = useBiometricIdentities();
-  const [reconcileResult, setReconcileResult] = useState<ReconcileResult | null>(null);
   const [syncingMemberId, setSyncingMemberId] = useState<string | null>(null);
+  const [optimisticAccess, setOptimisticAccess] = useState<Record<string, number>>({});
   
   const { data: membersData, isLoading: membersLoading } = useMembers({ pageSize: 1000 });
   const membersList = membersData?.items || [];
@@ -384,46 +390,10 @@ export default function SettingsPage() {
       <TabPanel value={tab} index={5}>
         <Card elevation={0} sx={{ mb: 3 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Access Control & Group Automation</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  ZKTeco F09 biometric devices automatically assign <strong>Group 1 (Access Allowed)</strong> to active members with a valid membership, and <strong>Group 99 (Access Denied)</strong> to expired, inactive, frozen, or cancelled members.
-                </Typography>
-              </Box>
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={reconcileMutation.isPending ? <CircularProgress size={16} /> : <SyncIcon />}
-                disabled={loading || reconcileMutation.isPending || !devices?.length}
-                onClick={async () => {
-                  setSettingsError('');
-                  try {
-                    const res = await reconcileMutation.mutateAsync({ branchId: branchForm.id || undefined });
-                    setReconcileResult(res);
-                    refetchIdentities();
-                  } catch (err) {
-                    setSettingsError(errorMessage(err, 'Failed to reconcile biometrics'));
-                  }
-                }}
-              >
-                {reconcileMutation.isPending ? 'Checking & Syncing...' : 'Reconcile Access Groups'}
-              </Button>
-            </Box>
-
-            {reconcileResult && (
-              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setReconcileResult(null)}>
-                <strong>Reconciliation Complete:</strong> Checked {reconcileResult.totalMembersChecked} members across {reconcileResult.devicesCount} devices.
-                Queued {reconcileResult.commandsQueued} update command(s) ({reconcileResult.group1ActiveCount} active in Group 1, {reconcileResult.group99DeniedCount} denied in Group 99). {reconcileResult.alreadyInSyncCount} members were already in sync and skipped (smart delta diff).
-              </Alert>
-            )}
-
-            <SettingRow label="Auto-Sync New Members" desc="When ON, creating a new member automatically computes their access group and queues it to be pushed to the biometric device.">
-              <Switch checked={biometricsForm.autoSync} onChange={e => setBiometricsForm({ autoSync: e.target.checked })} disabled={loading} />
-            </SettingRow>
-            <Box sx={{ mt: 2 }}>
-              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('biometrics', () => updateSetting.mutateAsync({ key: 'biometrics', data: biometricsForm }), 'Could not save hardware settings.')}>Save Hardware Settings</Button>
-            </Box>
+            <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Access Control & Group Automation</Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Automatic sync and reconciliation of access groups are currently disabled. You can manually assign pins and toggle access states for members below.
+            </Alert>
           </CardContent>
         </Card>
 
@@ -497,60 +467,114 @@ export default function SettingsPage() {
               </Tooltip>
             </Box>
 
-            {identities && identities.length > 0 ? (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Member</TableCell>
-                    <TableCell>PIN</TableCell>
-                    <TableCell>Device</TableCell>
-                    <TableCell>Access Group</TableCell>
-                    <TableCell>Sync Status</TableCell>
-                    <TableCell>Last Synced</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {identities.map((identity: any) => (
-                    <TableRow key={identity.id || `${identity.deviceId}-${identity.memberId}`}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{identity.memberName || 'Member'}</Typography>
-                        <Typography variant="caption" color="text.secondary">{identity.memberNumber}</Typography>
-                      </TableCell>
-                      <TableCell>{identity.deviceUserId}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{identity.deviceName || 'Device'}</Typography>
-                        <Typography variant="caption" color="text.secondary">{identity.deviceSerial}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        {identity.accessGroup === 1 ? (
-                          <Chip size="small" icon={<CheckCircleIcon fontSize="small" />} label="Group 1 (Allowed)" color="success" />
-                        ) : (
-                          <Chip size="small" icon={<BlockIcon fontSize="small" />} label="Group 99 (Denied)" color="error" />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
+            <Box sx={{ height: 400, width: '100%' }}>
+              <DataGrid
+                rows={identities || []}
+                columns={[
+                  {
+                    field: 'member',
+                    headerName: 'Member',
+                    flex: 1,
+                    renderCell: (params) => (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.memberName || 'Member'}</Typography>
+                        <Typography variant="caption" color="text.secondary">{params.row.memberNumber}</Typography>
+                      </Box>
+                    )
+                  },
+                  { field: 'deviceUserId', headerName: 'PIN', width: 100 },
+                  {
+                    field: 'device',
+                    headerName: 'Device',
+                    width: 150,
+                    renderCell: (params) => (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                        <Typography variant="body2">{params.row.deviceName || 'Device'}</Typography>
+                        <Typography variant="caption" color="text.secondary">{params.row.deviceSerial}</Typography>
+                      </Box>
+                    )
+                  },
+                  {
+                    field: 'accessGroup',
+                    headerName: 'Access State',
+                    width: 150,
+                    renderCell: (params) => (
+                      <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                        <Switch
                           size="small"
-                          label={identity.syncStatus || 'PENDING'}
-                          color={identity.syncStatus === 'SYNCED' ? 'success' : identity.syncStatus === 'FAILED' ? 'error' : 'warning'}
-                          variant="outlined"
+                          checked={(optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1}
+                          disabled={syncingMemberId === params.row.memberId || syncMutation.isPending}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={async (e) => {
+                            e.stopPropagation();
+                            const newAccessGroup = e.target.checked ? 1 : 99;
+                            setOptimisticAccess(prev => ({ ...prev, [params.row.memberId]: newAccessGroup }));
+                            setSyncingMemberId(params.row.memberId);
+                            try {
+                              await syncMutation.mutateAsync({
+                                branchId: branchForm.id,
+                                memberId: params.row.memberId,
+                                pin: params.row.deviceUserId,
+                                name: params.row.memberName || 'Member',
+                                accessGroup: newAccessGroup,
+                              });
+                              refetchIdentities();
+                            } catch (err) {
+                              // Revert on error
+                              setOptimisticAccess(prev => {
+                                const next = { ...prev };
+                                delete next[params.row.memberId];
+                                return next;
+                              });
+                              setSettingsError(errorMessage(err, 'Failed to update access state'));
+                            } finally {
+                              setSyncingMemberId(null);
+                            }
+                          }}
                         />
-                      </TableCell>
-                      <TableCell>
-                        {identity.lastSyncedAt ? new Date(identity.lastSyncedAt).toLocaleString() : 'Pending Device Sync'}
-                      </TableCell>
-                      <TableCell align="right">
+                        <Typography variant="caption" sx={{ ml: 1, color: (optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1 ? 'success.main' : 'error.main' }}>
+                          {(optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1 ? 'Allowed' : 'Denied'}
+                        </Typography>
+                      </Box>
+                    )
+                  },
+                  {
+                    field: 'syncStatus',
+                    headerName: 'Sync Status',
+                    width: 130,
+                    renderCell: (params) => (
+                      <Chip
+                        size="small"
+                        label={params.row.syncStatus || 'PENDING'}
+                        color={params.row.syncStatus === 'SYNCED' ? 'success' : params.row.syncStatus === 'FAILED' ? 'error' : 'warning'}
+                        variant="outlined"
+                      />
+                    )
+                  },
+                  {
+                    field: 'lastSyncedAt',
+                    headerName: 'Last Synced',
+                    width: 180,
+                    valueFormatter: (value) => value ? new Date(value).toLocaleString() : 'Pending'
+                  },
+                  {
+                    field: 'actions',
+                    headerName: 'Actions',
+                    width: 120,
+                    sortable: false,
+                    renderCell: (params) => (
+                      <Box sx={{ display: 'flex', gap: 1 }}>
                         <Tooltip title="Force Sync Access Group">
                           <span>
                             <IconButton
                               size="small"
                               color="primary"
-                              disabled={syncingMemberId === identity.memberId || syncMemberAccessMutation.isPending}
-                              onClick={async () => {
-                                setSyncingMemberId(identity.memberId);
+                              disabled={syncingMemberId === params.row.memberId || syncMemberAccessMutation.isPending}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                setSyncingMemberId(params.row.memberId);
                                 try {
-                                  await syncMemberAccessMutation.mutateAsync(identity.memberId);
+                                  await syncMemberAccessMutation.mutateAsync(params.row.memberId);
                                   setSaveSuccess(true);
                                   refetchIdentities();
                                 } catch (err) {
@@ -560,18 +584,52 @@ export default function SettingsPage() {
                                 }
                               }}
                             >
-                              {syncingMemberId === identity.memberId ? <CircularProgress size={16} /> : <SyncIcon fontSize="small" />}
+                              {syncingMemberId === params.row.memberId ? <CircularProgress size={16} /> : <SyncIcon fontSize="small" />}
                             </IconButton>
                           </span>
                         </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <Alert severity="info">No member identities mapped to devices yet.</Alert>
-            )}
+                        <Tooltip title="Unmap PIN / Delete Identity">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={deleteIdentityMutation.isPending}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (confirm('Are you sure you want to unmap this member from their PIN? This will wipe the PIN from the physical device.')) {
+                                  try {
+                                    await deleteIdentityMutation.mutateAsync(params.row.id);
+                                    setSaveSuccess(true);
+                                  } catch (err) {
+                                    setSettingsError(errorMessage(err, 'Failed to unmap identity'));
+                                  }
+                                }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    )
+                  }
+                ]}
+                pageSizeOptions={[5, 10, 25, 50]}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                }}
+                disableRowSelectionOnClick
+                getRowId={(row) => row.id || `${row.deviceId}-${row.memberId}`}
+                sx={{
+                  border: 0,
+                  '& .MuiDataGrid-columnHeaders': {
+                    bgcolor: 'rgba(255,255,255,0.03)',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  },
+                  '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)' },
+                }}
+              />
+            </Box>
           </CardContent>
         </Card>
 

@@ -79,6 +79,19 @@ export function useDeleteBiometricDevice() {
   });
 }
 
+export function useDeleteBiometricIdentity() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (identityId: string) => {
+      await api.delete(`/biometrics/identities/${identityId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
+    },
+  });
+}
+
 export function useSyncMemberToDevice() {
   const queryClient = useQueryClient();
 
