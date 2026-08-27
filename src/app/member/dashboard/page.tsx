@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Box, Grid, Card, CardContent, Typography, Chip, Stack,
-  LinearProgress, Button, Avatar, alpha, Divider, Skeleton,
+  Box, Grid, Card, CardContent, Typography, Chip, Button, alpha, Stack, LinearProgress, Divider,
 } from '@mui/material';
-import CardMembershipRoundedIcon from '@mui/icons-material/CardMembershipRounded';
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
+
 import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
 import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+
+import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
@@ -120,7 +120,7 @@ export default function MemberDashboardPage() {
 
       <Grid container spacing={2}>
         {/* ── Left column ── */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Stack spacing={2}>
             {/* Membership card */}
             <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)', border: '1px solid rgba(16,185,129,0.2)' }}>
@@ -197,7 +197,7 @@ export default function MemberDashboardPage() {
                       { label: 'Best Streak', value: attendance.longestStreak, icon: FitnessCenterRoundedIcon, color: '#8b5cf6' },
                       { label: 'All Time', value: attendance.totalVisits, icon: CheckCircleRoundedIcon, color: '#06b6d4' },
                     ].map((stat) => (
-                      <Grid item xs={6} sm={3} key={stat.label}>
+                      <Grid size={{ xs: 12, sm: 6 }} key={stat.label}>
                         <Box sx={{ textAlign: 'center', p: 1.5, borderRadius: 2, bgcolor: alpha(stat.color, 0.06), border: `1px solid ${alpha(stat.color, 0.12)}` }}>
                           <stat.icon sx={{ fontSize: 18, color: stat.color, mb: 0.5 }} />
                           <Typography sx={{ fontSize: '1.2rem', fontWeight: 800, color: 'text.primary', letterSpacing: '-0.04em' }}>
@@ -232,7 +232,7 @@ export default function MemberDashboardPage() {
                       { label: 'Completed', value: ptSessions.completed, color: '#10b981' },
                       { label: 'Remaining', value: ptSessions.remaining, color: '#ec4899' },
                     ].map((s) => (
-                      <Grid item xs={4} key={s.label}>
+                      <Grid size={{ xs: 12 }} key={s.label}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: s.color ?? 'text.primary', letterSpacing: '-0.05em' }}>
                             {s.value}
@@ -268,7 +268,7 @@ export default function MemberDashboardPage() {
         </Grid>
 
         {/* ── Right column ── */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Stack spacing={2}>
             {/* QR Check-in card */}
             <Card elevation={0} sx={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.04) 100%)', border: '1px solid rgba(16,185,129,0.15)' }}>

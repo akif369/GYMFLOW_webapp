@@ -1,6 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNetworkStore } from '@/store/useNetworkStore';
+import toast from 'react-hot-toast';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
@@ -119,6 +120,8 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    } else if (error.response?.status !== 401) {
+      toast.error(error.response?.data?.error || error.message || 'An error occurred');
     }
 
     return Promise.reject(error);

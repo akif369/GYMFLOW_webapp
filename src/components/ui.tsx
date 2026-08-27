@@ -63,7 +63,7 @@ export function PageHeader({
   return (
     <Stack
       direction={{ xs: 'column', lg: 'row' }}
-      gap={2}
+      spacing={2}
       sx={{ alignItems: { xs: 'flex-start', lg: 'center' }, justifyContent: 'space-between' }}
     >
       <Box>
@@ -110,7 +110,7 @@ export function PageHeader({
       {actions && (
         <Stack
           direction="row"
-          gap={1}
+          spacing={1}
           sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}
         >
           {actions}
@@ -132,7 +132,7 @@ export function SectionCard({
       <CardContent sx={{ p: 0 }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          gap={1.5}
+          spacing={1.5}
           sx={{
             px: { xs: 2, md: 2.5 },
             py: 2.25,
@@ -189,8 +189,8 @@ export function MetricCard({
       }}
     >
       <CardContent sx={{ position: 'relative', p: 2.25 }}>
-        <Stack direction="row" gap={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <Stack direction="row" gap={1.25} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
             {Icon && (
               <Avatar
                 variant="rounded"
@@ -259,7 +259,7 @@ export function PageToolbar({ title, description, actions }: PageToolbarProps) {
   return (
     <Stack
       direction={{ xs: 'column', md: 'row' }}
-      gap={2}
+      spacing={2}
       sx={{ mb: 3, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between' }}
     >
       <Box>
@@ -274,7 +274,7 @@ export function PageToolbar({ title, description, actions }: PageToolbarProps) {
       </Box>
 
       {actions && (
-        <Stack direction="row" gap={1} sx={{ flexWrap: 'wrap' }}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
           {actions}
         </Stack>
       )}

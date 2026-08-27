@@ -58,7 +58,7 @@ export default function TrainerProfilePage() {
 
       <Grid container spacing={2}>
         {/* Profile header */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
               <Avatar sx={{
@@ -87,27 +87,27 @@ export default function TrainerProfilePage() {
         </Grid>
 
         {/* Edit form */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary', mb: 2 }}>Personal Information</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <TextField label="First Name" value={form.firstName} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <TextField label="Last Name" value={form.lastName} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField label="Email" value={form.email} size="small" fullWidth disabled />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField label="Phone" value={form.phone} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField label="Bio / About" value={form.bio} size="small" fullWidth multiline rows={3} disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} />
                 </Grid>
@@ -117,7 +117,7 @@ export default function TrainerProfilePage() {
         </Grid>
 
         {/* Specializations + Certs */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack spacing={2}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>

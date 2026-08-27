@@ -324,7 +324,7 @@ export default function MembershipsPage() {
                       ].map(([key, value]) => (
                         <Box key={String(key)} sx={{ py: 0.5, display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between', gap: 2 }}>
                           <Typography variant="caption" color="text.secondary">{key}</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 600 }}>{value}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{value}</Typography>
                         </Box>
                       ))}
                     </Box>
@@ -371,7 +371,7 @@ export default function MembershipsPage() {
                   {events.map((event, index) => (
                     <TableRow key={event.id ?? index} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {event.firstName} {event.lastName}
                         </Typography>
                       </TableCell>

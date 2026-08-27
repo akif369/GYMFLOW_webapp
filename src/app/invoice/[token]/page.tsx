@@ -108,7 +108,7 @@ export default function InvoicePage({ params }: { params: Promise<{ token: strin
       const name = (invoice.memberName || 'Customer').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
       let date = '';
       try {
-        date = invoice.date ? new Date(invoice.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        date = invoice.date ? new Date(invoice.date).toISOString().split('T')[0] ?? '' : new Date().toISOString().split('T')[0] ?? '';
       } catch (e) {
         date = String(invoice.date || '').slice(0, 10) || 'no-date';
       }

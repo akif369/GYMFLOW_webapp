@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PageSkeleton from '@/components/PageSkeleton';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -16,7 +16,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '@/lib/api';
 import MemberSearchField from '@/components/MemberSearchField';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
-import { usePayments, useInvoices, usePaymentMutations, useInvoiceMutations } from '@/hooks/queries/payments';
+import { usePayments, useInvoices, usePaymentMutations } from '@/hooks/queries/payments';
 import { useSettings } from '@/hooks/queries/settings';
 
 type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
@@ -38,17 +38,7 @@ type Payment = {
   description: string;
 };
 
-type Invoice = {
-  id: string;
-  invoiceNumber: string;
-  memberId: string;
-  memberName: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-  dueDate: string;
-  publicViewUrl: string;
-};
+
 
 function PaymentsPageContent() {
   const searchParams = useSearchParams();
@@ -86,7 +76,7 @@ function PaymentsPageContent() {
 
   // ── Queries ─────────────────────────────────────────────────────────────────
   const { recordPayment, refundPayment: refundMutation } = usePaymentMutations();
-  const { generateInvoice, sendInvoice } = useInvoiceMutations();
+
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultPageSize);
@@ -175,14 +165,14 @@ function PaymentsPageContent() {
     setGenerateInvoiceForm(form => ({ ...form, gstPercent: String(taxSettings.taxRate) }));
   }, [taxSettings.taxRate]);
 
-  const filtered = payments.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
-  const totalRevenue = filtered.filter(p => p.status === 'PAID').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = filtered.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + p.amount, 0);
-  const totalRefunded = filtered.filter(p => p.status === 'REFUNDED').reduce((sum, p) => sum + p.amount, 0);
+  const filtered = payments.filter((p: Payment) => statusFilter === 'ALL' || p.status === statusFilter);
+  const totalRevenue = filtered.filter((p: Payment) => p.status === 'PAID').reduce((sum: number, p: Payment) => sum + p.amount, 0);
+  const totalPending = filtered.filter((p: Payment) => p.status === 'PENDING').reduce((sum: number, p: Payment) => sum + p.amount, 0);
+  const totalRefunded = filtered.filter((p: Payment) => p.status === 'REFUNDED').reduce((sum: number, p: Payment) => sum + p.amount, 0);
 
-  const memberName = payments.find(p => p.memberId === memberIdParam)?.member ?? '';
+  const memberName = payments.find((p: Payment) => p.memberId === memberIdParam)?.member ?? '';
   const visibleInvoices = memberIdParam
-    ? invoices.filter(invoice => invoice.memberId === memberIdParam)
+    ? invoices.filter((invoice: any) => invoice.memberId === memberIdParam)
     : invoices;
 
   if (loading) {
@@ -206,7 +196,7 @@ function PaymentsPageContent() {
           )}
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="outlined" startIcon={<RefreshIcon />} size="small" onClick={fetchPayments}>Refresh</Button>
+          <Button variant="outlined" startIcon={<RefreshIcon />} size="small" onClick={() => fetchPayments()}>Refresh</Button>
           <Button variant="outlined" startIcon={<ReceiptIcon />} onClick={() => { setGenerateInvoiceForm(form => ({ ...form, memberId: memberIdParam || form.memberId })); setGenerateInvoiceOpen(true); setInvoiceError(''); }}>
             Generate Invoice
           </Button>
@@ -295,7 +285,7 @@ function PaymentsPageContent() {
                   <Typography variant="caption" color="text.secondary">No payments found</Typography>
                 </TableCell>
               </TableRow>
-            ) : filtered.map(p => (
+            ) : filtered.map((p: Payment) => (
               <TableRow key={p.id} sx={{ '&:hover': { bgcolor: 'rgba(16,185,129,0.04)' } }}>
                 <TableCell><Typography variant="caption">{p.date}</Typography></TableCell>
                 <TableCell>
@@ -366,7 +356,7 @@ function PaymentsPageContent() {
               <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={22} /></TableCell></TableRow>
             ) : visibleInvoices.length === 0 ? (
               <TableRow><TableCell colSpan={6} align="center"><Typography variant="caption" color="text.secondary">No invoices found</Typography></TableCell></TableRow>
-            ) : visibleInvoices.map(invoice => (
+            ) : visibleInvoices.map((invoice: any) => (
               <TableRow key={invoice.id}>
                 <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{invoice.invoiceNumber}</Typography></TableCell>
                 <TableCell><Typography variant="caption">{invoice.createdAt || '—'}</Typography></TableCell>

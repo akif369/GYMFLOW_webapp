@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  Stack, LinearProgress, alpha, IconButton, useMediaQuery, useTheme, Skeleton,
+  Stack, LinearProgress, alpha, IconButton, useMediaQuery, useTheme,
 } from '@mui/material';
 import { BarChart, LineChart, SparkLineChart } from '@mui/x-charts';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -492,7 +492,7 @@ export default function Dashboard() {
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i}>
             <KpiCard
               {...card}
-              onClick={() => router.push(cardLinks[card.title])}
+              onClick={() => router.push(cardLinks[card.title as keyof typeof cardLinks] || '/')}
               actionLabel={`View ${card.title}`}
             />
           </Grid>
@@ -514,7 +514,7 @@ export default function Dashboard() {
           <Grid size={{ xs: 6, sm: 4, md: 4, lg: 2 }} key={i} sx={{ display: ['Trainers Working', 'New Leads'].includes(stat.title) ? { xs: 'none', sm: 'block' } : 'block' }}>
             <MiniStat
               {...stat}
-              onClick={() => router.push(cardLinks[stat.title])}
+              onClick={() => router.push(cardLinks[stat.title as keyof typeof cardLinks] || '/')}
               actionLabel={`View ${stat.title}`}
             />
           </Grid>

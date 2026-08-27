@@ -59,7 +59,7 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
 
     setLoading(true);
     try {
-      const res = await api.patch<{ staff: { id: string; firstName: string; lastName: string; phone: string | null; email: string; role: string; branchId: string | null; orgId: string; permissions: string[] } }>(
+      const res = await api.patch<{ staff: any }>(
         `/staff/${user.id}`, 
         {
           firstName: firstName.trim(),
@@ -86,22 +86,22 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
   if (!user) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" PaperProps={{ sx: { bgcolor: '#161b22', backgroundImage: 'none' } }}>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" sx={{ '& .MuiDialog-paper': { bgcolor: '#161b22', backgroundImage: 'none' } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>My Profile</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent sx={{ pt: 1, pb: 3 }}>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           
           <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
-            <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+            <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
               Account Information
             </Typography>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={6}>
+            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" sx={{ color: '#8b949e' }}>Email address</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.email}</Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body2" sx={{ color: '#8b949e' }}>Role</Typography>
                 <Box sx={{ mt: 0.5 }}>
                   <Chip 
@@ -123,7 +123,7 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
 
           <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Personal Details</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="First Name"
                 fullWidth
@@ -134,7 +134,7 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Last Name"
                 fullWidth
@@ -145,7 +145,7 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Phone Number"
                 fullWidth
@@ -154,8 +154,10 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
                 onChange={e => setPhone(e.target.value)}
                 disabled={loading}
                 placeholder="10-digit number"
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">🇮🇳 +91</InputAdornment>,
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">🇮🇳 +91</InputAdornment>,
+                  },
                 }}
               />
             </Grid>

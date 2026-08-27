@@ -28,8 +28,8 @@ export default function GrowthPage() {
           { label: 'New Signups (MTD)', value: '142', change: '+24%', color: '#10b981' },
           { label: 'Member Retention Rate', value: '88.5%', change: '+1.2%', color: '#10b981' },
           { label: 'Churn Rate', value: '3.4%', change: '-0.5%', color: '#10b981' },
-        ].map((kpi, i) => (
-          <Grid item xs={12} md={4} key={i}>
+        ].map((kpi, index) => (
+          <Grid size={{ xs: 12, md: 4 }} key={index}>
             <Card elevation={0} sx={{ height: '100%' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600, mb: 1, textTransform: 'uppercase' }}>

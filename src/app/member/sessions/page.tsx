@@ -1,8 +1,7 @@
 'use client';
 import {
-  Box, Card, CardContent, Typography, Chip, Stack, Divider, Button, Avatar, alpha,
+  Box, Card, CardContent, Typography, Chip, Stack, Divider, Button, Avatar,
 } from '@mui/material';
-import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
@@ -17,7 +16,7 @@ const SESSIONS = [
   { id: '7', trainer: 'Arjun Mehta', avatar: 'AM', date: 'Mon,  4 Aug', time: '07:00 AM', duration: '60 min', type: 'Strength Training', status: 'MISSED', notes: '' },
 ];
 
-const STATUS_STYLES: Record<string, { bg: string; color: string; icon: typeof CheckCircleRoundedIcon }> = {
+const STATUS_STYLES = {
   COMPLETED: { bg: 'rgba(16,185,129,0.12)',  color: '#10b981', icon: CheckCircleRoundedIcon },
   UPCOMING:  { bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa', icon: AccessTimeRoundedIcon },
   MISSED:    { bg: 'rgba(244,63,94,0.12)',   color: '#f87171', icon: CancelRoundedIcon },
@@ -62,8 +61,7 @@ export default function MemberSessionsPage() {
           </Typography>
           <Stack divider={<Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />}>
             {SESSIONS.map((session) => {
-              const sc = STATUS_STYLES[session.status] ?? STATUS_STYLES.UPCOMING;
-              const StatusIcon = sc.icon;
+              const sc = STATUS_STYLES[session.status as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.UPCOMING;
               return (
                 <Box key={session.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, py: 1.5 }}>
                   <Avatar sx={{

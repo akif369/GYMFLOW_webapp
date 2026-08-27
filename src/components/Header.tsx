@@ -16,6 +16,9 @@ import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import { useColorMode } from './ThemeRegistry';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
 import ChangePasswordDialog from './profile/ChangePasswordDialog';
@@ -63,6 +66,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const searchAnchorRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchAnchorWidth, setSearchAnchorWidth] = useState(320);
+  const { mode, toggleColorMode } = useColorMode();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -77,9 +81,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const initials = getInitials(user?.firstName, user?.lastName);
   const displayName = user ? `${user.firstName} ${user.lastName}` : 'Staff User';
   const roleLabel = ROLE_LABELS[user?.role ?? ''] ?? (user?.role ?? 'Staff');
+  const memberResults = (searchData?.members ?? []) as MemberResult[];
+  const paymentResults = (searchData?.payments ?? []) as PaymentResult[];
   const results = [
-    ...(searchData?.members ?? []).map((item: MemberResult) => ({ type: 'member' as const, item })),
-    ...(searchData?.payments ?? []).map((item: PaymentResult) => ({ type: 'payment' as const, item })),
+    ...memberResults.map(item => ({ type: 'member' as const, item })),
+    ...paymentResults.map(item => ({ type: 'payment' as const, item })),
   ];
 
   useEffect(() => {
@@ -218,7 +224,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   const index = results.findIndex(result => result.type === 'member' && result.item.id === member.id);
                   return <ListItemButton key={member.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'member', item: member })} sx={{ gap: 1.25, px: 2 }}>
                     <GroupsRoundedIcon sx={{ color: '#10b981', fontSize: 20 }} />
-                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} slotProps={{ primary: { fontSize: '0.85rem', fontWeight: 700 }, secondary: { fontSize: '0.72rem', color: '#7d8590' } }} />
+                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 } }, secondary: { sx: { fontSize: '0.72rem', color: '#7d8590' } } }} />
                     <Chip label="Member" size="small" sx={{ bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}
@@ -227,7 +233,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                   const index = results.findIndex(result => result.type === 'payment' && result.item.id === payment.id);
                   return <ListItemButton key={payment.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'payment', item: payment })} sx={{ gap: 1.25, px: 2 }}>
                     <ReceiptLongRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} slotProps={{ primary: { fontSize: '0.85rem', fontWeight: 700, noWrap: true }, secondary: { fontSize: '0.72rem', color: '#7d8590', noWrap: true } }} />
+                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 }, noWrap: true }, secondary: { sx: { fontSize: '0.72rem', color: '#7d8590' }, noWrap: true } }} />
                     <Chip label="Payment" size="small" sx={{ bgcolor: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}
@@ -241,13 +247,25 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
         {/* Right side */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Theme Toggle */}
+          <IconButton
+            size="small"
+            onClick={toggleColorMode}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+            }}
+          >
+            {mode === 'dark' ? <LightModeRoundedIcon sx={{ fontSize: 20 }} /> : <DarkModeRoundedIcon sx={{ fontSize: 20 }} />}
+          </IconButton>
+
           {/* Notification Bell */}
           <IconButton
             size="small"
             onClick={e => setNotifAnchor(e.currentTarget)}
             sx={{
-              color: '#7d8590',
-              '&:hover': { color: '#f0f6fc', bgcolor: 'rgba(255,255,255,0.06)' },
+              color: 'text.secondary',
+              '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
             }}
           >
             <Badge

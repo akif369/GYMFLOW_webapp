@@ -7,7 +7,7 @@ import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 export default function GlobalNetworkError() {
   const { isServerDown, setServerDown } = useNetworkStore();
 
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') return;
     setServerDown(false);
   };

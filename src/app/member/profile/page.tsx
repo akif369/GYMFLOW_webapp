@@ -58,7 +58,7 @@ export default function MemberProfilePage() {
 
       <Grid container spacing={2}>
         {/* Profile header */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
               <Avatar sx={{
@@ -86,7 +86,7 @@ export default function MemberProfilePage() {
         </Grid>
 
         {/* Personal info */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -94,24 +94,24 @@ export default function MemberProfilePage() {
                 <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>Personal Information</Typography>
               </Box>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <TextField label="First Name" value={form.firstName} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <TextField label="Last Name" value={form.lastName} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField label="Date of Birth" value={form.dob} type="date" size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
                     slotProps={{ inputLabel: { shrink: true } }} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField label="Address" value={form.address} size="small" fullWidth multiline rows={2} disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <TextField label="Blood Group" value={form.bloodGroup} size="small" fullWidth disabled={!editing}
                     onChange={(e) => setForm((f) => ({ ...f, bloodGroup: e.target.value }))} />
                 </Grid>
@@ -121,7 +121,7 @@ export default function MemberProfilePage() {
         </Grid>
 
         {/* Contact + Emergency */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack spacing={2}>
             <Card elevation={0}>
               <CardContent sx={{ p: 2.5 }}>
@@ -130,11 +130,11 @@ export default function MemberProfilePage() {
                   <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>Contact</Typography>
                 </Box>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField label="Phone" value={form.phone} size="small" fullWidth disabled={!editing}
                       onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField label="Email" value={form.email} size="small" fullWidth disabled />
                   </Grid>
                 </Grid>
@@ -148,15 +148,15 @@ export default function MemberProfilePage() {
                   <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: 'text.primary' }}>Emergency Contact</Typography>
                 </Box>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField label="Name" value={form.emergency.name} size="small" fullWidth disabled={!editing}
                       onChange={(e) => setForm((f) => ({ ...f, emergency: { ...f.emergency, name: e.target.value } }))} />
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <TextField label="Phone" value={form.emergency.phone} size="small" fullWidth disabled={!editing}
                       onChange={(e) => setForm((f) => ({ ...f, emergency: { ...f.emergency, phone: e.target.value } }))} />
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <TextField label="Relation" value={form.emergency.relation} size="small" fullWidth disabled={!editing}
                       onChange={(e) => setForm((f) => ({ ...f, emergency: { ...f.emergency, relation: e.target.value } }))} />
                   </Grid>

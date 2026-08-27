@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-import { usePresignedUrl, prefetchPresignedUrls } from '@/hooks/usePresignedUrl';
+import { prefetchPresignedUrls } from '@/hooks/usePresignedUrl';
 
 export function useMembers(params: Record<string, any>) {
   return useQuery({
@@ -32,7 +32,7 @@ export function useMembers(params: Record<string, any>) {
           if ((!calculatedMembershipStatus || calculatedMembershipStatus === 'ACTIVE') && expiryDate !== '-') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const exp = new Date(expiryDate);
+            const exp = new Date(expiryDate as string);
             if (exp < today) calculatedMembershipStatus = 'EXPIRED';
             else {
               const diffTime = exp.getTime() - today.getTime();

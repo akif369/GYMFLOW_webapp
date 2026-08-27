@@ -1,6 +1,7 @@
 'use client';
 import { use, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -129,7 +130,7 @@ function SkeletonProfile() {
     <Card elevation={0} sx={{ mb: 3 }}>
       <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
         <Skeleton variant="circular" width={80} height={80} />
-        <Box flex={1}>
+        <Box sx={{ flex: 1 }}>
           <Skeleton variant="text" width={240} height={32} />
           <Skeleton variant="text" width={320} height={20} sx={{ mt: 0.5 }} />
           <Skeleton variant="text" width={280} height={20} />
@@ -237,7 +238,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   useEffect(() => {
     setLoading(true);
 
-    const loadMember = api.get(`/members/${id}`)
+    api.get(`/members/${id}`)
       .then(res => {
         const m = res.data?.member ?? res.data;
         if (!m) return;
@@ -253,7 +254,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           address: String(m.address ?? ''),
           goal: String(m.goal ?? ''),
           experienceLevel: String(m.experienceLevel ?? ''),
-          joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
+          joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0] ?? '',
           status: String(m.status ?? 'ACTIVE'),
           branchId: String(m.branchId ?? ''),
           photoUrl: m.photoUrl ?? null,
@@ -521,7 +522,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       router.push('/org/members');
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to delete member');
+      toast.error(err.response?.data?.message || 'Failed to delete member');
       setDeleteLoading(false);
       setDeleteConfirmOpen(false);
     }
@@ -612,7 +613,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       {/* Back + Header */}
       <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, width: '100%', flexDirection: 'row' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
-        <Box flex={1} />
+        <Box sx={{ flex: 1 }} />
         <Button startIcon={<AutorenewIcon />} variant="contained" size="medium"
           sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 'auto', minWidth: 145, fontWeight: 700 }}
           onClick={() => { setRenewOpen(true); setRenewError(''); }}>
@@ -653,9 +654,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Avatar src={resolvedPhotoUrl ?? undefined} sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}>
             {!resolvedPhotoUrl && `${member.firstName[0]}${member.lastName[0]}`}
           </Avatar>
-          <Box flex={1}>
+          <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography variant="h4" fontWeight="bold">{member.firstName} {member.lastName}</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{member.firstName} {member.lastName}</Typography>
               <Chip label={member.memberNumber} size="small" variant="outlined" />
               <Chip label={`${memberStatusLabel}`} size="medium" color={membershipStatusColor[memberStatusLabel] ?? 'default'} />
               <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
@@ -687,7 +688,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Contact Details</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Overview</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {[
                     ['Email', member.email || '—'],
@@ -709,7 +710,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Emergency Contact</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Emergency Contact</Typography>
                 {member.emergency ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {[
@@ -727,7 +728,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <Typography variant="body2" color="text.secondary">No emergency contact on file</Typography>
                 )}
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>Goals & Experience</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5 }}>Goals & Experience</Typography>
                 {member.goal && <Chip label={member.goal} color="primary" variant="outlined" size="small" sx={{ mr: 1, mb: 1 }} />}
                 {member.experienceLevel && <Chip label={member.experienceLevel} variant="outlined" size="small" />}
                 {!member.goal && !member.experienceLevel && <Typography variant="body2" color="text.secondary">Not set</Typography>}
@@ -737,7 +738,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid size={{ xs: 12, md: 4 }}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Current Membership</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Current Membership</Typography>
                 {member.latestMembership ? (
                   <>
                     {[
@@ -748,9 +749,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                       ['PT Sessions: ', `${member.latestMembership.ptSessionsTotal - member.latestMembership.ptSessionsUsed} remaining`],
                       ['Assigned Trainer', trainerName],
                     ].map(([k, v]) => (
-                      <Box key={k} display="flex" py={0.75} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
+                      <Box key={k} sx={{ display: 'flex', py: 1.5, borderBottom: '1px solid rgba(255,255,255,0.06)', justifyContent: 'space-between' }}>
                         <Typography variant="caption" color="text.secondary">{k}</Typography>
-                        <Typography variant="caption" fontWeight={600}>{v}</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 600 }}>{v}</Typography>
                       </Box>
                     ))}
                   </>
@@ -774,7 +775,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid size={{ xs: 12, md: 8 }} sx={{ order: { xs: 2, md: 1 }, minWidth: 0 }}>
             <Card elevation={0} sx={{ mb: 2 }}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership History</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Membership History</Typography>
                 {membershipHistory.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">No memberships found.</Typography>
                 ) : (
@@ -792,7 +793,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                     <TableBody>
                       {membershipHistory.map((m: any) => (
                         <TableRow key={m.id}>
-                          <TableCell><Typography variant="body2" fontWeight={600}>{m.planName}</Typography></TableCell>
+                          <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{m.planName}</Typography></TableCell>
                           <TableCell><Typography variant="caption">{m.startDate}</Typography></TableCell>
                           <TableCell><Typography variant="caption">{m.endDate}</Typography></TableCell>
                           <TableCell><Chip label={m.status} size="small" color={membershipStatusColor[m.status] ?? 'default'} /></TableCell>
@@ -808,7 +809,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
 
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Event Log</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Event Log</Typography>
                 {membershipEvents.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">No membership events yet.</Typography>
                 ) : (
@@ -823,7 +824,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                             <Box sx={{ width: 1, flex: 1, bgcolor: 'rgba(255,255,255,0.06)', my: 0.5 }} />
                           )}
                         </Box>
-                        <Box pb={1}>
+                        <Box sx={{ pb: 1 }}>
                           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                             <Chip label={e.eventType} size="small" color={membershipEventColor[e.eventType] ?? 'default'} />
                             <Typography variant="caption" color="text.secondary">
@@ -844,7 +845,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 2 }, minWidth: 0 }}>
             <Card elevation={0}>
               <CardContent>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>Membership Actions</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>Membership Actions</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Button variant="outlined" size="small" fullWidth startIcon={<AddCircleIcon />}
                     onClick={() => { setCreateMemOpen(true); setCreateMemError(''); }}>
@@ -917,7 +918,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           <CardContent>
             <Box sx={{ display: 'flex', mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
               <Box>
-                <Typography variant="subtitle2" fontWeight="bold">Attendance History</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Attendance History</Typography>
                 <Typography variant="caption" color="text.secondary">{attendance.length} records</Typography>
               </Box>
               <Button
@@ -970,7 +971,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Card elevation={0}>
           <CardContent>
             <Box sx={{ display: 'flex', mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
-              <Typography variant="subtitle2" fontWeight="bold">Payment History</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Payment History</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
                   Total: <strong>₹{payments.filter(p => p.status === 'PAID').reduce((s: number, p: any) => s + p.amount, 0).toLocaleString()}</strong>
@@ -998,7 +999,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <TableRow key={p.id ?? i}>
                     <TableCell>{p.date || '—'}</TableCell>
                     <TableCell><Typography variant="caption">{p.description || '—'}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" fontWeight={600}>₹{p.amount.toLocaleString()}</Typography></TableCell>
+                    <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>₹{p.amount.toLocaleString()}</Typography></TableCell>
                     <TableCell><Chip label={p.method || 'CASH'} size="small" variant="outlined" /></TableCell>
                     <TableCell><Typography variant="caption" color="text.secondary">{p.refId || '—'}</Typography></TableCell>
                     <TableCell><Chip label={p.status} size="small" color={payStatusColor[p.status] ?? 'default'} /></TableCell>
@@ -1035,12 +1036,12 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Card elevation={0} sx={{ border: '1px solid rgba(239,68,68,0.2)' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">Health & Fitness Profile</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Health & Fitness Profile</Typography>
                   <Chip label="Sensitive" size="small" color="error" />
-                  <Box flex={1} />
+                  <Box sx={{ flex: 1 }} />
                   <Button size="small" variant="outlined" onClick={openHealthEditor}>Edit</Button>
                 </Box>
-                <Typography variant="caption" color="error.main" display="block" sx={{ mb: 2 }}>
+                <Typography variant="caption" color="error.main" sx={{ display: 'block', mb: 2 }}>
                   ⚠ Access to this section is logged. Sensitive health information.
                 </Typography>
                 {[
@@ -1053,7 +1054,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   ['Health Notes', member.health?.notes || '-'],
                   ['Blood Group', member.health?.bloodGroup || '—'],
                 ].map(([k, v]) => (
-                  <Box key={k} py={1} sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Box key={k} sx={{ py: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
                     <Typography variant="body2" sx={{ mt: 0.25 }}>{v}</Typography>
                   </Box>
@@ -1069,7 +1070,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         <Card elevation={0}>
           <CardContent>
             <Box sx={{ display: 'flex', mb: 2, alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle2" fontWeight="bold">Body Measurements History</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Body Measurements History</Typography>
               <Button variant="outlined" size="small" onClick={() => { setMeasureOpen(true); setMeasureError(''); }}>
                 Add Assessment
               </Button>
@@ -1090,7 +1091,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                     <TableRow key={m.id ?? i}>
                       <TableCell>{m.date}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>{m.weight ?? '—'}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.weight ?? '—'}</Typography>
                       </TableCell>
                       <TableCell>{m.bodyFat != null ? `${m.bodyFat}%` : '—'}</TableCell>
                       <TableCell>{m.chest ?? '—'}</TableCell>
@@ -1110,7 +1111,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={6}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>PT Sessions</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>PT Sessions</Typography>
             <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <Table size="small" sx={{ minWidth: 900 }}>
               <TableHead>
@@ -1164,7 +1165,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
       <TabPanel value={tab} index={7}>
         <Card elevation={0}>
           <CardContent>
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 3 }}>Activity Timeline</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 3 }}>Activity Timeline</Typography>
             {activity.length === 0 ? (
               <Typography variant="body2" color="text.secondary">No activity recorded yet.</Typography>
             ) : (
@@ -1179,9 +1180,9 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                         <Box sx={{ width: 1, flex: 1, bgcolor: 'rgba(255,255,255,0.06)', my: 0.5 }} />
                       )}
                     </Box>
-                    <Box pb={2}>
+                    <Box sx={{ pb: 2 }}>
                       <Typography variant="caption" color="text.secondary">{a.date}</Typography>
-                      <Typography variant="body2" fontWeight={500} sx={{ mt: 0.25 }}>{a.description}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }}>{a.description}</Typography>
                     </Box>
                   </Box>
                 ))}
@@ -1227,7 +1228,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           }
         }}>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight={700}>Edit Member Profile</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Edit Member Profile</Typography>
           </DialogTitle>
           <DialogContent>
             {editError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{editError}</Alert>}

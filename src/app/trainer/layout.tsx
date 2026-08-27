@@ -65,7 +65,7 @@ function TrainerSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
             <SportsRoundedIcon sx={{ fontSize: 20, color: '#fff' }} />
           </Box>
           <Box>
-            <Typography fontWeight={800} sx={{ color: '#f0f6fc', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            <Typography sx={{ fontWeight: 800, color: '#f0f6fc', fontSize: '1.25rem', letterSpacing: '-0.02em', lineHeight: 1 }}>
               GYMatrix
             </Typography>
             <Typography sx={{ color: '#ec4899', fontSize: '0.64rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -132,7 +132,7 @@ function TrainerSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
             {resolvedPhotoUrl && <Box component="img" src={resolvedPhotoUrl} alt={displayName} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#f0f6fc', display: 'block', fontSize: '0.8rem', lineHeight: 1.2 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: '#ec4899', fontSize: '0.68rem' }}>

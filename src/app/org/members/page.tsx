@@ -1,32 +1,28 @@
 'use client';
-import { Suspense, useRef, useState, useEffect, type MouseEvent, type PointerEvent } from 'react';
+import { Suspense, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
-  TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
-  DialogActions,Divider, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
-  Tooltip, CircularProgress, Alert, Select, FormControl,
+  TextField, MenuItem, InputAdornment, Stack, alpha, IconButton, Menu, ListItemIcon, ListItemText,
+  Tooltip, Select, FormControl,
 } from '@mui/material';
-import { useMediaQuery, useTheme } from '@mui/material';
+
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import PageSkeleton from '@/components/PageSkeleton';
 import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
-import { api } from '@/lib/api';
-import { usePresignedUrl, prefetchPresignedUrls } from '@/hooks/usePresignedUrl';
-import RenewMembershipDialog, { type RenewPlan } from '@/components/RenewMembershipDialog';
+import { usePresignedUrl } from '@/hooks/usePresignedUrl';
+import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
-import { useMembers, useMembershipPlans, useMemberMutations } from '@/hooks/queries/members';
+import { useMembers, useMembershipPlans } from '@/hooks/queries/members';
 import { useBranches } from '@/hooks/queries/branches';
 
 // ── MemberAvatar — resolves an S3 key to a presigned URL ──
@@ -50,14 +46,7 @@ function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; fi
 }
 
 
-type MemberRow = {
-  id: string; memberId: string; firstName: string; lastName: string; email: string; phone: string;
-  photoUrl: unknown; joinDate: string; gender: string; dob: string; plan: string; startDate: string;
-  expiryDate: string; trainer: string | null; lastVisit: string; paymentStatus: string;
-  membershipStatus: string; goal: string; experience: string; branch: string; address: string;
-  emergency: { name: string; phone: string; relation: string }; medicalConditions: string;
-  allergies: string; injuries: string;
-};
+
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
@@ -74,17 +63,12 @@ const FILTERS = [
   { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
 
-function indianMobileDigits(value: string) {
-  const digits = value.replace(/\D/g, '');
-  const localNumber = digits.length > 10 && digits.startsWith('91') ? digits.slice(2) : digits;
-  return localNumber.slice(0, 10);
-}
+
 
 function MembersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [search, setSearch] = useState('');
   const defaultPageSize = useResponsivePageSize();
   const [activeFilter, setActiveFilter] = useState(() => {
@@ -190,7 +174,7 @@ function MembersPageContent() {
 
   const runMemberAction = (action: 'view' | 'renew' | 'attendance' | 'payment') => {
     if (!actionMemberId) return;
-    const member = members.find(item => item.id === actionMemberId);
+    const member = members.find((item: any) => item.id === actionMemberId);
     closeActions();
     if (!member) return;
 
@@ -206,33 +190,10 @@ function MembersPageContent() {
     }
   };
 
-  const { updateStatus, deleteMember } = useMemberMutations();
 
-  const handleStatusChange = async () => {
-    if (!actionMemberId) return;
-    const member = members.find((m: any) => m.id === actionMemberId);
-    if (!member) return;
-    try {
-      const newStatus = member.membershipStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await updateStatus.mutateAsync({ memberId: actionMemberId, status: newStatus });
-      closeActions();
-    } catch (err) {
-      console.error('Failed to update status', err);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!actionMemberId || !confirm('Are you sure you want to permanently delete this member?')) return;
-    try {
-      await deleteMember.mutateAsync(actionMemberId);
-      closeActions();
-    } catch (err) {
-      console.error('Failed to delete member', err);
-    }
-  };
 
   // Always apply local filter because the backend doesn't natively support all compound statuses yet (like EXPIRING)
-  const filtered = members.filter(m => {
+  const filtered = members.filter((m: any) => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
     let matchFilter = true;
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
@@ -245,11 +206,11 @@ function MembersPageContent() {
 
   const counts = {
     ALL: totalCount,
-    ACTIVE: members.filter(m => m.membershipStatus === 'ACTIVE').length,
-    EXPIRING: members.filter(m => m.membershipStatus === 'EXPIRING').length,
-    EXPIRED: members.filter(m => m.membershipStatus === 'EXPIRED').length,
-    PAYMENT_PENDING: members.filter(m => m.paymentStatus !== 'PAID').length,
-    NO_TRAINER: members.filter(m => !m.trainer).length,
+    ACTIVE: members.filter((m: any) => m.membershipStatus === 'ACTIVE').length,
+    EXPIRING: members.filter((m: any) => m.membershipStatus === 'EXPIRING').length,
+    EXPIRED: members.filter((m: any) => m.membershipStatus === 'EXPIRED').length,
+    PAYMENT_PENDING: members.filter((m: any) => m.paymentStatus !== 'PAID').length,
+    NO_TRAINER: members.filter((m: any) => !m.trainer).length,
   };
 
   const paymentColumn: GridColDef = {
@@ -389,7 +350,6 @@ function MembersPageContent() {
           { label: 'Active', value: counts.ACTIVE, filter: 'ACTIVE', color: '#10b981', icon: PeopleRoundedIcon },
           { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
-          { label: 'Inactive', value: counts.INACTIVE, filter: 'INACTIVE', color: '#64748b', icon: PersonOffRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card
@@ -540,8 +500,9 @@ function MembersPageContent() {
       <RenewMembershipDialog
         open={renewOpen}
         memberId={renewMemberId ?? ''}
-        memberName={renewMemberId ? `${members.find(member => member.id === renewMemberId)?.firstName ?? ''} ${members.find(member => member.id === renewMemberId)?.lastName ?? ''}`.trim() : undefined}
+        memberName={renewMemberId ? `${members.find((member: any) => member.id === renewMemberId)?.firstName ?? ''} ${members.find((member: any) => member.id === renewMemberId)?.lastName ?? ''}`.trim() : undefined}
         plans={renewPlans}
+        onSuccess={() => {}}
         onClose={() => {
           setRenewOpen(false);
           setRenewMemberId(null);

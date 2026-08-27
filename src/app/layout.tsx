@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import ThemeRegistry from '@/components/ThemeRegistry';
 import GlobalNetworkError from '@/components/GlobalNetworkError';
 import QueryProvider from '@/providers/QueryProvider';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: 'GYMatrix Admin',
@@ -33,6 +34,7 @@ export default function RootLayout({
           <ThemeRegistry>
             {children}
             <GlobalNetworkError />
+            <Toaster position="bottom-right" />
           </ThemeRegistry>
         </QueryProvider>
       </body>

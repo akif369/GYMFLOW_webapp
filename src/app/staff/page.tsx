@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -9,7 +10,6 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useStaff, useStaffMutations } from '@/hooks/queries/staff';
-import { api } from '@/lib/api';
 
 const ALL_PERMISSIONS = [
   'member.create', 'member.update', 'member.delete', 'attendance.create',
@@ -144,7 +144,7 @@ export default function StaffPage() {
       await updateStaffStatus.mutateAsync({ staffId, status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
     } catch (e) {
       console.error(e);
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     }
   };
 
@@ -152,10 +152,10 @@ export default function StaffPage() {
     if (!confirm('Send a password reset link to this staff member?')) return;
     try {
       await resetPassword.mutateAsync(staffId);
-      alert('Password reset link sent to email and WhatsApp');
+      toast.success('Password reset link sent to email and WhatsApp');
     } catch (e) {
       console.error(e);
-      alert('Failed to send reset link');
+      toast.error('Failed to send reset link');
     }
   };
 
@@ -165,7 +165,7 @@ export default function StaffPage() {
       await deleteStaff.mutateAsync(staffId);
     } catch (e: any) {
       console.error(e);
-      alert(e.response?.data?.error || 'Failed to delete staff member');
+      toast.error(e.response?.data?.error || 'Failed to delete staff member');
     }
   };
 
@@ -205,7 +205,7 @@ export default function StaffPage() {
           </Box>
         ) : (
           <Grid container spacing={2}>
-            {staff.map(staffMember => (
+            {staff.map((staffMember: StaffRow) => (
               <Grid size={{ xs: 12, md: 6 }} key={staffMember.id}>
                 <Card elevation={0}>
                   <CardContent>
@@ -229,7 +229,7 @@ export default function StaffPage() {
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Permissions</Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {staffMember.permissions.map(p => (
+                          {staffMember.permissions.map((p: string) => (
                             <Chip key={p} label={p} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
                           ))}
                         </Box>

@@ -168,7 +168,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
             sx={{ width: 56, height: 56, borderRadius: 1, flexShrink: 0, objectFit: 'contain' }}
           />
           <Box>
-            <Typography variant="body1" fontWeight={800} sx={{ color: '#f0f6fc', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            <Typography variant="body1" sx={{ color: '#f0f6fc', letterSpacing: '-0.5px', lineHeight: 1.1, fontWeight: 800 }}>
               GYMatrix
             </Typography>
             <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
@@ -289,7 +289,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.8rem', lineHeight: 1.2, fontWeight: 700 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: roleColor, fontSize: '0.68rem' }}>

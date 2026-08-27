@@ -156,7 +156,7 @@ export default function InvitePage() {
       <Card sx={{ maxWidth: 450, width: '100%', p: { xs: 2, sm: 3 }, boxShadow: 6, borderRadius: 3 }}>
         <CardContent>
           <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <Typography variant="h5" fontWeight="bold">
+            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
               Complete Your Setup
             </Typography>
           </Box>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Chip, Stack, Avatar,
-  Divider, Button, Grid, IconButton, alpha,
+  Button, Grid, IconButton, alpha,
 } from '@mui/material';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
@@ -87,7 +87,7 @@ export default function TrainerSessionsPage() {
               <ChevronLeftRoundedIcon />
             </IconButton>
             <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary' }}>
-              {weekOffset === 0 ? 'This Week' : weekOffset === -1 ? 'Last Week' : weekOffset === 1 ? 'Next Week' : `Week of ${weekDates[0].toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
+              {weekOffset === 0 ? 'This Week' : weekOffset === -1 ? 'Last Week' : weekOffset === 1 ? 'Next Week' : `Week of ${weekDates[0]?.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
             </Typography>
             <IconButton size="small" onClick={() => setWeekOffset((w) => w + 1)} sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc' } }}>
               <ChevronRightRoundedIcon />
@@ -101,7 +101,7 @@ export default function TrainerSessionsPage() {
               const isSelected = selectedDay === idx;
               const sessionCount = ALL_SESSIONS.filter((s) => s.day === idx).length;
               return (
-                <Grid item xs key={idx}>
+                <Grid size="grow" key={idx}>
                   <Box
                     onClick={() => setSelectedDay(idx)}
                     sx={{
@@ -176,7 +176,7 @@ export default function TrainerSessionsPage() {
                   </Box>
                   {/* Status + Actions */}
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                    <Chip label={sc.label} size="small" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: sc.bg, color: sc.color }} />
+                    <Chip label={sc?.label} size="small" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: sc?.bg, color: sc?.color }} />
                     {session.status === 'UPCOMING' && (
                       <>
                         <IconButton size="small" sx={{ color: '#10b981', '&:hover': { bgcolor: 'rgba(16,185,129,0.1)' } }}>

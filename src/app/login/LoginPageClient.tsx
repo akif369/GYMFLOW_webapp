@@ -37,7 +37,7 @@ import { useAuthStore, getPortalHome } from '@/store/useAuthStore';
 import type { PortalType } from '@/store/useAuthStore';
 
 const REMEMBERED_EMAIL_KEY = 'gymatrix:remembered-email';
-const DEFAULT_REDIRECT = '/';
+
 
 interface LoginPageClientProps {
   redirectTo: string | null;
@@ -60,16 +60,6 @@ interface LoginResponse {
   };
 }
 
-function sanitizeRedirect(candidate: string | null): string {
-  if (!candidate) return DEFAULT_REDIRECT;
-  try {
-    const path = decodeURIComponent(candidate).trim();
-    if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) return DEFAULT_REDIRECT;
-    return path;
-  } catch {
-    return DEFAULT_REDIRECT;
-  }
-}
 
 function getErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
@@ -86,11 +76,11 @@ function getErrorMessage(error: unknown): string {
   return 'Sign in failed. Please try again.';
 }
 
-export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
+export default function LoginPageClient(_props: LoginPageClientProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
-  const destination = sanitizeRedirect(redirectTo);
+
   const { setAuth, isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
@@ -125,7 +115,7 @@ export default function LoginPageClient({ redirectTo }: LoginPageClientProps) {
   const emailError = touched.email && !email.trim() ? 'Email is required.' :
     touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Enter a valid email.' : '';
   const passwordError = touched.password && !password ? 'Password is required.' : '';
-  const isValid = !emailError && !passwordError && email.trim() && password;
+
 
   const handleCapsLock = (e: KeyboardEvent<HTMLInputElement>) => setCapsLock(e.getModifierState('CapsLock'));
 

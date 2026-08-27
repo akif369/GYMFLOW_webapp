@@ -28,8 +28,8 @@ export default function FinancialsPage() {
           { label: 'Total Revenue (MTD)', value: '₹12,45,000', change: '+12.5%', color: '#10b981' },
           { label: 'Outstanding Dues', value: '₹1,24,000', change: '-4.2%', color: '#f87171' },
           { label: 'Avg. Revenue Per User', value: '₹1,850', change: '+2.1%', color: '#3b82f6' },
-        ].map((kpi, i) => (
-          <Grid item xs={12} md={4} key={i}>
+        ].map((kpi, index) => (
+          <Grid size={{ xs: 12, md: 4 }} key={index}>
             <Card elevation={0} sx={{ height: '100%' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600, mb: 1, textTransform: 'uppercase' }}>

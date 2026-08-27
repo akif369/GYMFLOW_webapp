@@ -37,7 +37,7 @@ export default function MemberSearchField({ label = 'Search member', helperText 
   }, [autoFocus]);
 
   return (
-    <Autocomplete
+    <Autocomplete<MemberSearchResult, false, false, false>
       fullWidth
       options={options}
       loading={loading}
@@ -55,7 +55,7 @@ export default function MemberSearchField({ label = 'Search member', helperText 
         return (
           <Box component="li" {...optionProps} key={key} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body2" fontWeight={700}>{member.firstName} {member.lastName}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>{member.firstName} {member.lastName}</Typography>
               <Typography variant="caption" color="text.secondary">{member.memberNumber} · {member.phone}</Typography>
             </Box>
             <Chip label={member.status === 'EXPIRED' ? 'EXPIRED' : member.status} color={member.status === 'EXPIRED' ? 'error' : member.status === 'ACTIVE' ? 'success' : 'default'} size="small" />

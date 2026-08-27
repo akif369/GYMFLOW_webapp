@@ -115,7 +115,7 @@ function OrgSidebar({
             <AccountBalanceRoundedIcon sx={{ fontSize: 20, color: '#fff' }} />
           </Box>
           <Box>
-            <Typography fontWeight={800} sx={{ color: '#f0f6fc', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            <Typography sx={{ fontWeight: 800, color: '#f0f6fc', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
               GYMatrix
             </Typography>
             <Typography sx={{ color: '#f59e0b', fontSize: '0.64rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -227,7 +227,7 @@ function OrgSidebar({
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" fontWeight={700} sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: '#f59e0b', fontSize: '0.68rem' }}>
@@ -274,8 +274,7 @@ function OrgSidebar({
 export default function OrgOwnerLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [orgMode, setOrgMode] = useState<OrgMode>('SINGLE_GYM');
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -291,11 +290,7 @@ export default function OrgOwnerLayout({ children }: { children: React.ReactNode
       .catch(() => { /* default stays SINGLE_GYM */ });
   }, []);
 
-  const handleLogout = async () => {
-    try { await api.post('/auth/logout'); } catch { /* best effort */ }
-    logout();
-    router.replace('/login');
-  };
+
 
   return (
     <AuthGuard>

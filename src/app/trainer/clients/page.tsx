@@ -1,12 +1,10 @@
 'use client';
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Avatar, Chip, Stack, Grid,
-  TextField, InputAdornment, LinearProgress, Divider, Button, alpha,
+  Box, Card, CardContent, Typography, Avatar, Chip, Grid,
+  TextField, InputAdornment, LinearProgress, Divider, Button,
 } from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 
@@ -94,7 +92,7 @@ export default function TrainerClientsPage() {
           const attColor = client.attendance >= 85 ? '#10b981' : client.attendance >= 70 ? '#f59e0b' : '#f87171';
           const isActive = client.status === 'ACTIVE';
           return (
-            <Grid item xs={12} sm={6} lg={4} key={client.id}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={client.id}>
               <Card elevation={0} sx={{
                 height: '100%', transition: 'transform 0.18s, border-color 0.18s',
                 '&:hover': { transform: 'translateY(-2px)', borderColor: 'rgba(236,72,153,0.25)' },
@@ -150,19 +148,19 @@ export default function TrainerClientsPage() {
 
                   {/* Stats */}
                   <Grid container spacing={1}>
-                    <Grid item xs={4}>
+                    <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: 'text.primary' }}>{client.sessions}</Typography>
                         <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>Sessions</Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: attColor }}>{client.attendance}%</Typography>
                         <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>Attendance</Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
                         <CheckCircleRoundedIcon sx={{ fontSize: 16, color: isActive ? '#10b981' : '#6b7280', display: 'block', mx: 'auto', mb: 0.25 }} />
                         <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>Status</Typography>

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -35,13 +35,7 @@ const NAV_ITEMS = [
   { name: 'My Profile',  icon: <AccountCircleRoundedIcon sx={{ fontSize: 18 }} />,   href: '/member/profile' },
 ];
 
-// Mock: member's current membership data for the sidebar indicator
-const MOCK_MEMBERSHIP = {
-  planName: 'Premium Monthly',
-  daysLeft: 12,
-  totalDays: 30,
-  status: 'ACTIVE',
-};
+// Removed MOCK_MEMBERSHIP
 
 function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => void }) {
   const router = useRouter();
@@ -52,7 +46,15 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
 
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Member';
   const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : 'ME';
-  const membershipPct = Math.round((MOCK_MEMBERSHIP.daysLeft / MOCK_MEMBERSHIP.totalDays) * 100);
+  const [membershipStatus, setMembershipStatus] = useState({ planName: 'Loading...', daysLeft: 0, totalDays: 30, status: 'INACTIVE' });
+
+  useEffect(() => {
+    if (user?.memberId) {
+      api.get('/members/me/membership-status').then(res => setMembershipStatus(res.data)).catch(console.error);
+    }
+  }, [user?.memberId]);
+
+  const membershipPct = Math.round((membershipStatus.daysLeft / membershipStatus.totalDays) * 100);
   const expiryColor = membershipPct > 30 ? '#10b981' : membershipPct > 10 ? '#f59e0b' : '#f43f5e';
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -95,10 +97,10 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
       <Box sx={{ mx: 2, mb: 1, p: 1.5, borderRadius: 2, bgcolor: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
           <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: '#34d399' }}>
-            {MOCK_MEMBERSHIP.planName}
+            {membershipStatus.planName}
           </Typography>
           <Typography sx={{ fontSize: '0.68rem', color: expiryColor, fontWeight: 700 }}>
-            {MOCK_MEMBERSHIP.daysLeft}d left
+            {membershipStatus.daysLeft}d left
           </Typography>
         </Box>
         <LinearProgress

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Chip, Stack, Grid,
+  Box, Card, CardContent, Typography, Chip, Grid,
   Button, Divider, TextField, InputAdornment, alpha,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -87,7 +87,7 @@ export default function TrainerWorkoutsPage() {
           const catColor = CATEGORY_COLORS[tmpl.category] ?? '#6b7280';
           const diff = DIFF_COLORS[tmpl.difficulty] ?? DIFF_COLORS.Beginner;
           return (
-            <Grid item xs={12} sm={6} lg={4} key={tmpl.id}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={tmpl.id}>
               <Card elevation={0} sx={{
                 height: '100%', position: 'relative', overflow: 'hidden',
                 transition: 'transform 0.18s, border-color 0.18s',
@@ -99,7 +99,7 @@ export default function TrainerWorkoutsPage() {
                     <Box sx={{ width: 38, height: 38, borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: alpha(catColor, 0.12) }}>
                       <FitnessCenterRoundedIcon sx={{ fontSize: 18, color: catColor }} />
                     </Box>
-                    <Chip label={tmpl.difficulty} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: diff.bg, color: diff.color }} />
+                    <Chip label={tmpl.difficulty} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: diff?.bg, color: diff?.color }} />
                   </Box>
 
                   <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: 'text.primary', mb: 0.5 }}>
@@ -114,7 +114,7 @@ export default function TrainerWorkoutsPage() {
                       { label: 'Exercises', value: tmpl.exercises },
                       { label: 'Duration', value: `${tmpl.duration}m` },
                     ].map((s) => (
-                      <Grid item xs={6} key={s.label}>
+                      <Grid size={{ xs: 6 }} key={s.label}>
                         <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
                           <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: 'text.primary' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>{s.label}</Typography>

@@ -10,6 +10,20 @@ export function useTrainers(params: Record<string, any> = {}) {
     },
   });
 }
+export function useTrainerPerformance(trainerId: string) {
+  return useQuery({
+    queryKey: ['trainers', 'performance', trainerId],
+    queryFn: () => api.get(`/trainers/${trainerId}/performance`).then((res) => res.data),
+    enabled: !!trainerId,
+  });
+}
+
+export function useTrainerDashboard() {
+  return useQuery({
+    queryKey: ['trainers', 'me', 'dashboard'],
+    queryFn: () => api.get('/trainers/me/dashboard').then((res) => res.data),
+  });
+}
 export function useAssignedMembers(trainerId: string | null) {
   return useQuery({
     queryKey: ['trainers', trainerId, 'members'],

@@ -1,13 +1,14 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
   Table, TableBody, TableCell, TableHead, TableRow, TableContainer,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  Alert, CircularProgress, Divider, IconButton, Tooltip,
-  ToggleButton, ToggleButtonGroup, Autocomplete, InputAdornment, Paper,
-  LinearProgress, Checkbox, ListItemText,
+  Alert, CircularProgress, IconButton, Tooltip,
+  ToggleButton, ToggleButtonGroup, Autocomplete,
+  LinearProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -34,7 +35,6 @@ type PackageRow = {
   id: string; name: string; sessionsCount: number;
   validityDays: number; price: number; description: string;
 };
-type TrainerOption = { id: string; name: string };
 type MemberOption = { id: string; name: string; phone?: string };
 type BookMode = 'INDIVIDUAL' | 'GROUP' | 'RECURRING';
 
@@ -58,7 +58,7 @@ function mapSession(s: Record<string, unknown>): SessionRow {
     trainer: `${s.trainerFirstName ?? ''} ${s.trainerLastName ?? ''}`.trim() || String(s.trainerName ?? ''),
     trainerId: String(s.trainerId ?? ''),
     scheduledAt,
-    date: scheduledAt.split('T')[0],
+    date: String(scheduledAt).includes('T') ? (String(scheduledAt).split('T')[0] ?? '') : '',
     time: scheduledAt.substring(11, 16),
     duration: Number(s.durationMinutes ?? 60),
     sessionType: String(s.sessionType ?? 'General'),
@@ -114,7 +114,7 @@ export default function PtSessionsPage() {
   // ── Queries ─────────────────────────────────────────────────────────────────
   const { data: todayData, isLoading: todayLoading } = useTodayPtSessions();
   const { data: packagesData, isLoading: pkgsLoading } = usePtPackages();
-  const { data: trainersData, isLoading: trainersLoading } = useTrainers({ pageSize: '100' });
+  const { data: trainersData } = useTrainers({ pageSize: '100' });
 
   // ── All Sessions Filters ────────────────────────────────────────────────────
   const [filterTrainerId, setFilterTrainerId] = useState('');
@@ -213,7 +213,7 @@ export default function PtSessionsPage() {
         setBookProgress({ done: 0, total: groupMembers.length });
         for (let i = 0; i < groupMembers.length; i++) {
           await bookSession.mutateAsync({
-            memberId: groupMembers[i].id, trainerId: bookTrainerId,
+            memberId: groupMembers[i]?.id, trainerId: bookTrainerId,
             scheduledAt: `${bookDate}T${bookTime}:00`,
             durationMinutes: bookDuration, sessionType: bookType, notes: bookNotes,
           });
@@ -267,7 +267,7 @@ export default function PtSessionsPage() {
     if (!confirm('Mark this session as missed?')) return;
     try {
       await missSession.mutateAsync(sessionId);
-    } catch (e: any) { alert(e.response?.data?.error || 'Failed'); }
+    } catch (e: any) { toast.error(e.response?.data?.error || 'Failed'); }
   };
 
   // ── Package handlers ─────────────────────────────────────────────────────────
@@ -308,7 +308,7 @@ export default function PtSessionsPage() {
       {/* Header */}
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Personal Training</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Personal Training</Typography>
           <Typography variant="body2" color="text.secondary">PT packages, schedules, and session tracking</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => { resetBookForm(); setBookOpen(true); }}>
@@ -318,7 +318,7 @@ export default function PtSessionsPage() {
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
-          <Tab label={`Today (${todaySess.filter(s => s.status === 'UPCOMING').length} upcoming)`} />
+          <Tab label={`Today (${todaySess.filter((s: SessionRow) => s.status === 'UPCOMING').length} upcoming)`} />
           <Tab label="All Sessions" />
           <Tab label="Packages" />
         </Tabs>
@@ -335,7 +335,7 @@ export default function PtSessionsPage() {
           </Box>
         ) : (
           <Grid container spacing={2}>
-            {todaySess.sort((a, b) => a.time.localeCompare(b.time)).map(session => (
+            {todaySess.sort((a: SessionRow, b: SessionRow) => a.time.localeCompare(b.time)).map((session: SessionRow) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={session.id}>
                 <Card elevation={0} sx={{
                   borderLeft: '4px solid',
@@ -344,14 +344,14 @@ export default function PtSessionsPage() {
                 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                      <Typography variant="h5" fontWeight="bold" color="primary">{session.time}</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold' }} color="primary">{session.time}</Typography>
                       <Chip label={session.status} size="small" color={STATUS_COLOR[session.status]} />
                     </Box>
-                    <Typography variant="body1" fontWeight={700}>{session.member}</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{session.member}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                       Trainer: {session.trainer}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                       {session.duration} min · {session.sessionType}
                     </Typography>
                     {session.notes && (
@@ -360,7 +360,7 @@ export default function PtSessionsPage() {
                       </Box>
                     )}
                     {session.cancellationReason && (
-                      <Typography variant="caption" color="warning.main" display="block" sx={{ mt: 0.5 }}>
+                      <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
                         Reason: {session.cancellationReason}
                       </Typography>
                     )}
@@ -442,11 +442,11 @@ export default function PtSessionsPage() {
                         No sessions found
                       </TableCell>
                     </TableRow>
-                  ) : allSess.map(s => (
+                  ) : allSess.map((s: SessionRow) => (
                     <TableRow key={s.id} hover>
                       <TableCell>{s.date}</TableCell>
                       <TableCell>{s.time}</TableCell>
-                      <TableCell><Typography variant="body2" fontWeight={600}>{s.member}</Typography></TableCell>
+                      <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{s.member}</Typography></TableCell>
                       <TableCell>{s.trainer}</TableCell>
                       <TableCell>{s.sessionType}</TableCell>
                       <TableCell>{s.duration}m</TableCell>
@@ -491,17 +491,17 @@ export default function PtSessionsPage() {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
         ) : (
           <Grid container spacing={2}>
-            {pkgs.map(pkg => (
+            {pkgs.map((pkg: PackageRow) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pkg.id}>
                 <Card elevation={0} sx={{ height: '100%', position: 'relative' }}>
                   <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="h2" fontWeight={800} color="primary">{pkg.sessionsCount}</Typography>
+                    <Typography variant="h2" sx={{ fontWeight: 800 }} color="primary">{pkg.sessionsCount}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Sessions</Typography>
-                    <Typography variant="h5" fontWeight="bold">₹{pkg.price.toLocaleString('en-IN')}</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">{pkg.validityDays} days validity</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>₹{pkg.price.toLocaleString('en-IN')}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{pkg.validityDays} days validity</Typography>
                     {pkg.name && <Chip label={pkg.name} size="small" sx={{ mt: 1 }} />}
                     {pkg.description && (
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                         {pkg.description}
                       </Typography>
                     )}
@@ -558,14 +558,16 @@ export default function PtSessionsPage() {
                   onInputChange={(_, v) => memberSearch1.search(v)}
                   filterOptions={x => x}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
-                  renderInput={params => (
+                  renderInput={(params: any) => (
                     <TextField
                       {...params}
                       label="Member *"
                       size="small"
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (<><SearchIcon sx={{ color: 'text.secondary', mr: 0.5, fontSize: 18 }} />{params.InputProps?.startAdornment}</>),
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          startAdornment: (<><SearchIcon sx={{ color: 'text.secondary', mr: 0.5, fontSize: 18 }} />{params.InputProps?.startAdornment}</>),
+                        }
                       }}
                     />
                   )}
@@ -630,7 +632,7 @@ export default function PtSessionsPage() {
                 {recurStartDate && recurEndDate && (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Box sx={{ p: 1.5, bgcolor: 'primary.main', borderRadius: 1, textAlign: 'center' }}>
-                      <Typography variant="h6" fontWeight={700} color="primary.contrastText">
+                      <Typography variant="h6" sx={{ fontWeight: 700 }} color="primary.contrastText">
                         {getRecurringDates(recurStartDate, recurEndDate, recurDay, bookTime).length}
                       </Typography>
                       <Typography variant="caption" color="primary.contrastText">sessions to be created</Typography>
@@ -643,7 +645,7 @@ export default function PtSessionsPage() {
             {/* Shared: Trainer */}
             <Grid size={12}>
               <TextField label="Trainer *" select fullWidth size="small" value={bookTrainerId} onChange={e => setBookTrainerId(e.target.value)}>
-                {trainersOptions.map(t => (
+                {trainersOptions.map((t: any) => (
                   <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
                 ))}</TextField>
             </Grid>
@@ -693,7 +695,7 @@ export default function PtSessionsPage() {
           {actionError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{actionError}</Alert>}
           {completeSession && (
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" fontWeight={600}>{completeSession.member}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>{completeSession.member}</Typography>
               <Typography variant="caption" color="text.secondary">with {completeSession.trainer} · {completeSession.date} {completeSession.time}</Typography>
             </Box>
           )}
@@ -715,7 +717,7 @@ export default function PtSessionsPage() {
           {actionError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{actionError}</Alert>}
           {cancelSession && (
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" fontWeight={600}>{cancelSession.member}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>{cancelSession.member}</Typography>
               <Typography variant="caption" color="text.secondary">with {cancelSession.trainer} · {cancelSession.date} {cancelSession.time}</Typography>
             </Box>
           )}

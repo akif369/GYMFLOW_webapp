@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
@@ -28,7 +29,6 @@ type TrainerRow = {
   bio: string; salary: number;
 };
 type MemberOption = { id: string; name: string; phone?: string };
-type AssignedMember = { id: string; name: string; phone: string; email: string; assignedAt?: string };
 
 const STATUS_COLOR: Record<string, 'success' | 'warning' | 'error'> = {
   ACTIVE: 'success', ON_LEAVE: 'warning', INACTIVE: 'error',
@@ -49,7 +49,7 @@ function mapTrainer(t: Record<string, unknown>): TrainerRow {
     phone: String(t.phone ?? '').replace(/^\+91/, ''),
     specialization: String(t.specialization ?? ''),
     certifications: Array.isArray(t.certifications) ? t.certifications.map(String) : [],
-    joiningDate: String(t.joiningDate ?? t.joinDate ?? '').split('T')[0],
+    joiningDate: String(t.joiningDate ?? t.joinDate ?? '').split('T')[0] || '',
     shift: String(t.shift ?? ''),
     status: String(t.status ?? 'ACTIVE'),
     membersAssigned: Number(t.membersAssigned ?? t.memberCount ?? 0),
@@ -123,7 +123,7 @@ export default function TrainersPage() {
 
   // ── View Members Dialog ─────────────────────────────────────────────────────
   const [membersTrainer, setMembersTrainer] = useState<TrainerRow | null>(null);
-  const { data: assignedMembersData, isLoading: assignedMembersLoading } = useAssignedMembers(membersTrainer?.id || null);
+  const { data: assignedMembersData } = useAssignedMembers(membersTrainer?.id || null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
 
   const assignedMembers = membersTrainer && assignedMembersData
@@ -196,7 +196,7 @@ export default function TrainersPage() {
       await updateTrainerStatus.mutateAsync({ id: trainer.id, status: newStatus });
       setStatusTrainer(null);
     } catch (e: any) {
-      alert(e.response?.data?.error || 'Failed to update status');
+      toast.error(e.response?.data?.error || 'Failed to update status');
     } finally { setStatusSubmitting(false); }
   };
 
@@ -207,7 +207,7 @@ export default function TrainersPage() {
     try {
       await removeMember.mutateAsync({ trainerId, memberId });
     } catch (e: any) {
-      alert(e.response?.data?.error || 'Failed to remove member');
+      toast.error(e.response?.data?.error || 'Failed to remove member');
     } finally { setRemovingMemberId(null); }
   };
 
@@ -228,9 +228,9 @@ export default function TrainersPage() {
     } finally { setAssignSubmitting(false); }
   };
 
-  const trList = trainersData ? (trainersData.data ?? trainersData.items ?? trainersData.trainers ?? []).map(mapTrainer) : [];
-  const activeCount = trList.filter(t => t.status === 'ACTIVE').length;
-  const totalSessions = trList.reduce((s, t) => s + t.sessionsThisMonth, 0);
+  const trList: TrainerRow[] = trainersData ? (trainersData.data ?? trainersData.items ?? trainersData.trainers ?? []).map((t: any) => mapTrainer(t)) : [];
+  const activeCount = trList.filter((t: TrainerRow) => t.status === 'ACTIVE').length;
+  const totalSessions = trList.reduce((s: number, t: TrainerRow) => s + t.sessionsThisMonth, 0);
 
   return (
     <AppLayout>
@@ -252,12 +252,12 @@ export default function TrainersPage() {
             { label: 'Total Trainers', value: trList.length },
             { label: 'Active', value: activeCount },
             { label: 'Sessions This Month', value: totalSessions },
-            { label: 'Members Assigned', value: trList.reduce((s, t) => s + t.membersAssigned, 0) },
+            { label: 'Members Assigned', value: trList.reduce((s: number, t: TrainerRow) => s + t.membersAssigned, 0) },
           ].map(({ label, value }) => (
             <Grid size={{ xs: 6, sm: 3 }} key={label}>
               <Card elevation={0}>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                  <Typography variant="h5" fontWeight={800}>{value}</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{value}</Typography>
                   <Typography variant="caption" color="text.secondary">{label}</Typography>
                 </CardContent>
               </Card>
@@ -272,18 +272,18 @@ export default function TrainersPage() {
         <EmptyState onAdd={openAddTrainer} />
       ) : (
         <Grid container spacing={2}>
-          {trList.map(trainer => (
+          {trList.map((trainer: TrainerRow) => (
             <Grid size={{ xs: 12, md: 6, lg: 4 }} key={trainer.id}>
               <Card elevation={0} sx={{ height: '100%' }}>
                 <CardContent>
                   {/* Header */}
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'flex-start' }}>
                     <Avatar sx={{ width: 52, height: 52, bgcolor: 'primary.dark', fontSize: '1.1rem', flexShrink: 0 }}>
-                      {trainer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      {trainer.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{trainer.name}</Typography>
-                      <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
                         {trainer.specialization || 'General Training'}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
@@ -323,26 +323,26 @@ export default function TrainersPage() {
                     {trainer.phone && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="caption" color="text.secondary">Phone</Typography>
-                        <Typography variant="caption" fontWeight={500}>+91{trainer.phone}</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 500 }}>+91{trainer.phone}</Typography>
                       </Box>
                     )}
                     {trainer.email && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="caption" color="text.secondary">Email</Typography>
-                        <Typography variant="caption" fontWeight={500} noWrap sx={{ maxWidth: 180 }}>{trainer.email}</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 500, maxWidth: 180 }} noWrap>{trainer.email}</Typography>
                       </Box>
                     )}
                     {trainer.joiningDate && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="caption" color="text.secondary">Joined</Typography>
-                        <Typography variant="caption" fontWeight={500}>{trainer.joiningDate}</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 500 }}>{trainer.joiningDate}</Typography>
                       </Box>
                     )}
                     {trainer.certifications.length > 0 && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <Typography variant="caption" color="text.secondary">Certs</Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.3, justifyContent: 'flex-end', maxWidth: 200 }}>
-                          {trainer.certifications.map(c => (
+                          {trainer.certifications.map((c: string) => (
                             <Chip key={c} label={c} size="small" sx={{ fontSize: '0.6rem', height: 18 }} />
                           ))}
                         </Box>
@@ -354,7 +354,7 @@ export default function TrainersPage() {
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                       size="small" variant="outlined" startIcon={<PeopleIcon />}
-                      onClick={() => { setMembersTrainer(trainer); fetchAssignedMembers(trainer.id); }}
+                      onClick={() => { setMembersTrainer(trainer); }}
                     >
                       Members ({trainer.membersAssigned})
                     </Button>
@@ -440,8 +440,8 @@ export default function TrainersPage() {
         <DialogContent>
           {statusTrainer && (
             <Box>
-              <Typography variant="body2" fontWeight={600} sx={{ mb: 2 }}>{statusTrainer.name}</Typography>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>{statusTrainer.name}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
                 Current status: <Chip label={statusTrainer.status} size="small" color={STATUS_COLOR[statusTrainer.status]} />
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -501,14 +501,14 @@ export default function TrainersPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {assignedMembers.map(m => (
+                  {assignedMembers.map((m: any) => (
                     <TableRow key={m.id} hover>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ width: 28, height: 28, fontSize: '0.7rem', bgcolor: 'primary.dark' }}>
-                            {m.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {m.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                           </Avatar>
-                          <Typography variant="body2" fontWeight={600}>{m.name}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>{m.phone ? `+91${m.phone}` : '—'}</TableCell>
@@ -540,7 +540,7 @@ export default function TrainersPage() {
       <Dialog open={assignDialogOpen} onClose={() => setAssignDialogOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>
           Assign Members
-          {assignTrainer && <Typography variant="caption" color="text.secondary" display="block">to {assignTrainer.name}</Typography>}
+          {assignTrainer && <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>to {assignTrainer.name}</Typography>}
         </DialogTitle>
         <DialogContent>
           {assignError && <Alert severity="error" sx={{ mb: 2, mt: 1 }}>{assignError}</Alert>}
@@ -560,9 +560,11 @@ export default function TrainersPage() {
                   {...params}
                   label="Search members to assign"
                   size="small"
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (<><SearchIcon sx={{ color: 'text.secondary', mr: 0.5, fontSize: 18 }} />{params.InputProps?.startAdornment}</>),
+                  slotProps={{
+                    input: {
+                      ...(params as any).InputProps,
+                      startAdornment: (<><SearchIcon sx={{ color: 'text.secondary', mr: 0.5, fontSize: 18 }} />{(params as any).InputProps?.startAdornment}</>),
+                    }
                   }}
                 />
               )}

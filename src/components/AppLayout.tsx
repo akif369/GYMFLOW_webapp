@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { Box } from '@mui/material';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AuthGuard from './AuthGuard';
@@ -8,8 +8,6 @@ import RoleGuard from './RoleGuard';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const theme = useTheme();
-  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);

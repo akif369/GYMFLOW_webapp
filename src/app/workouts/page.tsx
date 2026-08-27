@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
@@ -7,7 +7,6 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '@/lib/api';
 import { useExercises, useWorkoutTemplates } from '@/hooks/queries/workouts';
 
 type ExerciseRow = { id: string; name: string; muscleGroup: string; equipment: string; difficulty: string; active: boolean; description: string };
@@ -27,7 +26,7 @@ export default function WorkoutsPage() {
   const { data: exercisesData } = useExercises({ pageSize: '100' });
   const { data: templatesData } = useWorkoutTemplates({ pageSize: '50' });
 
-  const exercises = (exercisesData?.data ?? exercisesData?.items ?? []).map((e: Record<string, unknown>) => ({
+  const exercises: ExerciseRow[] = (exercisesData?.data ?? exercisesData?.items ?? []).map((e: Record<string, unknown>) => ({
     id: String(e.id),
     name: String(e.name ?? ''),
     difficulty: String(e.difficulty ?? 'Intermediate'),
@@ -37,7 +36,7 @@ export default function WorkoutsPage() {
     active: e.active !== false,
   }));
 
-  const templates = (templatesData?.data ?? templatesData?.items ?? []).map((t: Record<string, unknown>) => ({
+  const templates: WorkoutTemplateRow[] = (templatesData?.data ?? templatesData?.items ?? []).map((t: Record<string, unknown>) => ({
     id: String(t.id),
     name: String(t.name ?? ''),
     trainer: String(t.createdByName ?? t.createdBy ?? ''),
@@ -51,7 +50,7 @@ export default function WorkoutsPage() {
     <AppLayout>
       <Box sx={{ display: 'flex', mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Workout Management</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Workout Management</Typography>
           <Typography variant="body2" color="text.secondary">Exercise library, templates, and workout plans</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddExOpen(true)}>Add Exercise</Button>
@@ -81,7 +80,7 @@ export default function WorkoutsPage() {
             <TableBody>
               {exercises.map(ex => (
                 <TableRow key={ex.id}>
-                  <TableCell><Typography variant="body2" fontWeight={600}>{ex.name}</Typography></TableCell>
+                  <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{ex.name}</Typography></TableCell>
                   <TableCell><Chip label={ex.muscleGroup} size="small" variant="outlined" /></TableCell>
                   <TableCell><Typography variant="caption">{ex.equipment}</Typography></TableCell>
                   <TableCell><Chip label={ex.difficulty} size="small" color={difficultyColor[ex.difficulty]} /></TableCell>
@@ -109,19 +108,19 @@ export default function WorkoutsPage() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={template.id}>
               <Card elevation={0} sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' }, transition: 'border-color 0.2s' }}>
                 <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{template.name}</Typography>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, mt: 1.5 }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Exercises</Typography>
-                      <Typography variant="caption" fontWeight={600}>{template.exercises}</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>{template.exercises}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Created by</Typography>
-                      <Typography variant="caption" fontWeight={600}>{template.trainer}</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>{template.trainer}</Typography>
                     </Box>
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="caption" color="text.secondary">Members using</Typography>
-                      <Typography variant="caption" fontWeight={600}>{template.members}</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>{template.members}</Typography>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
@@ -130,7 +129,7 @@ export default function WorkoutsPage() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+             </Grid>
           ))}
         </Grid>
       </TabPanel>

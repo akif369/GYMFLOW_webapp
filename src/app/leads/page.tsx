@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip,
@@ -7,7 +7,6 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { api } from '@/lib/api';
 import { useLeads } from '@/hooks/queries/leads';
 
 type LeadRow = {
@@ -42,8 +41,8 @@ export default function LeadsPage() {
     followUpDate: String(l.followUpDate ?? '').split('T')[0],
     trialDate: String(l.trialDate ?? '').split('T')[0] || null,
   }));
-  const byStage = (stage: string) => leads.filter(l => l.status === stage);
-  const bySource = SOURCES.map(s => ({ source: s, count: leads.filter(l => l.source === s).length }));
+  const byStage = (stage: string) => leads.filter((l: LeadRow) => l.status === stage);
+  const bySource = SOURCES.map(s => ({ source: s, count: leads.filter((l: LeadRow) => l.source === s).length }));
 
   return (
     <AppLayout>
@@ -82,7 +81,7 @@ export default function LeadsPage() {
               <Chip label={byStage(stage).length} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
             </Box>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {byStage(stage).map(lead => (
+              {byStage(stage).map((lead: LeadRow) => (
                 <Card key={lead.id} elevation={0} sx={{ bgcolor: 'background.default', cursor: 'pointer' }}>
                   <CardContent sx={{ p: '12px !important' }}>
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{lead.name}</Typography>
@@ -121,7 +120,7 @@ export default function LeadsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {leads.map(lead => (
+              {leads.map((lead: LeadRow) => (
                 <TableRow key={lead.id}>
                   <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{lead.name}</Typography></TableCell>
                   <TableCell>{lead.phone}</TableCell>

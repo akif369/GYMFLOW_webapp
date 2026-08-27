@@ -11,22 +11,17 @@ import {
   TableBody,
   FormControlLabel
 } from '@mui/material';
-import { useAuthStore } from '@/store/useAuthStore';
 import PageSkeleton from '@/components/PageSkeleton';
 import SaveIcon from '@mui/icons-material/Save';
-import { api } from '@/lib/api';
 import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settings';
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
-import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useDeleteBiometricIdentity, type ReconcileResult } from '@/hooks/queries/biometrics';
+import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useDeleteBiometricIdentity } from '@/hooks/queries/biometrics';
 import { useMembers } from '@/hooks/queries/members';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import BlockIcon from '@mui/icons-material/Block';
-import SecurityIcon from '@mui/icons-material/Security';
 import { IconButton, Chip, Tooltip, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <Box hidden={value !== index} sx={{ pt: 3 }}>{value === index && children}</Box>;
 }
@@ -133,7 +128,6 @@ export default function SettingsPage() {
   const deleteIdentityMutation = useDeleteBiometricIdentity();
   const { data: identities, refetch: refetchIdentities } = useBiometricIdentities();
   const [syncingMemberId, setSyncingMemberId] = useState<string | null>(null);
-  const [optimisticAccess, setOptimisticAccess] = useState<Record<string, number>>({});
   
   const { data: membersData, isLoading: membersLoading } = useMembers({ pageSize: 1000 });
   const membersList = membersData?.items || [];
@@ -367,18 +361,18 @@ export default function SettingsPage() {
             <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Invoice Settings</Typography>
             {settingsError && <Alert severity="error" sx={{ mb: 2 }}>{settingsError}</Alert>}
             <SettingRow label="Invoice Prefix" desc="Used for sequential invoice numbers, for example GYM-2026-0001.">
-              <TextField size="small" value={invoiceForm.prefix} onChange={e => setInvoiceForm({ ...invoiceForm, prefix: e.target.value.toUpperCase() })} disabled={loading} inputProps={{ maxLength: 20 }} sx={{ width: 180 }} />
+              <TextField size="small" value={invoiceForm.prefix} onChange={e => setInvoiceForm({ ...invoiceForm, prefix: e.target.value.toUpperCase() })} disabled={loading} slotProps={{ htmlInput: { maxLength: 20 } }} sx={{ width: 180 }} />
             </SettingRow>
             <SettingRow label="Payment Due Days" desc="Set 0 for invoices due immediately.">
-              <TextField size="small" type="number" value={invoiceForm.dueDays} onChange={e => setInvoiceForm({ ...invoiceForm, dueDays: e.target.value })} disabled={loading} inputProps={{ min: 0, max: 365 }} sx={{ width: 100 }} />
+              <TextField size="small" type="number" value={invoiceForm.dueDays} onChange={e => setInvoiceForm({ ...invoiceForm, dueDays: e.target.value })} disabled={loading} slotProps={{ htmlInput: { min: 0, max: 365 } }} sx={{ width: 100 }} />
             </SettingRow>
             <SettingRow label="Send on Renewal" desc="Send the membership renewal invoice link through Evolution Go automatically.">
               <Switch checked={invoiceForm.autoSendOnRenewal} onChange={e => setInvoiceForm({ ...invoiceForm, autoSendOnRenewal: e.target.checked })} disabled={loading} />
             </SettingRow>
             <Box sx={{ py: 2, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Invoice Footer</Typography>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>Shown at the bottom of the backend invoice view.</Typography>
-              <TextField fullWidth size="small" multiline minRows={3} value={invoiceForm.footer} onChange={e => setInvoiceForm({ ...invoiceForm, footer: e.target.value })} disabled={loading} inputProps={{ maxLength: 500 }} placeholder="Thank you for training with us." />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>Shown at the bottom of the backend invoice view.</Typography>
+              <TextField fullWidth size="small" multiline minRows={3} value={invoiceForm.footer} onChange={e => setInvoiceForm({ ...invoiceForm, footer: e.target.value })} disabled={loading} slotProps={{ htmlInput: { maxLength: 500 } }} placeholder="Thank you for training with us." />
             </Box>
             <Box sx={{ mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !invoiceForm.prefix.trim()} onClick={() => save('invoice', () => updateSetting.mutateAsync({ key: 'invoice', data: { ...invoiceForm, dueDays: Number(invoiceForm.dueDays) } }), 'Could not save invoice settings.')}>Save Invoice Settings</Button>
@@ -422,7 +416,7 @@ export default function SettingsPage() {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField label="Select Member" select size="small" fullWidth value={manualSyncForm.memberId} onChange={e => {
                   const mId = e.target.value;
-                  const member = membersList.find(m => m.id === mId);
+                  const member = membersList.find((m: any) => m.id === mId);
                   const existingIdentity = identities?.find((i: any) => i.memberId === mId);
                   const autoPin = existingIdentity ? existingIdentity.deviceUserId : (member ? member.memberId.replace(/\D/g, '') : '');
                   setManualSyncForm({ memberId: mId, pin: autoPin });
@@ -444,7 +438,7 @@ export default function SettingsPage() {
                 <Button variant="contained" disabled={loading || syncMutation.isPending || !manualSyncForm.memberId || !manualSyncForm.pin || !branchForm.id} onClick={async () => {
                   if (!branchForm.id) return setSettingsError('Please create a branch first');
                   setSettingsError('');
-                  const member = membersList.find(m => m.id === manualSyncForm.memberId);
+                  const member = membersList.find((m: any) => m.id === manualSyncForm.memberId);
                   if (!member) return;
                   try {
                     await syncMutation.mutateAsync({

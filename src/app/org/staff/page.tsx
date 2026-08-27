@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Avatar,
   Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Alert, CircularProgress,
@@ -8,6 +9,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { useStaff, useStaffMutations } from '@/hooks/queries/staff';
 import { useBranches } from '@/hooks/queries/branches';
+import { api } from '@/lib/api';
 
 const ALL_PERMISSIONS = [
   'member.create', 'member.update', 'member.delete', 'attendance.create',
@@ -50,7 +52,7 @@ export default function StaffPage() {
   const { data: branchesData } = useBranches();
   const branches = branchesData?.branches || [];
 
-  const { data: apiStaff, isLoading: staffLoading } = useStaff(selectedBranchId !== 'ALL' ? { branchId: selectedBranchId } : {});
+  const { data: apiStaff, refetch: fetchStaff } = useStaff(selectedBranchId !== 'ALL' ? { branchId: selectedBranchId } : {});
   const { inviteStaff, updateStaffInfo, updateStaffPermissions, updateStaffStatus, resetPassword } = useStaffMutations();
 
   const handleRoleChange = (newRole: string) => {
@@ -130,7 +132,7 @@ export default function StaffPage() {
       await updateStaffStatus.mutateAsync({ staffId, status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
     } catch (e) {
       console.error(e);
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     }
   };
 
@@ -138,10 +140,10 @@ export default function StaffPage() {
     if (!confirm('Are you sure you want to send a password reset link to this staff member?')) return;
     try {
       await resetPassword.mutateAsync(staffId);
-      alert('Password reset link sent to email and WhatsApp');
+      toast.success('Password reset link sent to email and WhatsApp');
     } catch (e) {
       console.error(e);
-      alert('Failed to send reset link');
+      toast.error('Failed to send reset link');
     }
   };
 
@@ -152,7 +154,7 @@ export default function StaffPage() {
       fetchStaff();
     } catch (e: any) {
       console.error(e);
-      alert(e.response?.data?.error || 'Failed to delete staff member');
+      toast.error(e.response?.data?.error || 'Failed to delete staff member');
     }
   };
 
@@ -205,7 +207,7 @@ export default function StaffPage() {
       {/* Tab 0: Staff Members */}
       <TabPanel value={tab} index={0}>
         <Grid container spacing={2}>
-          {staff.map(staffMember => (
+          {staff.map((staffMember: StaffRow) => (
             <Grid size={{ xs: 12, md: 6 }} key={staffMember.id}>
               <Card elevation={0}>
                 <CardContent>

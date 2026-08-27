@@ -49,7 +49,7 @@ export default function MemberMembershipPage() {
 
       <Grid container spacing={2}>
         {/* Current plan */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Stack spacing={2}>
             {/* Active card */}
             <Card elevation={0} sx={{ border: '1px solid rgba(16,185,129,0.25)', background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.03))' }}>
@@ -125,7 +125,7 @@ export default function MemberMembershipPage() {
         </Grid>
 
         {/* Available plans */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.secondary', mb: 1.5 }}>
             Available Plans
           </Typography>

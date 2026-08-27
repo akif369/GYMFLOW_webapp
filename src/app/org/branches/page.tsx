@@ -1,18 +1,16 @@
 'use client';
 import {
   Box, Card, CardContent, Typography, Chip, Grid, Button,
-  LinearProgress, Avatar, Stack, Divider, Skeleton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  LinearProgress, Avatar, Divider, Skeleton,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
-import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
-import Link from 'next/link';
+
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function OrgBranchesPage() {
   const { data, isLoading } = useBranches();
@@ -31,13 +29,14 @@ export default function OrgBranchesPage() {
       setFormData({ name: '', city: '', address: '', phone: '', capacity: 1000 });
     } catch (e) {
       console.error(e);
-      alert('Failed to add branch');
+      toast.error('Failed to add branch');
     } finally {
       setAdding(false);
     }
   };
 
   const [editBranch, setEditBranch] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState(false);
 
   const handleEdit = async () => {
@@ -54,10 +53,11 @@ export default function OrgBranchesPage() {
           capacity: editBranch.capacity,
         }
       });
+      setEditOpen(false);
       setEditBranch(null);
     } catch (e) {
       console.error(e);
-      alert('Failed to edit branch');
+      toast.error('Failed to edit branch');
     } finally {
       setEditing(false);
     }
@@ -165,7 +165,7 @@ export default function OrgBranchesPage() {
                     </Box>
 
                     <Button variant="outlined" size="small" fullWidth
-                      onClick={() => setEditBranch({ ...branch })}
+                      onClick={() => { setEditBranch({ ...branch }); setEditOpen(true); }}
                       sx={{ borderColor: 'rgba(245,158,11,0.25)', color: '#f59e0b', '&:hover': { borderColor: '#f59e0b', bgcolor: 'rgba(245,158,11,0.06)' } }}>
                       Manage Branch
                     </Button>
@@ -178,7 +178,7 @@ export default function OrgBranchesPage() {
       )}
 
       {/* Add Branch Modal */}
-      <Dialog open={openAdd} onClose={() => setOpenAdd(false)} PaperProps={{ sx: { bgcolor: '#1a1a1a', backgroundImage: 'none', minWidth: 400 } }}>
+      <Dialog open={openAdd} onClose={() => setOpenAdd(false)} slotProps={{ paper: { sx: { bgcolor: '#0f172a', backgroundImage: 'none', minWidth: 400 } } }}>
         <DialogTitle sx={{ color: '#fff' }}>Add New Branch</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -199,7 +199,7 @@ export default function OrgBranchesPage() {
       </Dialog>
 
       {/* Edit Branch Modal */}
-      <Dialog open={!!editBranch} onClose={() => setEditBranch(null)} PaperProps={{ sx: { bgcolor: '#1a1a1a', backgroundImage: 'none', minWidth: 400 } }}>
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} slotProps={{ paper: { sx: { bgcolor: '#0f172a', backgroundImage: 'none', minWidth: 400 } } }}>
         <DialogTitle sx={{ color: '#fff' }}>Edit Branch</DialogTitle>
         <DialogContent>
           {editBranch && (

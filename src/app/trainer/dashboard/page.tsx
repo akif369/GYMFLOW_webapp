@@ -1,5 +1,4 @@
 'use client';
-import { useState, useEffect } from 'react';
 import type { ElementType } from 'react';
 import Link from 'next/link';
 import {
@@ -16,36 +15,9 @@ import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
 import { SparkLineChart } from '@mui/x-charts';
 import { useAuthStore } from '@/store/useAuthStore';
 import PageSkeleton from '@/components/PageSkeleton';
+import { useTrainerDashboard } from '@/hooks/queries/trainers';
 
-// ── Mock data (replace with /trainer/me/stats API call) ──────────────────────
-
-const TRAINER_STATS = {
-  totalClients: 24,
-  activeClients: 21,
-  sessionsToday: 6,
-  sessionsThisWeek: 28,
-  sessionsThisMonth: 112,
-  completedSessions: 108,
-  cancelledSessions: 4,
-  clientAttendanceRate: 87,
-  weeklySessionData: [6, 7, 8, 5, 9, 8, 6],
-};
-
-const TODAY_SESSIONS = [
-  { id: '1', client: 'Arjun Mehta',   time: '07:00 AM', duration: '60 min', type: 'Strength', status: 'COMPLETED', avatar: 'AM' },
-  { id: '2', client: 'Priya Sharma',  time: '08:00 AM', duration: '45 min', type: 'Cardio',   status: 'COMPLETED', avatar: 'PS' },
-  { id: '3', client: 'Rahul Gupta',   time: '10:30 AM', duration: '60 min', type: 'Yoga',     status: 'UPCOMING',  avatar: 'RG' },
-  { id: '4', client: 'Neha Joshi',    time: '12:00 PM', duration: '60 min', type: 'HIIT',     status: 'UPCOMING',  avatar: 'NJ' },
-  { id: '5', client: 'Vikram Singh',  time: '05:30 PM', duration: '45 min', type: 'Strength', status: 'UPCOMING',  avatar: 'VS' },
-  { id: '6', client: 'Anjali Rao',    time: '07:00 PM', duration: '60 min', type: 'Pilates',  status: 'UPCOMING',  avatar: 'AR' },
-];
-
-const TOP_CLIENTS = [
-  { id: '1', name: 'Arjun Mehta',  sessions: 28, attendance: 96, goal: 'Muscle gain', avatar: 'AM', trend: 'up' },
-  { id: '2', name: 'Priya Sharma', sessions: 24, attendance: 91, goal: 'Weight loss', avatar: 'PS', trend: 'up' },
-  { id: '3', name: 'Rahul Gupta',  sessions: 20, attendance: 82, goal: 'Flexibility', avatar: 'RG', trend: 'down' },
-  { id: '4', name: 'Neha Joshi',   sessions: 18, attendance: 78, goal: 'Strength',    avatar: 'NJ', trend: 'up' },
-];
+// Removed Mock Data
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -104,19 +76,15 @@ const SESSION_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 
 export default function TrainerDashboardPage() {
   const { user } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useTrainerDashboard();
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(t);
-  }, []);
-
-  const completedToday = TODAY_SESSIONS.filter((s) => s.status === 'COMPLETED').length;
-  const remainingToday = TODAY_SESSIONS.filter((s) => s.status === 'UPCOMING').length;
-
-  if (loading) {
+  if (loading || !data) {
     return <PageSkeleton />;
   }
+
+  const { stats, todaySessions, topClients } = data;
+  const completedToday = todaySessions.filter((s: any) => s.status === 'COMPLETED').length;
+  const remainingToday = todaySessions.filter((s: any) => s.status !== 'COMPLETED').length;
 
   return (
     <Box>
@@ -135,17 +103,17 @@ export default function TrainerDashboardPage() {
 
       {/* Stats row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6} md={3}>
-                <StatCard title="My Clients" value={TRAINER_STATS.activeClients} sub={`${TRAINER_STATS.totalClients} total`} icon={PeopleRoundedIcon} color="#ec4899" />
+              <Grid size={{ xs: 6, md: 3 }}>
+                <StatCard title="My Clients" value={stats.activeClients} sub={`${stats.totalClients} total`} icon={PeopleRoundedIcon} color="#ec4899" />
               </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="Sessions Today" value={TRAINER_STATS.sessionsToday} sub={`${completedToday} done`} icon={EventNoteRoundedIcon} color="#8b5cf6" />
+              <Grid size={{ xs: 6, md: 3 }}>
+                <StatCard title="Sessions Today" value={stats.sessionsToday} sub={`${completedToday} done`} icon={EventNoteRoundedIcon} color="#8b5cf6" />
               </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="This Month" value={TRAINER_STATS.sessionsThisMonth} sub={`${TRAINER_STATS.completedSessions} completed`} icon={CheckCircleRoundedIcon} color="#10b981" sparkData={TRAINER_STATS.weeklySessionData} />
+              <Grid size={{ xs: 6, md: 3 }}>
+                <StatCard title="This Month" value={stats.sessionsThisMonth} sub={`${stats.completedSessions} completed`} icon={CheckCircleRoundedIcon} color="#10b981" sparkData={stats.weeklySessionData} />
               </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="Attendance Rate" value={`${TRAINER_STATS.clientAttendanceRate}%`} sub="Client avg" icon={TrendingUpRoundedIcon} color="#f59e0b" />
+              <Grid size={{ xs: 6, md: 3 }}>
+                <StatCard title="Attendance Rate" value={`${stats.clientAttendanceRate}%`} sub="Client avg" icon={TrendingUpRoundedIcon} color="#f59e0b" />
               </Grid>
 
       </Grid>
@@ -153,7 +121,7 @@ export default function TrainerDashboardPage() {
       {/* Today's schedule + Client list */}
       <Grid container spacing={2}>
         {/* Today's schedule */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card elevation={0}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -162,12 +130,12 @@ export default function TrainerDashboardPage() {
                     Today&apos;s Schedule
                   </Typography>
                   <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                    {completedToday} of {TRAINER_STATS.sessionsToday} sessions complete
+                    {completedToday} of {stats.sessionsToday} sessions complete
                   </Typography>
                 </Box>
                 <LinearProgress
                   variant="determinate"
-                  value={(completedToday / TRAINER_STATS.sessionsToday) * 100}
+                  value={stats.sessionsToday > 0 ? (completedToday / stats.sessionsToday) * 100 : 0}
                   sx={{
                     width: 80, height: 6, borderRadius: 4,
                     bgcolor: 'rgba(255,255,255,0.06)',
@@ -178,7 +146,7 @@ export default function TrainerDashboardPage() {
               <Stack divider={<Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />}>
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={60} sx={{ borderRadius: 1.5 }} />)
-                  : TODAY_SESSIONS.map((session) => {
+                  : todaySessions.map((session: any) => {
                     const sc = SESSION_STATUS_COLORS[session.status] ?? { bg: 'rgba(107,114,128,0.1)', text: '#9ca3af' };
                     return (
                       <Box key={session.id} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.25 }}>
@@ -221,7 +189,7 @@ export default function TrainerDashboardPage() {
         </Grid>
 
         {/* Top clients */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card elevation={0} sx={{ height: '100%' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -236,7 +204,7 @@ export default function TrainerDashboardPage() {
               <Stack divider={<Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />}>
                 {loading
                   ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={58} sx={{ borderRadius: 1.5 }} />)
-                  : TOP_CLIENTS.map((client) => (
+                  : topClients.map((client: any) => (
                     <Box key={client.id} sx={{
                       display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25,
                       cursor: 'pointer', borderRadius: 1.5,
@@ -273,10 +241,10 @@ export default function TrainerDashboardPage() {
               <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <Grid container spacing={1.5}>
                   {[
-                    { label: 'Missed this month', value: TRAINER_STATS.cancelledSessions, icon: PersonOffRoundedIcon, color: '#f43f5e' },
-                    { label: 'Weekly sessions', value: TRAINER_STATS.sessionsThisWeek, icon: FitnessCenterRoundedIcon, color: '#8b5cf6' },
+                    { label: 'Missed this month', value: stats.cancelledSessions, icon: PersonOffRoundedIcon, color: '#f43f5e' },
+                    { label: 'Weekly sessions', value: stats.sessionsThisWeek, icon: FitnessCenterRoundedIcon, color: '#8b5cf6' },
                   ].map((stat) => (
-                    <Grid item xs={6} key={stat.label}>
+                    <Grid size={{ xs: 6 }} key={stat.label}>
                       <Box sx={{
                         p: 1.25, borderRadius: 2,
                         bgcolor: 'rgba(255,255,255,0.03)',

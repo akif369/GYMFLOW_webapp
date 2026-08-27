@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Box, Grid, Card, CardContent, Typography, Button, Chip, Tabs, Tab,
-  Table, TableBody, TableCell, TableHead, TableRow, Divider
+  Table, TableBody, TableCell, TableHead, TableRow
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { api } from '@/lib/api';
@@ -35,7 +35,7 @@ function ReportCard({ title, subtitle, rows, columns }: ReportCardProps) {
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
           <Box>
-            <Typography variant="subtitle1" fontWeight="bold">{title}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{title}</Typography>
             {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
           </Box>
           <Button size="small" variant="outlined" startIcon={<DownloadIcon />}>CSV</Button>
@@ -155,7 +155,7 @@ export default function ReportsPage() {
     <AppLayout>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold">Reports</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Reports</Typography>
           <Typography variant="body2" color="text.secondary">Analytics and exportable reports</Typography>
         </Box>
       </Box>
@@ -193,7 +193,7 @@ export default function ReportsPage() {
             <Grid size={{ xs: 12, sm: 4 }} key={s.label}>
               <Card elevation={0}><CardContent>
                 <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ mt: 0.5 }}>{s.value}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 1 }}>{s.value}</Typography>
               </CardContent></Card>
             </Grid>
           ))}

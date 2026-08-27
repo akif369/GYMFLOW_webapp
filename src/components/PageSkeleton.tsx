@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Stack, Skeleton, Grid, alpha, useTheme } from '@mui/material';
 
 export default function PageSkeleton() {

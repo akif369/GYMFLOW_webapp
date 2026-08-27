@@ -1,6 +1,6 @@
 'use client';
 import type { ElementType } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box, Grid, Card, CardContent, Typography, Chip, Stack,
   LinearProgress, alpha, Button, Avatar, Divider, Skeleton,
@@ -16,7 +16,6 @@ import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
@@ -28,7 +27,6 @@ import { useDashboard } from '@/hooks/queries/dashboard';
 type BranchPerf = { id: string; name: string; members: number; revenue: number; growth: number; occupancy: number; status: string };
 
 const MONTHLY_REVENUE = [62000, 71000, 68500, 74000, 80200, 85000, 91000, 94300];
-const MONTHLY_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
 const MEMBER_GROWTH = [2100, 2180, 2240, 2310, 2450, 2600, 2720, 2847];
 
 
@@ -103,10 +101,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#f59e0b', trend, spar
 function BranchRow({ branch }: { branch: BranchPerf }) {
   const growthUp = branch.growth >= 0;
   return (
-    <Grid container alignItems="center" spacing={2} sx={{
-      py: 1.5, px: 2, borderRadius: 2, cursor: 'pointer',
-      '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' }, transition: 'background 0.15s',
-    }}>
+    <Grid container spacing={2} sx={{ alignItems: 'center', py: 1.5, px: 2, borderRadius: 2, cursor: 'pointer', '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' }, transition: 'background 0.15s' }}>
       <Grid size={{ xs: 12, sm: 5 }} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Avatar sx={{
           width: 36, height: 36, fontSize: '0.82rem', fontWeight: 700,
