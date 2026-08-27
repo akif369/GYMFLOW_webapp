@@ -18,7 +18,7 @@ function indianMobileDigits(value: string) {
 const EMPTY_FORM = {
   firstName: '', lastName: '', phone: '', email: '', gender: 'MALE',
   dob: '', address: '', goal: '', joinDate: new Date().toISOString().split('T')[0],
-  branchId: '',
+  branchId: '', pin: '',
 };
 
 export default function AddMemberDialog({
@@ -109,7 +109,7 @@ export default function AddMemberDialog({
       let hasSyncError = false;
       if (syncToDevice && memberId && memberNumber) {
         try {
-          const pin = memberNumber.replace(/\D/g, '');
+          const pin = addForm.pin || memberNumber.replace(/\D/g, '');
           await api.post('/biometrics/sync', {
             branchId: payload.branchId,
             memberId: memberId,
@@ -286,6 +286,17 @@ export default function AddMemberDialog({
                 }
                 sx={{ m: 0, width: '100%' }}
               />
+              <Collapse in={syncToDevice}>
+                <TextField 
+                  label="Optional PIN" 
+                  value={addForm.pin} 
+                  onChange={e => setAddForm({ ...addForm, pin: e.target.value.replace(/\D/g, '') })} 
+                  fullWidth 
+                  size="small" 
+                  placeholder="Leave empty to use Gym Number" 
+                  sx={{ mt: 2 }}
+                />
+              </Collapse>
             </Box>
           </Collapse>
         </DialogContent>
