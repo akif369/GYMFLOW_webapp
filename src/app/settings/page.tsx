@@ -492,19 +492,16 @@ export default function SettingsPage() {
                     flex: 1,
                     renderCell: (params) => {
                       const member = membersList.find((m: any) => m.id === params.row.memberId);
+                      const isFullyActive = member?.status === 'ACTIVE' && (member?.membershipStatus === 'ACTIVE' || member?.membershipStatus === 'EXPIRING');
                       return (
                       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.memberName || 'Member'}</Typography>
                           {member && (
                             <Chip 
-                              label={member.membershipStatus} 
+                              label={isFullyActive ? 'ACTIVE' : 'INACTIVE'} 
                               size="small" 
-                              color={
-                                member.membershipStatus === 'ACTIVE' ? 'success' : 
-                                member.membershipStatus === 'EXPIRING' ? 'warning' : 
-                                'error'
-                              } 
+                              color={isFullyActive ? 'success' : 'error'} 
                               sx={{ height: 20, fontSize: '0.65rem' }} 
                             />
                           )}
@@ -531,41 +528,12 @@ export default function SettingsPage() {
                     width: 150,
                     renderCell: (params) => (
                       <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                        <Switch
+                        <Chip
                           size="small"
-                          checked={(optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1}
-                          disabled={syncingMemberId === params.row.memberId || syncMutation.isPending}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={async (e) => {
-                            e.stopPropagation();
-                            const newAccessGroup = e.target.checked ? 1 : 99;
-                            setOptimisticAccess(prev => ({ ...prev, [params.row.memberId]: newAccessGroup }));
-                            setSyncingMemberId(params.row.memberId);
-                            try {
-                              await syncMutation.mutateAsync({
-                                branchId: branchForm.id,
-                                memberId: params.row.memberId,
-                                pin: params.row.deviceUserId,
-                                name: params.row.memberName || 'Member',
-                                accessGroup: newAccessGroup,
-                              });
-                              refetchIdentities();
-                            } catch (err) {
-                              // Revert on error
-                              setOptimisticAccess(prev => {
-                                const next = { ...prev };
-                                delete next[params.row.memberId];
-                                return next;
-                              });
-                              setSettingsError(errorMessage(err, 'Failed to update access state'));
-                            } finally {
-                              setSyncingMemberId(null);
-                            }
-                          }}
+                          label={params.row.accessGroup === 1 ? 'Allowed' : 'Denied'}
+                          color={params.row.accessGroup === 1 ? 'success' : 'error'}
+                          variant="outlined"
                         />
-                        <Typography variant="caption" sx={{ ml: 1, color: (optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1 ? 'success.main' : 'error.main' }}>
-                          {(optimisticAccess[params.row.memberId] ?? params.row.accessGroup) === 1 ? 'Allowed' : 'Denied'}
-                        </Typography>
                       </Box>
                     )
                   },

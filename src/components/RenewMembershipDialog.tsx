@@ -22,6 +22,7 @@ import {
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export type RenewPlan = {
@@ -59,6 +60,7 @@ export default function RenewMembershipDialog({
   onClose,
   onSuccess,
 }: RenewMembershipDialogProps) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -137,7 +139,10 @@ export default function RenewMembershipDialog({
         }, { headers: { 'Idempotency-Key': requestKey } });
       }
 
-      onSuccess();
+      await queryClient.invalidateQueries({ queryKey: ['members'] });
+      await queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
+      
+      onSuccess?.();
       resetAndClose();
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'response' in err
