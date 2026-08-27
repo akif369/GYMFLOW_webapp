@@ -88,9 +88,18 @@ export default function AddMemberDialog({
     try {
       const payload: any = { ...addForm, phone: `+91${addForm.phone}` };
       if (!payload.branchId) delete payload.branchId;
+      
+      payload.syncToDevice = syncToDevice;
+      if (syncToDevice) {
+        payload.accessGroup = 1; // Default to allowed for new members
+        if (!payload.pin) delete payload.pin; // allow backend to fallback to gym number
+      } else {
+        delete payload.pin;
+      }
+
       const res = await api.post('/members', payload);
       const memberId = res.data?.member?.id;
-      const memberNumber = res.data?.member?.memberNumber;
+      const syncErrorMsg = res.data?.member?.syncError;
 
       // Upload profile photo if one was selected
       if (memberId && avatarFile) {
@@ -106,32 +115,17 @@ export default function AddMemberDialog({
         }
       }
 
-      let hasSyncError = false;
-      if (syncToDevice && memberId && memberNumber) {
-        try {
-          const pin = addForm.pin || memberNumber.replace(/\D/g, '');
-          await api.post('/biometrics/sync', {
-            branchId: payload.branchId,
-            memberId: memberId,
-            pin: pin,
-            name: `${addForm.firstName} ${addForm.lastName}`.trim().substring(0, 24),
-            accessGroup: 1, // Default to allowed for new members
-          });
-        } catch (err: any) {
-          hasSyncError = true;
-          const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Unknown error';
-          setSyncError(`Device sync failed: ${msg}. Please change the member's PIN in Settings.`);
-          setSnackbarOpen(true);
-        }
+      if (syncErrorMsg) {
+        setSyncError(`Device sync failed: ${syncErrorMsg}. Please change the member's PIN in Settings.`);
+        setSnackbarOpen(true);
       }
 
       onSuccess?.();
-      if (!hasSyncError) {
+      if (!syncErrorMsg) {
         resetState();
         onClose();
       } else {
         // We do not reset state completely so they can see the error, but we do trigger onClose to hide the modal.
-        // Actually, closing it is better so they don't click 'Create' twice.
         onClose();
         // Clear the form after a slight delay to allow the dialog to close smoothly, but keep snackbar
         setTimeout(() => setAddForm(EMPTY_FORM), 300);
