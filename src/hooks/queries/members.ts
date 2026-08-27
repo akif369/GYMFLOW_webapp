@@ -57,6 +57,7 @@ export function useMembers(params: Record<string, any>) {
           email: String(m.email ?? ''),
           phone: String(m.phone ?? ''),
           photoUrl: m.photoUrl ?? null,
+          status: String(m.status ?? 'INACTIVE'),
           joinDate: String(m.joinDate ?? m.createdAt ?? '').split('T')[0],
           gender: String(m.gender ?? ''),
           dob: String(m.dob ?? ''),
