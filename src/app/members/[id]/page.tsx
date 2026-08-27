@@ -24,7 +24,9 @@ import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import BlockIcon from '@mui/icons-material/Block';
 import PanToolIcon from '@mui/icons-material/PanTool';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { api } from '@/lib/api';
+import { useAuthStore, hasPermission } from '@/store/useAuthStore';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AvatarUpload from '@/components/AvatarUpload';
 import { usePresignedUrl } from '@/hooks/usePresignedUrl';
@@ -141,6 +143,8 @@ function SkeletonProfile() {
 export default function MemberProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { user } = useAuthStore();
+  const canDeleteMember = hasPermission(user, 'member.delete');
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [member, setMember] = useState<MemberData | null>(null);
@@ -168,6 +172,13 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   const [editError, setEditError] = useState('');
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
+
+  // ── Delete State ──────────────────────────────────────────────────────────────
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletionSummary, setDeletionSummary] = useState<any>(null);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   // ── Renew State ───────────────────────────────────────────────────────────────
   const [renewOpen, setRenewOpen] = useState(false);
@@ -1259,13 +1270,99 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
               <Grid size={12}><TextField label="Address" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} fullWidth size="small" multiline rows={2} /></Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5 }}>
-            <Button onClick={() => { setEditOpen(false); setEditAvatarFile(null); }}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={editLoading || photoUploading}>
-              {(editLoading || photoUploading) ? <CircularProgress size={24} /> : 'Save Changes'}
-            </Button>
+          <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
+            {canDeleteMember ? (
+              <Button 
+                color="error" 
+                startIcon={<DeleteIcon />}
+                disabled={editLoading || photoUploading}
+                onClick={async () => {
+                  setDeleteOpen(true);
+                  setSummaryLoading(true);
+                  try {
+                    const res = await api.get(`/members/${id}/deletion-summary`);
+                    setDeletionSummary(res.data);
+                  } catch (err) {
+                    console.error('Failed to fetch deletion summary', err);
+                  } finally {
+                    setSummaryLoading(false);
+                  }
+                }}
+              >
+                Delete Member
+              </Button>
+            ) : (
+              <Box /> // placeholder for flex space-between
+            )}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button onClick={() => { setEditOpen(false); setEditAvatarFile(null); }}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={editLoading || photoUploading || deleteLoading}>
+                {(editLoading || photoUploading) ? <CircularProgress size={24} /> : 'Save Changes'}
+              </Button>
+            </Box>
           </DialogActions>
+
         </Box>
+      </Dialog>
+
+      {/* ── Delete Member Dialog ─────────────────────────────────────────────── */}
+      <Dialog open={deleteOpen} onClose={() => !deleteLoading && setDeleteOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: 'error.main' }}>Delete Member?</DialogTitle>
+        <DialogContent>
+          {summaryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                {member?.firstName} {member?.lastName}
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                This member has:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, mb: 3, typography: 'body2' }}>
+                <li>{deletionSummary?.activeMemberships || 0} active membership(s)</li>
+                <li>{deletionSummary?.attendanceRecords || 0} attendance record(s)</li>
+                <li>{deletionSummary?.paymentTransactions || 0} payment transaction(s)</li>
+                <li>{deletionSummary?.invoices || 0} invoice(s)</li>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                The member will be removed from normal gym operations, but historical financial and attendance records will be retained. Access will be immediately revoked.
+              </Typography>
+              <TextField
+                label="Reason for deletion (Optional)"
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={deletionReason}
+                onChange={(e) => setDeletionReason(e.target.value)}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setDeleteOpen(false)} disabled={deleteLoading}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleteLoading || summaryLoading}
+            onClick={async () => {
+              setDeleteLoading(true);
+              try {
+                await api.delete(`/members/${id}`, { data: { deletionReason } });
+                router.push('/members');
+              } catch (err: any) {
+                setEditError(err.response?.data?.message || 'Failed to delete member');
+                setDeleteOpen(false);
+                setDeleteLoading(false);
+              }
+            }}
+          >
+            {deleteLoading ? <CircularProgress size={24} color="inherit" /> : 'Delete Member'}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* ── Renew Membership Dialog ─────────────────────────────────────────────── */}
