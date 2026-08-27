@@ -19,7 +19,6 @@ export function useAttendanceInside() {
         membershipStatus: String(m.membershipStatus ?? ''),
       }));
     },
-    refetchInterval: 30000, // Refresh every 30s
   });
 }
 function toISTTime(utcIso: string): string {

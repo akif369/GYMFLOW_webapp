@@ -16,6 +16,7 @@ import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 
 import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
@@ -103,7 +104,7 @@ function MembersPageContent() {
     }
   }
 
-  const { data: membersData, isLoading: apiLoading } = useMembers(queryParams);
+  const { data: membersData, isLoading: apiLoading, refetch: refetchMembers } = useMembers(queryParams);
   const members = membersData?.items ?? [];
   const totalCount = membersData?.total ?? 0;
   const strictPaymentPolicy = membersData?.strictPaymentPolicy ?? false;
@@ -311,9 +312,16 @@ function MembersPageContent() {
             {totalCount} total members across all branches
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setAddOpen(true)}>
-          Add Member
-        </Button>
+        <Stack direction="row" sx={{ gap: 1 }}>
+          <Tooltip title="Refresh members">
+            <IconButton onClick={() => refetchMembers()} sx={{ bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+              <RefreshRoundedIcon fontSize="small" sx={{ color: '#7d8590' }} />
+            </IconButton>
+          </Tooltip>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setAddOpen(true)}>
+            Add Member
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Summary strip */}
@@ -485,6 +493,7 @@ function MembersPageContent() {
       <AddMemberDialog
         open={addOpen}
         onClose={() => setAddOpen(false)}
+        onSuccess={() => refetchMembers()}
       />
     </AppLayout>
   );
