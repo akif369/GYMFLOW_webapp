@@ -29,7 +29,7 @@ export function useMembers(params: Record<string, any>) {
         if (!membershipPlan || planName === '-') {
           calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
         } else {
-          if (!calculatedMembershipStatus && expiryDate !== '-') {
+          if ((!calculatedMembershipStatus || calculatedMembershipStatus === 'ACTIVE') && expiryDate !== '-') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const exp = new Date(expiryDate);
