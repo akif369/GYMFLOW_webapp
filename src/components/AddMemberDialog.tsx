@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
   Box, Grid, Typography, Button, TextField, MenuItem, InputAdornment, Dialog, DialogTitle, DialogContent,
-  DialogActions, CircularProgress, Alert, IconButton, Collapse,
+  DialogActions, CircularProgress, Alert, IconButton, Collapse, Switch, FormControlLabel, Snackbar,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { api } from '@/lib/api';
+import { useSettings } from '@/hooks/queries/settings';
 
 import AvatarUpload from './AvatarUpload';
 
@@ -38,8 +39,21 @@ export default function AddMemberDialog({
   const [addError, setAddError] = useState('');
   const [photoError, setPhotoError] = useState('');
 
+  const { data: settings } = useSettings();
+  const [syncToDevice, setSyncToDevice] = useState(false);
+  
+  React.useEffect(() => {
+    if (settings?.settings) {
+      const settingMap = settings.settings;
+      const bioSetting = settingMap.biometrics && typeof settingMap.biometrics === 'object' ? settingMap.biometrics as Record<string, unknown> : {};
+      setSyncToDevice(bioSetting.autoSync !== false);
+    }
+  }, [settings]);
+
   const [membershipExpanded, setMembershipExpanded] = useState(true);
   const [additionalExpanded, setAdditionalExpanded] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [syncError, setSyncError] = useState('');
 
   const resetState = () => {
     setAddForm(EMPTY_FORM);
@@ -76,6 +90,7 @@ export default function AddMemberDialog({
       if (!payload.branchId) delete payload.branchId;
       const res = await api.post('/members', payload);
       const memberId = res.data?.member?.id;
+      const memberNumber = res.data?.member?.memberNumber;
 
       // Upload profile photo if one was selected
       if (memberId && avatarFile) {
@@ -91,9 +106,36 @@ export default function AddMemberDialog({
         }
       }
 
+      let hasSyncError = false;
+      if (syncToDevice && memberId && memberNumber) {
+        try {
+          const pin = memberNumber.replace(/\D/g, '');
+          await api.post('/biometrics/sync', {
+            branchId: payload.branchId,
+            memberId: memberId,
+            pin: pin,
+            name: `${addForm.firstName} ${addForm.lastName}`.trim().substring(0, 24),
+            accessGroup: 1, // Default to allowed for new members
+          });
+        } catch (err: any) {
+          hasSyncError = true;
+          const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Unknown error';
+          setSyncError(`Device sync failed: ${msg}. Please change the member's PIN in Settings.`);
+          setSnackbarOpen(true);
+        }
+      }
+
       onSuccess?.();
-      resetState();
-      onClose();
+      if (!hasSyncError) {
+        resetState();
+        onClose();
+      } else {
+        // We do not reset state completely so they can see the error, but we do trigger onClose to hide the modal.
+        // Actually, closing it is better so they don't click 'Create' twice.
+        onClose();
+        // Clear the form after a slight delay to allow the dialog to close smoothly, but keep snackbar
+        setTimeout(() => setAddForm(EMPTY_FORM), 300);
+      }
     } catch (err: any) {
       setAddError(err.response?.data?.message || err.response?.data?.error?.message || 'Failed to create member');
     } finally {
@@ -102,9 +144,10 @@ export default function AddMemberDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
+    <>
+      <Dialog
+        open={open}
+        onClose={handleClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -231,7 +274,19 @@ export default function AddMemberDialog({
             </IconButton>
           </Box>
           <Collapse in={additionalExpanded}>
-            <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} sx={{ mt: 1.25 }} />
+            <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} sx={{ mt: 1.25, mb: 2 }} />
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1.5 }}>
+              <FormControlLabel
+                control={<Switch checked={syncToDevice} onChange={e => setSyncToDevice(e.target.checked)} color="primary" />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Sync to Biometric Device</Typography>
+                    <Typography variant="caption" sx={{ color: '#7d8590' }}>Automatically assign a PIN and queue access group data for the member's branch</Typography>
+                  </Box>
+                }
+                sx={{ m: 0, width: '100%' }}
+              />
+            </Box>
           </Collapse>
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.5, sm: 2.5 }, gap: 1.5, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { mx: '0 !important', width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>
@@ -242,5 +297,16 @@ export default function AddMemberDialog({
         </DialogActions>
       </Box>
     </Dialog>
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={8000} 
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="error" sx={{ width: '100%', boxShadow: 3, border: '1px solid rgba(244,63,94,0.3)' }} onClose={() => setSnackbarOpen(false)}>
+          {syncError}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }

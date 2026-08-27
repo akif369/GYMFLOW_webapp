@@ -8,7 +8,8 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody
+  TableBody,
+  FormControlLabel
 } from '@mui/material';
 import { useAuthStore } from '@/store/useAuthStore';
 import PageSkeleton from '@/components/PageSkeleton';
@@ -394,6 +395,20 @@ export default function SettingsPage() {
             <Alert severity="info" sx={{ mb: 2 }}>
               Automatic sync and reconciliation of access groups are currently disabled. You can manually assign pins and toggle access states for members below.
             </Alert>
+            <Box sx={{ mt: 3 }}>
+              <FormControlLabel
+                control={<Switch checked={biometricsForm.autoSync} onChange={e => setBiometricsForm({ autoSync: e.target.checked })} />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Create Hardware PIN & Map on New Member</Typography>
+                    <Typography variant="caption" color="text.secondary">Automatically checks the 'Sync to Biometric Device' toggle in the Add Member dialog</Typography>
+                  </Box>
+                }
+              />
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null} onClick={() => save('biometrics', () => updateSetting.mutateAsync({ key: 'biometrics', data: biometricsForm }), 'Could not save hardware settings.')}>Save Hardware Settings</Button>
+            </Box>
           </CardContent>
         </Card>
 
