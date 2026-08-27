@@ -490,12 +490,28 @@ export default function SettingsPage() {
                     field: 'member',
                     headerName: 'Member',
                     flex: 1,
-                    renderCell: (params) => (
+                    renderCell: (params) => {
+                      const member = membersList.find((m: any) => m.id === params.row.memberId);
+                      return (
                       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.memberName || 'Member'}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.memberName || 'Member'}</Typography>
+                          {member && (
+                            <Chip 
+                              label={member.membershipStatus} 
+                              size="small" 
+                              color={
+                                member.membershipStatus === 'ACTIVE' ? 'success' : 
+                                member.membershipStatus === 'EXPIRING' ? 'warning' : 
+                                'error'
+                              } 
+                              sx={{ height: 20, fontSize: '0.65rem' }} 
+                            />
+                          )}
+                        </Box>
                         <Typography variant="caption" color="text.secondary">{params.row.memberNumber}</Typography>
                       </Box>
-                    )
+                    )}
                   },
                   { field: 'deviceUserId', headerName: 'PIN', width: 100 },
                   {
