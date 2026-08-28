@@ -50,8 +50,8 @@ export function proxy(request: NextRequest) {
   }
 
   // ── 2. Read auth cookies (set by the client-side auth store on login) ─────
-  const isAuthenticated = request.cookies.get('gymflow_auth')?.value === 'true';
-  const portalType = (request.cookies.get('gymflow_portal')?.value ?? null) as PortalType | null;
+  const isAuthenticated = request.cookies.get('gymatrix_auth')?.value === 'true';
+  const portalType = (request.cookies.get('gymatrix_portal')?.value ?? null) as PortalType | null;
 
   const isPublicPath = PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

@@ -420,7 +420,7 @@ export default function SettingsPage() {
           <CardContent>
             <Typography variant="subtitle2" sx={{ mb: 3, fontWeight: 'bold' }}>Manual Device Sync</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Manually map an existing GymFlow member to a PIN on your ZKTeco device, and queue the access group data to be pushed to the device.
+              Manually map an existing GYMatrix member to a PIN on your ZKTeco device, and queue the access group data to be pushed to the device.
             </Typography>
             <Grid container spacing={2} sx={{ alignItems: 'center' }}>
               <Grid size={{ xs: 12, md: 4 }}>

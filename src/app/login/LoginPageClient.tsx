@@ -221,7 +221,7 @@ export default function LoginPageClient(_props: LoginPageClientProps) {
           <Box
             component="img"
             src="/logo/icon.png"
-            alt="GymFlow"
+            alt="GYMatrix"
             sx={{ width: 36, height: 36, borderRadius: 1.5, objectFit: 'contain' }}
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
@@ -233,7 +233,7 @@ export default function LoginPageClient(_props: LoginPageClientProps) {
               color: 'text.primary',
             }}
           >
-            GymFlow
+            GYMatrix
           </Typography>
         </Box>
 

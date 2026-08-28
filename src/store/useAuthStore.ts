@@ -76,14 +76,14 @@ function setAuthCookies(authenticated: boolean, role?: string, portalType?: Port
   const base = `path=/; SameSite=Strict; ${maxAge}`;
 
   if (authenticated && role && portalType) {
-    document.cookie = `gymflow_auth=true; ${base}`;
-    document.cookie = `gymflow_role=${role}; ${base}`;
-    document.cookie = `gymflow_portal=${portalType}; ${base}`;
+    document.cookie = `gymatrix_auth=true; ${base}`;
+    document.cookie = `gymatrix_role=${role}; ${base}`;
+    document.cookie = `gymatrix_portal=${portalType}; ${base}`;
   } else {
     const expired = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = `gymflow_auth=; path=/; SameSite=Strict; ${expired}`;
-    document.cookie = `gymflow_role=; path=/; SameSite=Strict; ${expired}`;
-    document.cookie = `gymflow_portal=; path=/; SameSite=Strict; ${expired}`;
+    document.cookie = `gymatrix_auth=; path=/; SameSite=Strict; ${expired}`;
+    document.cookie = `gymatrix_role=; path=/; SameSite=Strict; ${expired}`;
+    document.cookie = `gymatrix_portal=; path=/; SameSite=Strict; ${expired}`;
   }
 }
 
