@@ -44,14 +44,14 @@ export default function AddMemberDialog({
   const { data: settings } = useSettings();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isOrgOwner = user?.role === UserRole.ORGANIZATION_OWNER;
-  const [syncToDevice, setSyncToDevice] = useState(true);
+  const isOrgOwner = user?.portalType === 'org-owner';
+  const [syncToDevice, setSyncToDevice] = useState(false);
   
   React.useEffect(() => {
     if (settings?.settings) {
       const settingMap = settings.settings;
       const bioSetting = settingMap.biometrics && typeof settingMap.biometrics === 'object' ? settingMap.biometrics as Record<string, unknown> : {};
-      setSyncToDevice(bioSetting.autoSync !== false);
+      setSyncToDevice(bioSetting.autoSync === true);
     }
   }, [settings]);
 

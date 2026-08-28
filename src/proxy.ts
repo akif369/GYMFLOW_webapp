@@ -5,7 +5,7 @@ import type { PortalType } from '@/store/useAuthStore';
 // ── Route configuration ───────────────────────────────────────────────────────
 
 /** Routes accessible without authentication */
-const PUBLIC_PATHS = ['/login', '/reset-password', '/forgot-password', '/invite/accept'];
+const PUBLIC_PATHS = ['/login', '/reset-password', '/forgot-password', '/invite'];
 
 /** Static assets and Next.js internals — always bypass */
 const STATIC_PREFIXES = ['/_next', '/favicon', '/logo', '/icons', '/site.webmanifest', '/apple-touch-icon'];

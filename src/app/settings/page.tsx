@@ -152,7 +152,7 @@ export default function SettingsPage() {
   const [invoiceForm, setInvoiceForm] = useState<InvoiceForm>({ prefix: 'GYM', footer: '', dueDays: '0', autoSendOnRenewal: true });
   const [notificationsForm, setNotificationsForm] = useState<NotificationsForm>({ attachInvoicePdf: false });
   const [strictPaymentPolicy, setStrictPaymentPolicy] = useState(false);
-  const [biometricsForm, setBiometricsForm] = useState({ autoSync: true });
+  const [biometricsForm, setBiometricsForm] = useState({ autoSync: false });
   const [manualSyncForm, setManualSyncForm] = useState({ memberId: '', pin: '' });
 
   useEffect(() => {
@@ -432,7 +432,7 @@ export default function SettingsPage() {
                   const autoPin = existingIdentity ? existingIdentity.deviceUserId : gymNumberToPin(memberCode);
                   setManualSyncForm({ memberId: mId, pin: autoPin });
                 }} disabled={loading || membersLoading || syncMutation.isPending}>
-                  {membersList.map((m: any) => {
+                  {membersList.filter((m: any) => !branchForm.id || m.branchId === branchForm.id).map((m: any) => {
                     const existingIdentity = identities?.find((i: any) => i.memberId === m.id);
                     return (
                       <MenuItem key={m.id} value={m.id}>
@@ -489,7 +489,11 @@ export default function SettingsPage() {
 
             <Box sx={{ height: 400, width: '100%' }}>
               <DataGrid
-                rows={identities || []}
+                rows={(identities || []).filter((i: any) => {
+                  if (!branchForm.id) return true;
+                  const member = membersList.find((m: any) => m.id === i.memberId);
+                  return member?.branchId === branchForm.id;
+                })}
                 columns={[
                   {
                     field: 'member',
