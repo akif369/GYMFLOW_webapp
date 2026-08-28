@@ -705,7 +705,7 @@ export default function SettingsPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {devices.map(device => (
+                  {devices.filter(device => !branchForm.id || device.branchId === branchForm.id).map(device => (
                     <TableRow key={device.id}>
                       <TableCell>{device.deviceName}</TableCell>
                       <TableCell>{device.serialNumber}</TableCell>
