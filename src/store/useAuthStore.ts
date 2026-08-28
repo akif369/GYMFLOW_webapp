@@ -48,6 +48,12 @@ export interface AuthUser {
   phone?: string | null;
   photoUrl?: string | null;
   portalType: PortalType;
+  organization?: {
+    id: string;
+    name: string;
+    mode: 'SINGLE_LOCATION' | 'MULTI_LOCATION';
+  };
+  accessibleBranches?: { id: string; name: string }[];
 }
 
 // ── Permission helper ─────────────────────────────────────────────────────────

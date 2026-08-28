@@ -227,6 +227,7 @@ interface ActivityRowProps {
 }
 
 function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: ActivityRowProps) {
+  const theme = useTheme();
   const isInside = !rightSub;
   return (
     <Box sx={{

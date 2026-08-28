@@ -57,6 +57,12 @@ interface LoginResponse {
     memberId: string | null;
     permissions: string[];
     portalType: PortalType;
+    organization?: {
+      id: string;
+      name: string;
+      mode: 'SINGLE_LOCATION' | 'MULTI_LOCATION';
+    };
+    accessibleBranches?: { id: string; name: string }[];
   };
 }
 
@@ -139,10 +145,23 @@ export default function LoginPageClient(_props: LoginPageClientProps) {
           lastName: user.lastName, role: user.role, orgId: user.orgId,
           branchId: user.branchId, memberId: user.memberId,
           permissions: user.permissions, portalType: user.portalType,
+          organization: user.organization,
+          accessibleBranches: user.accessibleBranches,
         },
         accessToken,
         refreshToken,
       );
+      
+      // Initialize active context if null
+      import('@/store/useAppStore').then(({ useAppStore }) => {
+        const appStore = useAppStore.getState();
+        if (!appStore.organizationId && user.orgId) {
+          appStore.setOrganizationId(user.orgId);
+        }
+        if (!appStore.branchId && user.branchId) {
+          appStore.setBranchId(user.branchId);
+        }
+      });
 
       localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
 

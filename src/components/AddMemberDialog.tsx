@@ -7,7 +7,7 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { api } from '@/lib/api';
 import { useSettings } from '@/hooks/queries/settings';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuthStore, UserRole } from '@/store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 import AvatarUpload from './AvatarUpload';
 

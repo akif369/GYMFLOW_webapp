@@ -1,15 +1,23 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AppState {
-  organizationId: string;
-  branchId: string;
+  organizationId: string | null;
+  branchId: string | null;
   setOrganizationId: (id: string) => void;
   setBranchId: (id: string) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  organizationId: 'default-org-id', // Stub for development
-  branchId: 'default-branch-id',    // Stub for development
-  setOrganizationId: (id) => set({ organizationId: id }),
-  setBranchId: (id) => set({ branchId: id }),
-}));
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      organizationId: null,
+      branchId: null,
+      setOrganizationId: (id) => set({ organizationId: id }),
+      setBranchId: (id) => set({ branchId: id }),
+    }),
+    {
+      name: 'gymatrix-app',
+    }
+  )
+);
