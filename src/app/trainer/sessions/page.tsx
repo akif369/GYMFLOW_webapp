@@ -83,13 +83,13 @@ export default function TrainerSessionsPage() {
       <Card elevation={0} sx={{ mb: 2.5 }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <IconButton size="small" onClick={() => setWeekOffset((w) => w - 1)} sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc' } }}>
+            <IconButton size="small" onClick={() => setWeekOffset((w) => w - 1)} sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
               <ChevronLeftRoundedIcon />
             </IconButton>
             <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary' }}>
               {weekOffset === 0 ? 'This Week' : weekOffset === -1 ? 'Last Week' : weekOffset === 1 ? 'Next Week' : `Week of ${weekDates[0]?.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`}
             </Typography>
-            <IconButton size="small" onClick={() => setWeekOffset((w) => w + 1)} sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc' } }}>
+            <IconButton size="small" onClick={() => setWeekOffset((w) => w + 1)} sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
               <ChevronRightRoundedIcon />
             </IconButton>
           </Box>
@@ -106,7 +106,7 @@ export default function TrainerSessionsPage() {
                     onClick={() => setSelectedDay(idx)}
                     sx={{
                       textAlign: 'center', p: 1, borderRadius: 2, cursor: 'pointer',
-                      bgcolor: isSelected ? 'rgba(236,72,153,0.15)' : isToday ? 'rgba(255,255,255,0.04)' : 'transparent',
+                      bgcolor: isSelected ? 'rgba(236,72,153,0.15)' : isToday ? 'divider' : 'transparent',
                       border: `1px solid ${isSelected ? 'rgba(236,72,153,0.35)' : isToday ? 'rgba(255,255,255,0.12)' : 'transparent'}`,
                       transition: 'all 0.15s',
                       '&:hover': { bgcolor: 'rgba(236,72,153,0.1)' },

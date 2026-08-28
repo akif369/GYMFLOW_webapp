@@ -111,7 +111,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
 
         {/* Label */}
         <Typography sx={{
-          color: '#7d8590', fontWeight: 700, fontSize: '0.62rem',
+          color: 'text.secondary', fontWeight: 700, fontSize: '0.62rem',
           textTransform: 'uppercase', letterSpacing: '0.07em', mb: 0.3,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
@@ -120,7 +120,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
 
         {/* Value */}
         <Typography sx={{
-          color: '#f0f6fc', fontWeight: 800,
+          color: 'text.primary', fontWeight: 800,
           fontSize: { xs: '1.3rem', xl: '1.5rem' },
           letterSpacing: '-0.03em', lineHeight: 1.1,
         }}>
@@ -130,7 +130,7 @@ function KpiCard({ title, value, sub, icon: Icon, color = '#10b981', trend, spar
         {/* Sub */}
         {sub && (
           <Typography sx={{
-            color: '#5d6470', fontSize: '0.65rem', mt: 0.4,
+            color: 'text.secondary', fontSize: '0.65rem', mt: 0.4,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {sub}
@@ -196,11 +196,11 @@ function MiniStat({ title, value, icon: Icon, color, trend, onClick, actionLabel
             <Icon sx={{ fontSize: 15, color }} />
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: '0.59rem', color: '#7d8590', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>
+            <Typography sx={{ fontSize: '0.59rem', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>
               {title}
             </Typography>
             <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5, mt: 0.25 }}>
-              <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              <Typography sx={{ color: 'text.primary', fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', lineHeight: 1 }}>
                 {value}
               </Typography>
               {trend !== undefined && (
@@ -231,7 +231,7 @@ function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: ActivityR
   return (
     <Box sx={{
       display: 'flex', alignItems: 'center', gap: 1.25, py: 0.9,
-      borderBottom: '1px solid rgba(255,255,255,0.04)',
+      borderBottom: '1px solid', borderBottomColor: 'divider',
       '&:last-child': { borderBottom: 0 },
     }}>
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
@@ -245,19 +245,19 @@ function ActivityRow({ avatar, name, sub, right, rightSub, dotColor }: ActivityR
           <Box sx={{
             position: 'absolute', bottom: 0, right: 0,
             width: 8, height: 8, borderRadius: '50%',
-            bgcolor: '#10b981', border: '2px solid #0a0a0a',
+            bgcolor: '#10b981', border: `2px solid ${theme.palette.background.paper}`,
           }} />
         )}
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ color: '#f0f6fc', fontWeight: 600, fontSize: '0.79rem' }} noWrap>{name}</Typography>
-        <Typography sx={{ color: '#7d8590', fontSize: '0.67rem' }} noWrap>{sub}</Typography>
+        <Typography sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.79rem' }} noWrap>{name}</Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.67rem' }} noWrap>{sub}</Typography>
       </Box>
       <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-        <Typography sx={{ fontSize: '0.79rem', fontWeight: 700, color: isInside ? '#34d399' : '#f0f6fc' }}>
+        <Typography sx={{ fontSize: '0.79rem', fontWeight: 700, color: isInside ? '#34d399' : 'text.primary' }}>
           {right}
         </Typography>
-        {rightSub && <Typography sx={{ color: '#7d8590', fontSize: '0.65rem' }}>{rightSub}</Typography>}
+        {rightSub && <Typography sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>{rightSub}</Typography>}
       </Box>
     </Box>
   );
@@ -277,10 +277,10 @@ function CardHeader({ title, sub, action, collapsible, collapsed, onToggle }: Ca
   return (
     <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.75, gap: 1 }}>
       <Box>
-        <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.88rem', letterSpacing: '-0.01em' }}>
+        <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: '0.88rem', letterSpacing: '-0.01em' }}>
           {title}
         </Typography>
-        {sub && <Typography sx={{ color: '#7d8590', fontSize: '0.68rem', mt: 0.2 }}>{sub}</Typography>}
+        {sub && <Typography sx={{ color: 'text.secondary', fontSize: '0.68rem', mt: 0.2 }}>{sub}</Typography>}
       </Box>
       <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
         {action}
@@ -291,7 +291,7 @@ function CardHeader({ title, sub, action, collapsible, collapsed, onToggle }: Ca
             size="small"
             sx={{
               display: { xs: 'inline-flex', sm: 'none' },
-              color: '#7d8590',
+              color: 'text.secondary',
               p: 0.5,
               transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
               transition: 'transform 0.2s ease',
@@ -422,12 +422,12 @@ export default function Dashboard() {
         sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2, mb: 3 }}
       >
         <Box>
-          <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '1.35rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+          <Typography sx={{ color: 'text.primary', fontWeight: 800, fontSize: '1.35rem', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
             Good morning, {firstName}
           </Typography>
-          <Typography sx={{ color: '#7d8590', fontSize: '0.75rem', mt: 0.3 }}>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem', mt: 0.3 }}>
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            <Box component="span" sx={{ mx: 0.75, color: 'rgba(255,255,255,0.15)' }}>·</Box>
+            <Box component="span" sx={{ mx: 0.75, color: 'text.disabled' }}>·</Box>
             Gym dashboard
           </Typography>
         </Box>
@@ -467,7 +467,7 @@ export default function Dashboard() {
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#10b981', boxShadow: '0 0 6px #10b981' }} />
           <Typography sx={{ color: '#34d399', fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.08em' }}>LIVE</Typography>
         </Stack>
-        <Box sx={{ width: 1, height: 14, bgcolor: 'rgba(255,255,255,0.1)' }} />
+        <Box sx={{ width: 1, height: 14, bgcolor: 'divider' }} />
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2 }}>
           {[
             { label: 'Inside Now', val: loading ? '...' : `${s.currentlyInside} members` },
@@ -475,8 +475,8 @@ export default function Dashboard() {
             { label: 'PT Sessions', val: loading ? '...' : `${s.todaysPtSessions} scheduled` },
           ].map(item => (
             <Stack key={item.label} direction="row" sx={{ alignItems: 'center', gap: 0.5, display: item.label === 'PT Sessions' ? { xs: 'none', sm: 'flex' } : 'flex' }}>
-              <Typography sx={{ color: '#5d6470', fontSize: '0.68rem' }}>{item.label}:</Typography>
-              <Typography sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.72rem' }}>{item.val}</Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>{item.label}:</Typography>
+              <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: '0.72rem' }}>{item.val}</Typography>
             </Stack>
           ))}
         </Stack>
@@ -543,20 +543,20 @@ export default function Dashboard() {
               {paymentsData.map(pay => (
                 <Grid size={12} key={pay.id}>
                   <Box sx={{
-                    p: 1.5, borderRadius: 2, border: '1px solid rgba(255,255,255,0.06)',
-                    bgcolor: 'rgba(255,255,255,0.02)',
+                    p: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider',
+                    bgcolor: 'background.paper',
                   }}>
                     <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
                       <Avatar sx={{ width: 32, height: 32, flexShrink: 0, bgcolor: alpha('#8b5cf6', 0.15), color: '#a78bfa', fontSize: '0.65rem', fontWeight: 800 }}>
                         {(pay.member ?? '').split(' ').map((n: string) => n[0]).join('')}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ color: '#f0f6fc', fontWeight: 600, fontSize: '0.79rem' }} noWrap>{pay.member}</Typography>
-                        <Typography sx={{ color: '#7d8590', fontSize: '0.65rem' }}>{pay.method} · {pay.date}</Typography>
+                        <Typography sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.79rem' }} noWrap>{pay.member}</Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>{pay.method} · {pay.date}</Typography>
                       </Box>
                       <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                        <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '0.85rem' }}>₹{pay.amount.toLocaleString()}</Typography>
-                        <Box sx={{ display: 'inline-block', px: 0.6, py: 0.1, borderRadius: 0.75, bgcolor: payStatusBg[pay.status] || 'rgba(255,255,255,0.05)', fontSize: '0.58rem', fontWeight: 800, color: payStatusColor[pay.status] || '#7d8590' }}>{pay.status}</Box>
+                        <Typography sx={{ color: 'text.primary', fontWeight: 800, fontSize: '0.85rem' }}>₹{pay.amount.toLocaleString()}</Typography>
+                        <Box sx={{ display: 'inline-block', px: 0.6, py: 0.1, borderRadius: 0.75, bgcolor: payStatusBg[pay.status] || 'rgba(255,255,255,0.05)', fontSize: '0.58rem', fontWeight: 800, color: payStatusColor[pay.status] || 'text.secondary' }}>{pay.status}</Box>
                       </Box>
                     </Stack>
                   </Box>
@@ -588,7 +588,7 @@ export default function Dashboard() {
                       { label: 'Growth', value: revenueGrowthLabel, color: '#4ade80' },
                       ].map(m => (
                         <Box key={m.label} sx={{ display: { xs: 'none', sm: 'block' } }}>
-                          <Typography sx={{ fontSize: '0.58rem', color: '#7d8590', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</Typography>
+                          <Typography sx={{ fontSize: '0.58rem', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</Typography>
                           <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: m.color, letterSpacing: '-0.02em' }}>{m.value}</Typography>
                         </Box>
                       ))}
@@ -601,11 +601,11 @@ export default function Dashboard() {
                 xAxis={[{
                   scaleType: 'point',
                   data: revChartLabels,
-                  tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
+                  tickLabelStyle: { fontSize: 10, fill: theme.palette.text.secondary },
                 }]}
                 yAxis={[{
                   valueFormatter: (v: number) => `₹${(v/1000).toFixed(0)}K`,
-                  tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
+                  tickLabelStyle: { fontSize: 10, fill: theme.palette.text.secondary },
                 }]}
                 series={[{
                   data: revenueData,
@@ -620,8 +620,8 @@ export default function Dashboard() {
                   '& .MuiLineElement-root': { strokeWidth: 2.5 },
                   '& .MuiAreaElement-root': { fillOpacity: 0.1 },
                   '& .MuiChartsLegend-root': { display: 'none' },
-                  '& .MuiChartsAxis-line': { stroke: 'rgba(255,255,255,0.06)' },
-                  '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
+                  '& .MuiChartsAxis-line': { stroke: 'divider' },
+                  '& .MuiChartsAxis-tick': { stroke: 'divider' },
                 }}
                 margin={{ left: 54, right: 16, top: 8, bottom: 26 }}
                 hideLegend
@@ -648,7 +648,7 @@ export default function Dashboard() {
                   return (
                     <Box key={h.hour}>
                       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.4 }}>
-                        <Typography sx={{ color: '#7d8590', fontSize: '0.68rem' }}>{h.hour}</Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>{h.hour}</Typography>
                         <Typography sx={{ color, fontWeight: 700, fontSize: '0.68rem' }}>{h.count}</Typography>
                       </Stack>
                       <LinearProgress
@@ -688,15 +688,15 @@ export default function Dashboard() {
                 xAxis={[{
                   scaleType: 'band',
                   data: attChartLabels,
-                  tickLabelStyle: { fontSize: 10, fill: '#7d8590' },
+                  tickLabelStyle: { fontSize: 10, fill: theme.palette.text.secondary },
                 }]}
-                yAxis={[{ tickLabelStyle: { fontSize: 10, fill: '#7d8590' } }]}
+                yAxis={[{ tickLabelStyle: { fontSize: 10, fill: theme.palette.text.secondary } }]}
                 series={[{ data: attendanceData, label: 'Members', color: '#06b6d4' }]}
                 height={180}
                 margin={{ left: 38, right: 10, top: 6, bottom: 26 }}
                 sx={{
-                  '& .MuiChartsAxis-line': { stroke: 'rgba(255,255,255,0.06)' },
-                  '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.06)' },
+                  '& .MuiChartsAxis-line': { stroke: 'divider' },
+                  '& .MuiChartsAxis-tick': { stroke: 'divider' },
                   '& .MuiBarElement-root': { rx: 3 },
                 }}
                 hideLegend
@@ -725,7 +725,7 @@ export default function Dashboard() {
                   sub={`${log.date} · ${log.checkIn}`}
                   right={log.checkOut ? log.duration : 'Inside'}
                   rightSub={log.checkOut ? log.duration : undefined}
-                  dotColor={log.checkOut ? '#7d8590' : '#10b981'}
+                  dotColor={log.checkOut ? theme.palette.text.secondary : '#10b981'}
                 />
               ))}
             </CardContent>
@@ -752,10 +752,10 @@ export default function Dashboard() {
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={pay.id}>
                 <Box sx={{
                   p: 1.5, borderRadius: 2,
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  bgcolor: 'rgba(255,255,255,0.02)',
+                  border: '1px solid', borderColor: 'divider',
+                  bgcolor: 'background.paper',
                   transition: 'all 0.15s',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', transform: 'translateY(-1px)' },
+                  '&:hover': { bgcolor: 'divider', borderColor: 'divider', transform: 'translateY(-1px)' },
                 }}>
                   <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25 }}>
                     <Avatar sx={{
@@ -766,22 +766,22 @@ export default function Dashboard() {
                       {(pay.member ?? '').split(' ').map((n: string) => n[0]).join('')}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ color: '#f0f6fc', fontWeight: 600, fontSize: '0.79rem' }} noWrap>
+                      <Typography sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.79rem' }} noWrap>
                         {pay.member}
                       </Typography>
-                      <Typography sx={{ color: '#7d8590', fontSize: '0.65rem' }}>
+                      <Typography sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
                         {pay.method} · {pay.date}
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                      <Typography sx={{ color: '#f0f6fc', fontWeight: 800, fontSize: '0.85rem' }}>
+                      <Typography sx={{ color: 'text.primary', fontWeight: 800, fontSize: '0.85rem' }}>
                         ₹{pay.amount.toLocaleString()}
                       </Typography>
                       <Box sx={{
                         display: 'inline-block', px: 0.6, py: 0.1, borderRadius: 0.75,
                         bgcolor: payStatusBg[pay.status] || 'rgba(255,255,255,0.05)',
                         fontSize: '0.58rem', fontWeight: 800,
-                        color: payStatusColor[pay.status] || '#7d8590',
+                        color: payStatusColor[pay.status] || 'text.secondary',
                       }}>
                         {pay.status}
                       </Box>

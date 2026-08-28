@@ -138,7 +138,7 @@ export default function TrainerDashboardPage() {
                   value={stats.sessionsToday > 0 ? (completedToday / stats.sessionsToday) * 100 : 0}
                   sx={{
                     width: 80, height: 6, borderRadius: 4,
-                    bgcolor: 'rgba(255,255,255,0.06)',
+                    bgcolor: 'divider',
                     '& .MuiLinearProgress-bar': { bgcolor: '#ec4899', borderRadius: 4 },
                   }}
                 />
@@ -248,7 +248,7 @@ export default function TrainerDashboardPage() {
                       <Box sx={{
                         p: 1.25, borderRadius: 2,
                         bgcolor: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        border: '1px solid', borderColor: 'divider',
                       }}>
                         <stat.icon sx={{ fontSize: 14, color: stat.color, mb: 0.5 }} />
                         <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: 'text.primary', letterSpacing: '-0.04em' }}>

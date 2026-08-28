@@ -142,7 +142,7 @@ function BranchRow({ branch }: { branch: BranchPerf }) {
           value={branch.occupancy}
           sx={{
             height: 4, borderRadius: 4,
-            bgcolor: 'rgba(255,255,255,0.06)',
+            bgcolor: 'divider',
             '& .MuiLinearProgress-bar': {
               bgcolor: branch.occupancy >= 70 ? '#10b981' : branch.occupancy >= 50 ? '#f59e0b' : '#f43f5e',
               borderRadius: 4,
@@ -197,7 +197,7 @@ export default function OrgDashboardPage() {
                 bgcolor: 'rgba(255,255,255,0.03)',
                 borderRadius: 1.5,
                 fontSize: '0.85rem',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
               }}
             >
               <MenuItem value="ALL">All Branches</MenuItem>

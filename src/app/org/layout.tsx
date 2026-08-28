@@ -115,7 +115,7 @@ function OrgSidebar({
             <AccountBalanceRoundedIcon sx={{ fontSize: 20, color: '#fff' }} />
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, color: '#f0f6fc', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            <Typography sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
               GYMatrix
             </Typography>
             <Typography sx={{ color: '#f59e0b', fontSize: '0.64rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -124,7 +124,7 @@ function OrgSidebar({
           </Box>
         </Box>
         {!isMdUp && (
-          <IconButton onClick={onClose} size="small" sx={{ color: '#7d8590' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
             <CloseRoundedIcon fontSize="small" />
           </IconButton>
         )}
@@ -172,9 +172,9 @@ function OrgSidebar({
                       sx={{
                         borderRadius: 1.5, py: 0.85, px: 1.25,
                         bgcolor: active ? 'rgba(245,158,11,0.14)' : 'transparent',
-                        color: active ? '#f59e0b' : '#7d8590',
+                        color: active ? '#f59e0b' : 'text.secondary',
                         '&:hover': {
-                          bgcolor: active ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.04)',
+                          bgcolor: active ? 'rgba(245,158,11,0.18)' : 'divider',
                           color: active ? '#f59e0b' : '#c9d1d9',
                         },
                       }}
@@ -201,9 +201,9 @@ function OrgSidebar({
             onClick={!isMdUp ? onClose : undefined}
             sx={{
               borderRadius: 1.5, py: 0.85, px: 1.25,
-              color: isActive('/org/settings') ? '#f59e0b' : '#7d8590',
+              color: isActive('/org/settings') ? '#f59e0b' : 'text.secondary',
               bgcolor: isActive('/org/settings') ? 'rgba(245,158,11,0.14)' : 'transparent',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#c9d1d9' },
+              '&:hover': { bgcolor: 'divider', color: '#c9d1d9' },
             }}
           >
             <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
@@ -227,7 +227,7 @@ function OrgSidebar({
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', fontSize: '0.78rem', lineHeight: 1.2 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: '#f59e0b', fontSize: '0.68rem' }}>
@@ -236,7 +236,7 @@ function OrgSidebar({
           </Box>
           <Tooltip title="Sign out" placement="top">
             <IconButton size="small" onClick={handleLogout}
-              sx={{ color: '#7d8590', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}>
+              sx={{ color: 'text.secondary', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}>
               <LogoutRoundedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
@@ -307,12 +307,12 @@ export default function OrgOwnerLayout({ children }: { children: React.ReactNode
             <Box sx={{
               height: 52, display: 'flex', alignItems: 'center',
               px: { xs: 2, md: 3 }, gap: 2,
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid', borderBottomColor: 'divider',
               bgcolor: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(12px)',
               position: 'sticky', top: 0, zIndex: 100,
             }}>
               {!isMdUp && (
-                <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: '#7d8590' }}>
+                <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: 'text.secondary' }}>
                   <MenuRoundedIcon />
                 </IconButton>
               )}
@@ -327,7 +327,7 @@ export default function OrgOwnerLayout({ children }: { children: React.ReactNode
               </Typography>
               <Box sx={{ flex: 1 }} />
               <Tooltip title="Notifications">
-                <IconButton size="small" sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc' } }}>
+                <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
                   <NotificationsNoneRoundedIcon sx={{ fontSize: 20 }} />
                 </IconButton>
               </Tooltip>

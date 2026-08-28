@@ -152,7 +152,7 @@ export default function MemberMembershipPage() {
                     <Typography key={f} sx={{ fontSize: '0.72rem', color: 'text.secondary', mb: 0.25 }}>• {f}</Typography>
                   ))}
                   <Button variant={plan.popular ? 'contained' : 'outlined'} size="small" fullWidth sx={{ mt: 1.5,
-                    ...(plan.popular ? { bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } } : { borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }),
+                    ...(plan.popular ? { bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } } : { borderColor: 'divider', color: 'text.secondary' }),
                   }}>
                     {plan.name === MEMBERSHIP.current.planName ? 'Renew' : 'Switch Plan'}
                   </Button>

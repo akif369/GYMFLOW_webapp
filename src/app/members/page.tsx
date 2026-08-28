@@ -244,17 +244,17 @@ function MembersPageContent() {
       sortable: false,
       renderCell: (params) => (
         <Box sx={{ mt: 1 }}>
-          <Typography sx={{ fontWeight: 600, fontSize: '0.83rem', color: '#f0f6fc' }}>
+          <Typography sx={{ fontWeight: 600, fontSize: '0.83rem', color: 'text.primary' }}>
             {params.row.firstName} {params.row.lastName}
           </Typography>
-          <Typography sx={{ fontSize: '0.7rem', color: '#7d8590' }}>
+          <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
             #{params.row.memberId} · {params.row.phone}
           </Typography>
         </Box>
       ),
     },
-    { field: 'plan', headerName: 'Plan', width: 150, renderCell: p => <Typography sx={{ fontSize: '0.8rem', color: '#f0f6fc' }}>{p.value}</Typography> },
-    { field: 'startDate', headerName: 'Start', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: '#7d8590' }}>{p.value}</Typography> },
+    { field: 'plan', headerName: 'Plan', width: 150, renderCell: p => <Typography sx={{ fontSize: '0.8rem', color: 'text.primary' }}>{p.value}</Typography> },
+    { field: 'startDate', headerName: 'Start', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{p.value}</Typography> },
     {
       field: 'expiryDate',
       headerName: 'Expiry',
@@ -262,7 +262,7 @@ function MembersPageContent() {
       renderCell: (p) => {
         const isExpiring = p.row.membershipStatus === 'EXPIRING';
         return (
-          <Typography sx={{ fontSize: '0.78rem', color: isExpiring ? '#fbbf24' : '#7d8590', fontWeight: isExpiring ? 600 : 400 }}>
+          <Typography sx={{ fontSize: '0.78rem', color: isExpiring ? '#fbbf24' : 'text.secondary', fontWeight: isExpiring ? 600 : 400 }}>
             {p.value}
           </Typography>
         );
@@ -273,10 +273,10 @@ function MembersPageContent() {
       headerName: 'Trainer',
       width: 130,
       renderCell: p => p.value
-        ? <Typography sx={{ fontSize: '0.78rem', color: '#f0f6fc' }}>{p.value}</Typography>
-        : <Typography sx={{ fontSize: '0.75rem', color: '#7d8590', fontStyle: 'italic' }}>Unassigned</Typography>,
+        ? <Typography sx={{ fontSize: '0.78rem', color: 'text.primary' }}>{p.value}</Typography>
+        : <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontStyle: 'italic' }}>Unassigned</Typography>,
     },
-    { field: 'lastVisit', headerName: 'Last Visit', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: '#7d8590' }}>{p.value}</Typography> },
+    { field: 'lastVisit', headerName: 'Last Visit', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{p.value}</Typography> },
     ...(strictPaymentPolicy ? [paymentColumn] : []),
     {
       field: 'membershipStatus',
@@ -297,7 +297,7 @@ function MembersPageContent() {
             size="small"
             aria-label={`Actions for ${params.row.firstName} ${params.row.lastName}`}
             onClick={event => openActions(event, params.row.id)}
-            sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc', bgcolor: 'rgba(255,255,255,0.08)' } }}
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary', bgcolor: 'rgba(255,255,255,0.08)' } }}
           >
             <MoreVertRoundedIcon fontSize="small" />
           </IconButton>
@@ -311,15 +311,15 @@ function MembersPageContent() {
       {/* Header */}
       <Stack direction="row" sx={{ mb: 3, gap: 2, alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Box>
-          <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>Members</Typography>
-          <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+          <Typography variant="h5" sx={{ color: 'text.primary', fontWeight: 800 }}>Members</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
             {totalCount} total members across all branches
           </Typography>
         </Box>
         <Stack direction="row" sx={{ gap: 1 }}>
           <Tooltip title="Refresh members">
-            <IconButton onClick={() => refetchMembers()} sx={{ bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
-              <RefreshRoundedIcon fontSize="small" sx={{ color: '#7d8590' }} />
+            <IconButton onClick={() => refetchMembers()} sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+              <RefreshRoundedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
             </IconButton>
           </Tooltip>
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setAddOpen(true)}>
@@ -363,8 +363,8 @@ function MembersPageContent() {
                     <s.icon sx={{ fontSize: 16, color: s.color }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontSize: '0.65rem', color: '#7d8590', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</Typography>
-                    <Typography variant="h6" sx={{ color: '#f0f6fc', lineHeight: 1.2, fontSize: '1.2rem', fontWeight: 800 }}>{s.value}</Typography>
+                    <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</Typography>
+                    <Typography variant="h6" sx={{ color: 'text.primary', lineHeight: 1.2, fontSize: '1.2rem', fontWeight: 800 }}>{s.value}</Typography>
                   </Box>
                 </Stack>
               </CardContent>
@@ -385,7 +385,7 @@ function MembersPageContent() {
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRoundedIcon sx={{ fontSize: 18, color: '#7d8590' }} />
+                  <SearchRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
                 </InputAdornment>
               ),
             },
@@ -445,10 +445,10 @@ function MembersPageContent() {
               border: 0,
               '& .MuiDataGrid-columnHeaders': {
                 bgcolor: 'rgba(255,255,255,0.03)',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid', borderBottomColor: 'divider',
               },
-              '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7d8590' },
-              '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center' },
+              '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' },
+              '& .MuiDataGrid-cell': { borderBottom: '1px solid', borderBottomColor: 'divider', alignItems: 'center' },
               '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(16,185,129,0.04)', cursor: 'pointer' },
               '& .MuiDataGrid-footerContainer': { borderTop: '1px solid rgba(255,255,255,0.06)' },
             }}
@@ -462,7 +462,7 @@ function MembersPageContent() {
         anchorPosition={actionPosition || undefined}
         open={Boolean(actionAnchor || actionPosition)}
         onClose={closeActions}
-        slotProps={{ paper: { sx: { minWidth: 220, bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.08)' } } }}
+        slotProps={{ paper: { sx: { minWidth: 220, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } } }}
       >
         <MenuItem onClick={() => runMemberAction('view')}>
           <ListItemIcon><VisibilityRoundedIcon fontSize="small" sx={{ color: '#a78bfa' }} /></ListItemIcon>
@@ -508,8 +508,8 @@ function MembersPageFallback() {
   return (
     <AppLayout>
       <Box sx={{ py: 3 }}>
-        <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>Members</Typography>
-        <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+        <Typography variant="h5" sx={{ color: 'text.primary', fontWeight: 800 }}>Members</Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
           Loading member directory...
         </Typography>
       </Box>

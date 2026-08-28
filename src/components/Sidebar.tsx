@@ -168,16 +168,16 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
             sx={{ width: 56, height: 56, borderRadius: 1, flexShrink: 0, objectFit: 'contain' }}
           />
           <Box>
-            <Typography variant="body1" sx={{ color: '#f0f6fc', letterSpacing: '-0.5px', lineHeight: 1.1, fontWeight: 800 }}>
+            <Typography variant="body1" sx={{ color: 'text.primary', letterSpacing: '-0.5px', lineHeight: 1.1, fontWeight: 800 }}>
               GYMatrix
             </Typography>
-            <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.67rem' }}>
               Admin Portal
             </Typography>
           </Box>
         </Box>
         {!isMdUp && (
-          <IconButton onClick={onClose} size="small" sx={{ color: '#7d8590' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
             <CloseRoundedIcon fontSize="small" />
           </IconButton>
         )}
@@ -213,9 +213,9 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
                         borderRadius: 1.5,
                         py: 0.85, px: 1.25,
                         bgcolor: active ? 'rgba(16,185,129,0.14)' : 'transparent',
-                        color: active ? '#34d399' : '#7d8590',
+                        color: active ? '#34d399' : 'text.secondary',
                         '&:hover': {
-                          bgcolor: active ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)',
+                          bgcolor: active ? 'rgba(16,185,129,0.18)' : 'divider',
                           color: active ? '#34d399' : '#c9d1d9',
                         },
                       }}
@@ -258,9 +258,9 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
               onClick={!isMdUp ? onClose : undefined}
               sx={{
                 borderRadius: 1.5, py: 0.85, px: 1.25,
-                color: isActive('/settings') ? '#34d399' : '#7d8590',
+                color: isActive('/settings') ? '#34d399' : 'text.secondary',
                 bgcolor: isActive('/settings') ? 'rgba(16,185,129,0.14)' : 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: '#c9d1d9' },
+                '&:hover': { bgcolor: 'divider', color: '#c9d1d9' },
               }}
             >
               <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}>
@@ -289,7 +289,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.8rem', lineHeight: 1.2, fontWeight: 700 }}>
+            <Typography variant="caption" sx={{ color: 'text.primary', display: 'block', fontSize: '0.8rem', lineHeight: 1.2, fontWeight: 700 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: roleColor, fontSize: '0.68rem' }}>
@@ -300,7 +300,7 @@ export default function Sidebar({ mobileOpen = false, onClose, drawerWidth = 220
             <IconButton
               size="small"
               onClick={handleLogout}
-              sx={{ color: '#7d8590', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}
+              sx={{ color: 'text.secondary', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}
               aria-label="Sign out"
             >
               <LogoutRoundedIcon sx={{ fontSize: 16 }} />

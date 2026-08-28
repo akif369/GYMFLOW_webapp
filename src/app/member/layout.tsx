@@ -78,7 +78,7 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
             <FitnessCenterRoundedIcon sx={{ fontSize: 20, color: '#fff' }} />
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, color: '#f0f6fc', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+            <Typography sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.95rem', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
               GYMatrix
             </Typography>
             <Typography sx={{ color: '#10b981', fontSize: '0.64rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -87,7 +87,7 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
           </Box>
         </Box>
         {!isMdUp && (
-          <IconButton onClick={onClose} size="small" sx={{ color: '#7d8590' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
             <CloseRoundedIcon fontSize="small" />
           </IconButton>
         )}
@@ -129,9 +129,9 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
                   sx={{
                     borderRadius: 1.5, py: 0.85, px: 1.25,
                     bgcolor: active ? 'rgba(16,185,129,0.14)' : 'transparent',
-                    color: active ? '#34d399' : '#7d8590',
+                    color: active ? '#34d399' : 'text.secondary',
                     '&:hover': {
-                      bgcolor: active ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)',
+                      bgcolor: active ? 'rgba(16,185,129,0.18)' : 'divider',
                       color: active ? '#34d399' : '#c9d1d9',
                     },
                   }}
@@ -165,7 +165,7 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
               <QrCode2RoundedIcon sx={{ fontSize: 28, color: '#10b981' }} />
               <Box>
                 <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#34d399' }}>QR Check-in</Typography>
-                <Typography sx={{ fontSize: '0.65rem', color: '#7d8590' }}>Show at front desk</Typography>
+                <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>Show at front desk</Typography>
               </Box>
             </Box>
           </Box>
@@ -185,7 +185,7 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.78rem', color: '#f0f6fc', display: 'block', lineHeight: 1.2 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.78rem', color: 'text.primary', display: 'block', lineHeight: 1.2 }}>
               {displayName}
             </Typography>
             <Typography variant="caption" sx={{ color: '#10b981', fontSize: '0.68rem' }}>
@@ -194,7 +194,7 @@ function MemberSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: 
           </Box>
           <Tooltip title="Sign out" placement="top">
             <IconButton size="small" onClick={handleLogout}
-              sx={{ color: '#7d8590', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}>
+              sx={{ color: 'text.secondary', '&:hover': { color: '#f43f5e', bgcolor: 'rgba(244,63,94,0.1)' } }}>
               <LogoutRoundedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
@@ -245,12 +245,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             <Box sx={{
               height: 52, display: 'flex', alignItems: 'center',
               px: { xs: 2, md: 3 }, gap: 2,
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid', borderBottomColor: 'divider',
               bgcolor: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(12px)',
               position: 'sticky', top: 0, zIndex: 100,
             }}>
               {!isMdUp && (
-                <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: '#7d8590' }}>
+                <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: 'text.secondary' }}>
                   <MenuRoundedIcon />
                 </IconButton>
               )}
@@ -260,7 +260,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
               </Typography>
               <Box sx={{ flex: 1 }} />
               <Tooltip title="Notifications">
-                <IconButton size="small" sx={{ color: '#7d8590', '&:hover': { color: '#f0f6fc' } }}>
+                <IconButton size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
                   <NotificationsNoneRoundedIcon sx={{ fontSize: 20 }} />
                 </IconButton>
               </Tooltip>

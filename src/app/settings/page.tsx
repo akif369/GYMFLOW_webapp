@@ -28,7 +28,7 @@ function TabPanel({ children, value, index }: { children?: React.ReactNode; valu
 
 function SettingRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', py: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', py: 2, borderBottom: '1px solid', borderBottomColor: 'divider', alignItems: 'center', justifyContent: 'space-between' }}>
       <Box sx={{ flex: 1, mr: 2 }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
         {desc && <Typography variant="caption" color="text.secondary">{desc}</Typography>}
@@ -379,7 +379,7 @@ export default function SettingsPage() {
             <SettingRow label="Send on Renewal" desc="Send the membership renewal invoice link through Evolution Go automatically.">
               <Switch checked={invoiceForm.autoSendOnRenewal} onChange={e => setInvoiceForm({ ...invoiceForm, autoSendOnRenewal: e.target.checked })} disabled={loading} />
             </SettingRow>
-            <Box sx={{ py: 2, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ py: 2, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Invoice Footer</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>Shown at the bottom of the backend invoice view.</Typography>
               <TextField fullWidth size="small" multiline minRows={3} value={invoiceForm.footer} onChange={e => setInvoiceForm({ ...invoiceForm, footer: e.target.value })} disabled={loading} slotProps={{ htmlInput: { maxLength: 500 } }} placeholder="Thank you for training with us." />
@@ -628,9 +628,9 @@ export default function SettingsPage() {
                   border: 0,
                   '& .MuiDataGrid-columnHeaders': {
                     bgcolor: 'rgba(255,255,255,0.03)',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    borderBottom: '1px solid', borderBottomColor: 'divider',
                   },
-                  '& .MuiDataGrid-cell': { borderBottom: '1px solid rgba(255,255,255,0.04)' },
+                  '& .MuiDataGrid-cell': { borderBottom: '1px solid', borderBottomColor: 'divider' },
                 }}
               />
             </Box>

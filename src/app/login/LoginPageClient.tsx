@@ -185,7 +185,7 @@ export default function LoginPageClient(_props: LoginPageClientProps) {
         px: { xs: 2, sm: 3 },
         py: 4,
         // Subtle radial glow matching admin theme
-        background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.08) 0%, transparent 60%), #0a0a0a',
+        background: (t) => `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.08) 0%, transparent 60%), ${t.palette.background.default}`,
       }}
     >
       <Box
@@ -242,8 +242,8 @@ export default function LoginPageClient(_props: LoginPageClientProps) {
         {/* Form Card */}
         <Box
           sx={{
-            bgcolor: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            bgcolor: 'background.paper',
+            border: '1px solid', borderColor: 'divider',
             borderRadius: 3,
             p: { xs: 2.5, sm: 3 },
           }}

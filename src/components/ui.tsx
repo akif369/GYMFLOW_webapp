@@ -263,7 +263,7 @@ export function PageToolbar({ title, description, actions }: PageToolbarProps) {
       sx={{ mb: 3, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between' }}
     >
       <Box>
-        <Typography variant="h5" sx={{ color: '#f0f6fc', fontWeight: 800 }}>
+        <Typography variant="h5" sx={{ color: 'text.primary', fontWeight: 800 }}>
           {title}
         </Typography>
         {description && (

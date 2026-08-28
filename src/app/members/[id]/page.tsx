@@ -741,7 +741,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                       ['PT Sessions: ', `${member.latestMembership.ptSessionsTotal - member.latestMembership.ptSessionsUsed} remaining`],
                       ['Assigned Trainer', trainerName],
                     ].map(([k, v]) => (
-                      <Box key={k} sx={{ display: 'flex', py: 1, justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Box key={k} sx={{ display: 'flex', py: 1, justifyContent: 'space-between', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
                         <Typography variant="caption" color="text.secondary">{k}</Typography>
                         <Typography variant="caption" sx={{ fontWeight: 600 }}>{v}</Typography>
                       </Box>
@@ -813,7 +813,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                             {eventIcon[e.eventType] ?? eventIcon['CheckCircle']}
                           </Box>
                           {i < membershipEvents.length - 1 && (
-                            <Box sx={{ width: 1, flex: 1, bgcolor: 'rgba(255,255,255,0.06)', my: 0.5 }} />
+                            <Box sx={{ width: 1, flex: 1, bgcolor: 'divider', my: 0.5 }} />
                           )}
                         </Box>
                         <Box sx={{ pb: 1 }}>
@@ -1046,7 +1046,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   ['Health Notes', member.health?.notes || '-'],
                   ['Blood Group', member.health?.bloodGroup || '—'],
                 ].map(([k, v]) => (
-                  <Box key={k} sx={{ py: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Box key={k} sx={{ py: 1, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary">{k}</Typography>
                     <Typography variant="body2" sx={{ mt: 0.25 }}>{v}</Typography>
                   </Box>
@@ -1169,7 +1169,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                         {eventIcon[a.type] ?? eventIcon['CheckCircle']}
                       </Box>
                       {i < activity.length - 1 && (
-                        <Box sx={{ width: 1, flex: 1, bgcolor: 'rgba(255,255,255,0.06)', my: 0.5 }} />
+                        <Box sx={{ width: 1, flex: 1, bgcolor: 'divider', my: 0.5 }} />
                       )}
                     </Box>
                     <Box sx={{ pb: 2 }}>

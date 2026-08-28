@@ -107,7 +107,7 @@ export default function TrainerWorkoutsPage() {
                   </Typography>
                   <Chip label={tmpl.category} size="small" sx={{ bgcolor: alpha(catColor, 0.12), color: catColor, fontWeight: 700, fontSize: '0.68rem', mb: 1.5 }} />
 
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 1.5 }} />
+                  <Divider sx={{ borderColor: 'divider', mb: 1.5 }} />
 
                   <Grid container spacing={1} sx={{ mb: 1.5 }}>
                     {[
@@ -115,7 +115,7 @@ export default function TrainerWorkoutsPage() {
                       { label: 'Duration', value: `${tmpl.duration}m` },
                     ].map((s) => (
                       <Grid size={{ xs: 6 }} key={s.label}>
-                        <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                        <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
                           <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: 'text.primary' }}>{s.value}</Typography>
                           <Typography sx={{ fontSize: '0.62rem', color: 'text.disabled' }}>{s.label}</Typography>
                         </Box>
@@ -130,7 +130,7 @@ export default function TrainerWorkoutsPage() {
                     ))}
                   </Box>
 
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 1.5 }} />
+                  <Divider sx={{ borderColor: 'divider', mb: 1.5 }} />
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -140,7 +140,7 @@ export default function TrainerWorkoutsPage() {
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 0.75 }}>
-                      <Button size="small" variant="outlined" sx={{ fontSize: '0.72rem', py: 0.4, px: 1, borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}>
+                      <Button size="small" variant="outlined" sx={{ fontSize: '0.72rem', py: 0.4, px: 1, borderColor: 'divider', color: 'text.secondary' }}>
                         Edit
                       </Button>
                       <Button size="small" variant="outlined" startIcon={<PersonRoundedIcon sx={{ fontSize: 13 }} />}

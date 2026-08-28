@@ -146,7 +146,7 @@ export default function OrgBranchesPage() {
                       }} />
                     </Box>
 
-                    <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 1.5 }} />
+                    <Divider sx={{ borderColor: 'divider', mb: 1.5 }} />
 
                     {/* Staff stats */}
                     <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>

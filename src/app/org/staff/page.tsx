@@ -178,7 +178,7 @@ export default function StaffPage() {
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
               sx={{
-                bgcolor: 'rgba(255,255,255,0.02)',
+                bgcolor: 'background.paper',
                 borderRadius: 2,
                 fontSize: '0.85rem',
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.12)' },

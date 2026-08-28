@@ -183,7 +183,7 @@ export default function RenewMembershipDialog({
             </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 800 }}>{renewalCompleted ? 'Record Payment' : 'Renew Membership'}</Typography>
-              <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.25 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.25 }}>
                 {memberName ? `${memberName} · ` : ''}{renewalCompleted ? 'finish recording the payment' : 'choose a plan and extend access'}
               </Typography>
             </Box>
@@ -216,13 +216,13 @@ export default function RenewMembershipDialog({
 
       
 
-          <Accordion expanded={paymentDetailsOpen} onChange={(_, expanded) => setPaymentDetailsOpen(expanded)} disableGutters sx={{ mt: 2, bgcolor: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
+          <Accordion expanded={paymentDetailsOpen} onChange={(_, expanded) => setPaymentDetailsOpen(expanded)} disableGutters sx={{ mt: 2, bgcolor: 'rgba(255,255,255,0.035)', border: '1px solid', borderColor: 'divider', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
             <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ px: { xs: 1.5, sm: 2 } }}>
               <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
                 <PaymentsRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
                 <Box>
                   <Typography sx={{ fontWeight: 800 }}>Payment details</Typography>
-                  <Typography variant="caption" sx={{ color: '#7d8590' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {form.recordPayment || renewalCompleted ? 'Plan amount and Cash method are used by default' : 'Open to review payment details'}
                   </Typography>
                 </Box>

@@ -169,7 +169,7 @@ export default function AddMemberDialog({
       <Box component="form" onSubmit={handleAddSubmit}>
         <DialogTitle sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 1.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.01em' }}>Add New Member</Typography>
-          <Typography variant="body2" sx={{ color: '#7d8590', mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
             Create a member profile to start tracking their fitness journey.
           </Typography>
         </DialogTitle>
@@ -284,13 +284,13 @@ export default function AddMemberDialog({
                 <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
                   <FormControlLabel
                     control={<Switch checked={syncToDevice} onChange={e => setSyncToDevice(e.target.checked)} color="primary" />}
                     label={
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>Add to biometric device</Typography>
-                        <Typography variant="caption" sx={{ color: '#7d8590' }}>Creates a PIN in Member Device Permissions & Identities and queues the user on the branch terminal</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>Creates a PIN in Member Device Permissions & Identities and queues the user on the branch terminal</Typography>
                       </Box>
                     }
                     sx={{ m: 0, width: '100%' }}

@@ -322,7 +322,7 @@ export default function MembershipsPage() {
                         ['Joining Fee', plan.joiningFee > 0 ? `₹${plan.joiningFee.toLocaleString()}` : 'None'],
                         ['PT Sessions', plan.ptSessionsIncluded],
                       ].map(([key, value]) => (
-                        <Box key={String(key)} sx={{ py: 0.5, display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between', gap: 2 }}>
+                        <Box key={String(key)} sx={{ py: 0.5, display: 'flex', borderBottom: '1px solid', borderBottomColor: 'divider', justifyContent: 'space-between', gap: 2 }}>
                           <Typography variant="caption" color="text.secondary">{key}</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>{value}</Typography>
                         </Box>
@@ -369,7 +369,7 @@ export default function MembershipsPage() {
                 </TableHead>
                 <TableBody>
                   {events.map((event, index) => (
-                    <TableRow key={event.id ?? index} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                    <TableRow key={event.id ?? index} sx={{ '&:hover': { bgcolor: 'background.paper' } }}>
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {event.firstName} {event.lastName}

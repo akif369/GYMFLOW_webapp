@@ -74,7 +74,7 @@ export default function ChangePasswordDialog({ open, onClose, onSuccess }: Chang
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" sx={{ '& .MuiDialog-paper': { bgcolor: '#161b22', backgroundImage: 'none' } }}>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" sx={{ '& .MuiDialog-paper': { bgcolor: 'background.paper', backgroundImage: 'none' } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Change Password</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>

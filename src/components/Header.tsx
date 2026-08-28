@@ -158,7 +158,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           {/* Hamburger Menu for Mobile */}
           <IconButton
             onClick={onMenuClick}
-            sx={{ display: { xs: 'block', md: 'none' }, color: '#f0f6fc' }}
+            sx={{ display: { xs: 'block', md: 'none' }, color: 'text.primary' }}
           >
             <MenuRoundedIcon />
           </IconButton>
@@ -175,7 +175,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             px: 1.5,
             py: 0.6,
             width: '100%',
-            border: '1px solid rgba(255,255,255,0.07)',
+            border: '1px solid', borderColor: 'divider',
             transition: 'all 0.2s',
             '&:focus-within': {
               borderColor: '#10b981',
@@ -184,7 +184,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             },
           }}
         >
-          <SearchRoundedIcon sx={{ color: '#7d8590', mr: 1, fontSize: 18 }} />
+          <SearchRoundedIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 18 }} />
           <InputBase
             placeholder="Search members, payments..."
             inputRef={searchInputRef}
@@ -195,10 +195,10 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             }}
             onKeyDown={handleSearchKeyDown}
             inputProps={{ 'aria-label': 'Search members and payments', autoComplete: 'off' }}
-            sx={{ flex: 1, color: '#f0f6fc', fontSize: '0.82rem' }}
+            sx={{ flex: 1, color: 'text.primary', fontSize: '0.82rem' }}
           />
-          <Box sx={{ display: { xs: 'none', sm: 'block' }, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1, px: 0.6, py: 0.1 }}>
-            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#7d8590' }}>⌘K</Typography>
+          <Box sx={{ display: { xs: 'none', sm: 'block' }, bgcolor: 'divider', borderRadius: 1, px: 0.6, py: 0.1 }}>
+            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>⌘K</Typography>
           </Box>
         </Box>
         <Popper
@@ -212,28 +212,28 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             width: { xs: 'calc(100vw - 24px)', sm: searchAnchorWidth },
           }}
         >
-          <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: '#161b22', border: '1px solid rgba(255,255,255,0.09)', borderRadius: { xs: 3, sm: 2 }, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
+          <Paper elevation={8} sx={{ mt: 1, overflow: 'hidden', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: { xs: 3, sm: 2 }, maxHeight: 'min(420px, calc(100vh - 72px))', overflowY: 'auto' }}>
             {searchLoading && results.length === 0 && <Box sx={{ py: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={20} /></Box>}
             {searchLoading && results.length > 0 && <Box sx={{ height: 2, bgcolor: 'rgba(16,185,129,0.2)', '&::after': { content: '""', display: 'block', height: '100%', width: '45%', bgcolor: '#10b981', animation: 'search-loading 0.9s ease-in-out infinite alternate' }, '@keyframes search-loading': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(220%)' } } }} />}
             {!searchLoading && searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: '#f87171' }}>Search is temporarily unavailable.</Typography>}
-            {!searchLoading && !searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: '#7d8590' }}>No members or payments found.</Typography>}
+            {!searchLoading && !searchError && results.length === 0 && <Typography variant="body2" sx={{ p: 2, color: 'text.secondary' }}>No members or payments found.</Typography>}
             {results.length > 0 && (
               <List disablePadding>
-                {memberResults.length > 0 && <Typography variant="caption" sx={{ display: 'block', px: 2, pt: 1.5, pb: 0.5, color: '#7d8590', fontWeight: 700 }}>MEMBERS</Typography>}
+                {memberResults.length > 0 && <Typography variant="caption" sx={{ display: 'block', px: 2, pt: 1.5, pb: 0.5, color: 'text.secondary', fontWeight: 700 }}>MEMBERS</Typography>}
                 {memberResults.map(member => {
                   const index = results.findIndex(result => result.type === 'member' && result.item.id === member.id);
                   return <ListItemButton key={member.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'member', item: member })} sx={{ gap: 1.25, px: 2 }}>
                     <GroupsRoundedIcon sx={{ color: '#10b981', fontSize: 20 }} />
-                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 } }, secondary: { sx: { fontSize: '0.72rem', color: '#7d8590' } } }} />
+                    <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={`${member.memberNumber} · ${member.phone}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 } }, secondary: { sx: { fontSize: '0.72rem', color: 'text.secondary' } } }} />
                     <Chip label="Member" size="small" sx={{ bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}
-                {paymentResults.length > 0 && <Typography variant="caption" sx={{ display: 'block', px: 2, pt: 1.5, pb: 0.5, color: '#7d8590', fontWeight: 700 }}>PAYMENTS</Typography>}
+                {paymentResults.length > 0 && <Typography variant="caption" sx={{ display: 'block', px: 2, pt: 1.5, pb: 0.5, color: 'text.secondary', fontWeight: 700 }}>PAYMENTS</Typography>}
                 {paymentResults.map(payment => {
                   const index = results.findIndex(result => result.type === 'payment' && result.item.id === payment.id);
                   return <ListItemButton key={payment.id} selected={activeResult === index} onMouseEnter={() => setActiveResult(index)} onClick={() => openSearchResult({ type: 'payment', item: payment })} sx={{ gap: 1.25, px: 2 }}>
                     <ReceiptLongRoundedIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 }, noWrap: true }, secondary: { sx: { fontSize: '0.72rem', color: '#7d8590' }, noWrap: true } }} />
+                    <ListItemText primary={payment.referenceId || payment.id} secondary={`${payment.memberName || 'Walk-in payment'} · ₹${Number(payment.amount).toLocaleString()} · ${payment.status}`} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 700 }, noWrap: true }, secondary: { sx: { fontSize: '0.72rem', color: 'text.secondary' }, noWrap: true } }} />
                     <Chip label="Payment" size="small" sx={{ bgcolor: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontWeight: 700, fontSize: '0.65rem' }} />
                   </ListItemButton>;
                 })}
@@ -310,11 +310,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             size="small"
             sx={{
               display: { xs: 'none', sm: 'inline-flex' },
-              bgcolor: 'rgba(255,255,255,0.06)',
-              color: '#7d8590',
+              bgcolor: 'divider',
+              color: 'text.secondary',
               fontSize: '0.72rem',
               fontWeight: 600,
-              border: '1px solid rgba(255,255,255,0.07)',
+              border: '1px solid', borderColor: 'divider',
               height: 26,
             }}
           />
@@ -339,14 +339,14 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
               {initials}
             </Avatar>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <Typography variant="caption" sx={{ color: '#f0f6fc', display: 'block', fontSize: '0.78rem', lineHeight: 1.2, fontWeight: 700 }}>
+              <Typography variant="caption" sx={{ color: 'text.primary', display: 'block', fontSize: '0.78rem', lineHeight: 1.2, fontWeight: 700 }}>
                 {displayName}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.67rem' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.67rem' }}>
                 {roleLabel}
               </Typography>
             </Box>
-            <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+            <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
           </Box>
         </Box>
       </Toolbar>
@@ -360,8 +360,8 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           paper: {
             sx: {
               width: { xs: 'calc(100vw - 32px)', sm: 320 },
-              bgcolor: '#161b22',
-              border: '1px solid rgba(255,255,255,0.07)',
+              bgcolor: 'background.paper',
+              border: '1px solid', borderColor: 'divider',
               borderRadius: 2,
               mt: 1,
             },
@@ -371,11 +371,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" sx={{ color: '#f0f6fc', fontWeight: 700 }}>Notifications</Typography>
+          <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 700 }}>Notifications</Typography>
         </Box>
         <Divider />
         <Box sx={{ px: 2, py: 2 }}>
-          <Typography variant="body2" sx={{ color: '#7d8590' }}>No new notifications</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>No new notifications</Typography>
         </Box>
       </Menu>
 
@@ -388,8 +388,8 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           paper: {
             sx: {
               width: 220,
-              bgcolor: '#161b22',
-              border: '1px solid rgba(255,255,255,0.07)',
+              bgcolor: 'background.paper',
+              border: '1px solid', borderColor: 'divider',
               borderRadius: 2,
               mt: 1,
             },
@@ -399,11 +399,11 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {/* User Info Header */}
-        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <Typography variant="subtitle2" sx={{ color: '#f0f6fc', fontWeight: 700, fontSize: '0.82rem' }}>
+        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
+          <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 700, fontSize: '0.82rem' }}>
             {displayName}
           </Typography>
-          <Typography variant="caption" sx={{ color: '#7d8590', fontSize: '0.7rem' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
             {user?.email}
           </Typography>
           <Box sx={{ mt: 0.75, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -438,22 +438,22 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
         <MenuItem
           onClick={() => { setUserAnchor(null); setProfileOpen(true); }}
-          sx={{ py: 1, px: 2, gap: 1.5, mt: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
+          sx={{ py: 1, px: 2, gap: 1.5, mt: 0.5, '&:hover': { bgcolor: 'divider' } }}
         >
           <ListItemIcon sx={{ minWidth: 'auto' }}>
-            <PersonRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+            <PersonRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
           </ListItemIcon>
-          <Typography variant="body2" sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>My Profile</Typography>
+          <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.82rem' }}>My Profile</Typography>
         </MenuItem>
 
         <MenuItem
           onClick={() => { setUserAnchor(null); setPasswordOpen(true); }}
-          sx={{ py: 1, px: 2, gap: 1.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } }}
+          sx={{ py: 1, px: 2, gap: 1.5, '&:hover': { bgcolor: 'divider' } }}
         >
           <ListItemIcon sx={{ minWidth: 'auto' }}>
-            <LockResetRoundedIcon sx={{ fontSize: 16, color: '#7d8590' }} />
+            <LockResetRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
           </ListItemIcon>
-          <Typography variant="body2" sx={{ color: '#f0f6fc', fontSize: '0.82rem' }}>Change Password</Typography>
+          <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.82rem' }}>Change Password</Typography>
         </MenuItem>
 
         <Divider sx={{ my: 0.5 }} />

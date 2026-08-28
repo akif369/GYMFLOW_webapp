@@ -86,13 +86,13 @@ export default function MyProfileDialog({ open, onClose, onSuccess }: MyProfileD
   if (!user) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" sx={{ '& .MuiDialog-paper': { bgcolor: '#161b22', backgroundImage: 'none' } }}>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" sx={{ '& .MuiDialog-paper': { bgcolor: 'background.paper', backgroundImage: 'none' } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>My Profile</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent sx={{ pt: 1, pb: 3 }}>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
+          <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
               Account Information
             </Typography>

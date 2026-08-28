@@ -139,12 +139,12 @@ export default function TrainerClientsPage() {
                     </Box>
                     <LinearProgress variant="determinate" value={client.progressPct} sx={{
                       height: 4, borderRadius: 4,
-                      bgcolor: 'rgba(255,255,255,0.06)',
+                      bgcolor: 'divider',
                       '& .MuiLinearProgress-bar': { bgcolor: '#ec4899', borderRadius: 4 },
                     }} />
                   </Box>
 
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 1.5 }} />
+                  <Divider sx={{ borderColor: 'divider', mb: 1.5 }} />
 
                   {/* Stats */}
                   <Grid container spacing={1}>
@@ -168,7 +168,7 @@ export default function TrainerClientsPage() {
                     </Grid>
                   </Grid>
 
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', my: 1.5 }} />
+                  <Divider sx={{ borderColor: 'divider', my: 1.5 }} />
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'text.disabled' }}>
                     <span>Last: {client.lastSession}</span>

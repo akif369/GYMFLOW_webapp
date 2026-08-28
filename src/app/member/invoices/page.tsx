@@ -89,7 +89,7 @@ export default function MemberInvoicesPage() {
                     startIcon={<DownloadRoundedIcon sx={{ fontSize: 15 }} />}
                     variant="outlined"
                     sx={{
-                      borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary',
+                      borderColor: 'divider', color: 'text.secondary',
                       '&:hover': { borderColor: '#10b981', color: '#10b981', bgcolor: 'rgba(16,185,129,0.06)' },
                       fontSize: '0.75rem', minWidth: 90,
                     }}
