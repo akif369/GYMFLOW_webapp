@@ -302,7 +302,7 @@ export default function AddMemberDialog({
                       onChange={e => setAddForm({ ...addForm, pin: e.target.value.replace(/\D/g, '') })}
                       fullWidth
                       size="small"
-                      placeholder="Leave empty to use Gym Number"
+                      placeholder="Leave empty to auto-generate (e.g. 10001)"
                       sx={{ mt: 2 }}
                     />
                   </Collapse>

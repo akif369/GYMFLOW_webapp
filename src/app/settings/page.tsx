@@ -100,10 +100,13 @@ const emptyBranch: BranchForm = {
 };
 
 function gymNumberToPin(memberNumber: string | undefined) {
-  const digits = String(memberNumber ?? '').replace(/\D/g, '');
+  const str = String(memberNumber ?? '');
+  const digits = str.replace(/\D/g, '');
   if (!digits) return '';
   const normalized = parseInt(digits, 10);
-  return Number.isFinite(normalized) ? String(normalized) : '';
+  if (!Number.isFinite(normalized)) return '';
+  const isStaff = str.toUpperCase().startsWith('SAF');
+  return `${isStaff ? '2' : '1'}${String(normalized).padStart(4, '0')}`;
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -425,7 +428,8 @@ export default function SettingsPage() {
                   const mId = e.target.value;
                   const member = membersList.find((m: any) => m.id === mId);
                   const existingIdentity = identities?.find((i: any) => i.memberId === mId);
-                  const autoPin = existingIdentity ? existingIdentity.deviceUserId : gymNumberToPin(member?.memberId);
+                  const memberCode = member?.memberNumber || member?.memberId;
+                  const autoPin = existingIdentity ? existingIdentity.deviceUserId : gymNumberToPin(memberCode);
                   setManualSyncForm({ memberId: mId, pin: autoPin });
                 }} disabled={loading || membersLoading || syncMutation.isPending}>
                   {membersList.map((m: any) => {
