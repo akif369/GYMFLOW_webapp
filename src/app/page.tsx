@@ -30,6 +30,7 @@ import AddMemberDialog from '@/components/AddMemberDialog';
 import PageSkeleton from '@/components/PageSkeleton';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useBranches } from '@/hooks/queries/branches';
 type DashboardStats = {
   todaysCheckins: number; currentlyInside: number; todaysRevenue: number; monthRevenue: number;
   pendingAmount: number; expiringIn7Days: number; expiredMemberships: number; newMembersMonth: number;
@@ -326,6 +327,9 @@ export default function Dashboard() {
   const [recentPayments, setRecentPayments] = useState<DashboardPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+
+  const { data: branchesData } = useBranches();
+  const branches = branchesData?.branches || [];
 
   useEffect(() => {
     let cancelled = false;
@@ -794,6 +798,7 @@ export default function Dashboard() {
       <AddMemberDialog
         open={addOpen}
         onClose={() => setAddOpen(false)}
+        branches={branches}
         onSuccess={() => {
           router.push('/members');
         }}

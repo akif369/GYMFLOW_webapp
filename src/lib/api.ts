@@ -121,7 +121,9 @@ api.interceptors.response.use(
         isRefreshing = false;
       }
     } else if (error.response?.status !== 401) {
-      toast.error(error.response?.data?.error || error.message || 'An error occurred');
+      const errData = error.response?.data?.error;
+      const message = typeof errData === 'string' ? errData : errData?.message || error.response?.data?.message || error.message || 'An error occurred';
+      toast.error(message);
     }
 
     return Promise.reject(error);

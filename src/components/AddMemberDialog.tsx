@@ -6,6 +6,8 @@ import {
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { api } from '@/lib/api';
 import { useSettings } from '@/hooks/queries/settings';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore, UserRole } from '@/store/useAuthStore';
 
 import AvatarUpload from './AvatarUpload';
 
@@ -40,7 +42,10 @@ export default function AddMemberDialog({
   const [photoError, setPhotoError] = useState('');
 
   const { data: settings } = useSettings();
-  const [syncToDevice, setSyncToDevice] = useState(false);
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const isOrgOwner = user?.role === UserRole.ORGANIZATION_OWNER;
+  const [syncToDevice, setSyncToDevice] = useState(true);
   
   React.useEffect(() => {
     if (settings?.settings) {
@@ -74,9 +79,9 @@ export default function AddMemberDialog({
     setPhotoError('');
     if (
       !addForm.firstName || !addForm.lastName || !addForm.phone || !addForm.dob || !addForm.joinDate ||
-      (branches && branches.length > 0 && !addForm.branchId)
+      (isOrgOwner && branches && branches.length > 0 && !addForm.branchId)
     ) {
-      setAddError('First Name, Last Name, Phone, Date of Birth, Join Date, and Branch are required.');
+      setAddError('First Name, Last Name, Phone, Date of Birth, Join Date' + (isOrgOwner ? ', and Branch' : '') + ' are required.');
       return;
     }
     if (!/^[6-9]\d{9}$/.test(addForm.phone)) {
@@ -87,6 +92,9 @@ export default function AddMemberDialog({
     setAddError('');
     try {
       const payload: any = { ...addForm, phone: `+91${addForm.phone}` };
+      if (!isOrgOwner && user?.branchId) {
+        payload.branchId = user.branchId;
+      }
       if (!payload.branchId) delete payload.branchId;
       
       payload.syncToDevice = syncToDevice;
@@ -114,6 +122,9 @@ export default function AddMemberDialog({
           setPhotoError('Member created, but the profile photo could not be uploaded. You can upload it from the member\'s profile page.');
         }
       }
+
+      await queryClient.invalidateQueries({ queryKey: ['members'] });
+      await queryClient.invalidateQueries({ queryKey: ['biometric-identities'] });
 
       if (syncErrorMsg) {
         setSyncError(`Device sync failed: ${syncErrorMsg}. Please change the member's PIN in Settings.`);
@@ -237,7 +248,7 @@ export default function AddMemberDialog({
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Grid>
-              {branches && branches.length > 0 && (
+              {isOrgOwner && branches && branches.length > 0 && (
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Branch"
@@ -268,30 +279,36 @@ export default function AddMemberDialog({
             </IconButton>
           </Box>
           <Collapse in={additionalExpanded}>
-            <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} sx={{ mt: 1.25, mb: 2 }} />
-            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1.5 }}>
-              <FormControlLabel
-                control={<Switch checked={syncToDevice} onChange={e => setSyncToDevice(e.target.checked)} color="primary" />}
-                label={
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Sync to Biometric Device</Typography>
-                    <Typography variant="caption" sx={{ color: '#7d8590' }}>Automatically assign a PIN and queue access group data for the member's branch</Typography>
-                  </Box>
-                }
-                sx={{ m: 0, width: '100%' }}
-              />
-              <Collapse in={syncToDevice}>
-                <TextField 
-                  label="Optional PIN" 
-                  value={addForm.pin} 
-                  onChange={e => setAddForm({ ...addForm, pin: e.target.value.replace(/\D/g, '') })} 
-                  fullWidth 
-                  size="small" 
-                  placeholder="Leave empty to use Gym Number" 
-                  sx={{ mt: 2 }}
-                />
-              </Collapse>
-            </Box>
+            <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: 0.25, mb: 2 }}>
+              <Grid size={{ xs: 12 }}>
+                <TextField label="Address" value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} fullWidth multiline minRows={2} />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 1.5 }}>
+                  <FormControlLabel
+                    control={<Switch checked={syncToDevice} onChange={e => setSyncToDevice(e.target.checked)} color="primary" />}
+                    label={
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>Add to biometric device</Typography>
+                        <Typography variant="caption" sx={{ color: '#7d8590' }}>Creates a PIN in Member Device Permissions & Identities and queues the user on the branch terminal</Typography>
+                      </Box>
+                    }
+                    sx={{ m: 0, width: '100%' }}
+                  />
+                  <Collapse in={syncToDevice}>
+                    <TextField
+                      label="Optional PIN"
+                      value={addForm.pin}
+                      onChange={e => setAddForm({ ...addForm, pin: e.target.value.replace(/\D/g, '') })}
+                      fullWidth
+                      size="small"
+                      placeholder="Leave empty to use Gym Number"
+                      sx={{ mt: 2 }}
+                    />
+                  </Collapse>
+                </Box>
+              </Grid>
+            </Grid>
           </Collapse>
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.5, sm: 2.5 }, gap: 1.5, flexDirection: { xs: 'column-reverse', sm: 'row' }, '& > button': { mx: '0 !important', width: { xs: '100%', sm: 'auto' }, minHeight: 44 } }}>

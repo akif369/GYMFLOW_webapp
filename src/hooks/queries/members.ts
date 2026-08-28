@@ -70,6 +70,7 @@ export function useMembers(params: Record<string, any>) {
           membershipStatus: calculatedMembershipStatus,
           goal: String(m.goal ?? ''),
           experience: String(m.experience ?? ''),
+          branchId: m.branchId ? String(m.branchId) : '',
           branch: String(m.branch ?? ''),
           address: String(m.address ?? ''),
           emergency: m.emergency ?? { name: '', phone: '', relation: '' },

@@ -25,6 +25,7 @@ import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AddMemberDialog from '@/components/AddMemberDialog';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 import { useMembers, useMembershipPlans } from '@/hooks/queries/members';
+import { useBranches } from '@/hooks/queries/branches';
 
 // ── MemberAvatar — resolves an S3 key to a presigned URL and renders avatar ──
 function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; firstName: string; lastName: string }) {
@@ -90,6 +91,9 @@ function MembersPageContent() {
 
   const { data: plansData } = useMembershipPlans();
   const renewPlans = plansData ?? [];
+
+  const { data: branchesData } = useBranches();
+  const branches = branchesData?.branches || [];
 
   const queryParams: Record<string, string> = {
     page: String(paginationModel.page + 1),
@@ -494,6 +498,7 @@ function MembersPageContent() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={() => refetchMembers()}
+        branches={branches}
       />
     </AppLayout>
   );

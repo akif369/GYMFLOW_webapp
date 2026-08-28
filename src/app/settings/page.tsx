@@ -99,6 +99,13 @@ const emptyBranch: BranchForm = {
   id: '', name: '', address: '', city: '', phone: '', email: '', capacity: '', status: 'ACTIVE', openingTime: '06:00', closingTime: '22:00',
 };
 
+function gymNumberToPin(memberNumber: string | undefined) {
+  const digits = String(memberNumber ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  const normalized = parseInt(digits, 10);
+  return Number.isFinite(normalized) ? String(normalized) : '';
+}
+
 function errorMessage(error: unknown, fallback: string) {
   if (error && typeof error === 'object' && 'response' in error) {
     const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
@@ -418,7 +425,7 @@ export default function SettingsPage() {
                   const mId = e.target.value;
                   const member = membersList.find((m: any) => m.id === mId);
                   const existingIdentity = identities?.find((i: any) => i.memberId === mId);
-                  const autoPin = existingIdentity ? existingIdentity.deviceUserId : (member ? member.memberId.replace(/\D/g, '') : '');
+                  const autoPin = existingIdentity ? existingIdentity.deviceUserId : gymNumberToPin(member?.memberId);
                   setManualSyncForm({ memberId: mId, pin: autoPin });
                 }} disabled={loading || membersLoading || syncMutation.isPending}>
                   {membersList.map((m: any) => {
