@@ -26,6 +26,7 @@ import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 import { useMembers, useMembershipPlans } from '@/hooks/queries/members';
 import { useBranches } from '@/hooks/queries/branches';
 import { formatDateOnly } from '@/lib/date';
+import { usePersistedDataGridState } from '@/hooks/usePersistedDataGridState';
 
 // ── MemberAvatar — resolves an S3 key to a presigned URL ──
 function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; firstName: string; lastName: string }) {
@@ -90,6 +91,7 @@ function MembersPageContent() {
   const longPressTriggered = useRef(false);
 
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: defaultPageSize });
+  const tableState = usePersistedDataGridState('gymflow.org-members.table.v1');
 
 
   const { data: plansData } = useMembershipPlans();
@@ -229,6 +231,7 @@ function MembersPageContent() {
       width: 52,
       sortable: false,
       disableColumnMenu: true,
+      hideable: false,
       renderCell: (params) => (
         <MemberAvatar
           photoKey={params.row.photoUrl}
@@ -261,9 +264,16 @@ function MembersPageContent() {
       headerName: 'Expiry',
       width: 116,
       renderCell: (p) => {
+        const isExpired = p.row.membershipStatus === 'EXPIRED';
+        const isActive = p.row.membershipStatus === 'ACTIVE';
         const isExpiring = p.row.membershipStatus === 'EXPIRING';
         return (
-          <Typography sx={{ fontSize: '0.78rem', color: isExpiring ? '#fbbf24' : 'text.secondary', fontWeight: isExpiring ? 600 : 400 }}>
+          <Typography sx={{
+            fontSize: '0.78rem',
+            color: isExpired ? 'error.main' : isActive ? 'success.main' : isExpiring ? 'warning.main' : 'text.secondary',
+            fontWeight: isExpired || isActive || isExpiring ? 600 : 400,
+            whiteSpace: 'nowrap',
+          }}>
             {formatDateOnly(p.value)}
           </Typography>
         );
@@ -292,6 +302,7 @@ function MembersPageContent() {
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
+      hideable: false,
       renderCell: params => (
         <Tooltip title="Member actions">
           <IconButton
@@ -462,9 +473,14 @@ function MembersPageContent() {
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           paginationMode="server"
+          columnVisibilityModel={tableState.columnVisibilityModel}
+          onColumnVisibilityModelChange={tableState.onColumnVisibilityModelChange}
+          sortModel={tableState.sortModel}
+          onSortModelChange={tableState.onSortModelChange}
+          filterModel={tableState.filterModel}
+          onFilterModelChange={tableState.onFilterModelChange}
           loading={apiLoading}
           disableRowSelectionOnClick
-          disableColumnMenu
           sx={{
             border: 0,
             '& .MuiDataGrid-columnHeaders': {
