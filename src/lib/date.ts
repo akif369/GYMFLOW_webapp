@@ -8,7 +8,7 @@ export function formatDateOnly(value: unknown, timeZone = DEFAULT_TIME_ZONE): st
 
   // Date inputs and legacy date-only values are already calendar dates.
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const [year, month, day] = raw.split('-').map(Number);
+    const [year = 0, month = 1, day = 1] = raw.split('-').map(Number);
     return new Intl.DateTimeFormat('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC',
     }).format(new Date(Date.UTC(year, month - 1, day)));

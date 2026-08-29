@@ -33,8 +33,8 @@ export function usePaymentMutations() {
   });
 
   const refundPayment = useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const res = await api.post(`/payments/${id}/refund`, { reason });
+    mutationFn: async ({ id, amount, reason }: { id: string; amount: number; reason: string }) => {
+      const res = await api.post(`/payments/${id}/refund`, { amount, reason });
       return res.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payments'] }),

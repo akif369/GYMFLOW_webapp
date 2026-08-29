@@ -307,10 +307,10 @@ function CardHeader({ title, sub, action, collapsible, collapsed, onToggle }: Ca
 }
 
 const payStatusColor: Record<string, string> = {
-  PAID: '#4ade80', PENDING: '#fbbf24', PARTIALLY_PAID: '#fbbf24', FAILED: '#fb7185',
+  PAID: '#4ade80', PENDING: '#fbbf24', PARTIALLY_PAID: '#fbbf24', PARTIALLY_REFUNDED: '#fbbf24', REFUNDED: '#94a3b8', FAILED: '#fb7185', CANCELLED: '#94a3b8',
 };
 const payStatusBg: Record<string, string> = {
-  PAID: alpha('#22c55e', 0.1), PENDING: alpha('#f59e0b', 0.1), PARTIALLY_PAID: alpha('#f59e0b', 0.1), FAILED: alpha('#f43f5e', 0.1),
+  PAID: alpha('#22c55e', 0.1), PENDING: alpha('#f59e0b', 0.1), PARTIALLY_PAID: alpha('#f59e0b', 0.1), PARTIALLY_REFUNDED: alpha('#f59e0b', 0.1), REFUNDED: alpha('#94a3b8', 0.1), FAILED: alpha('#f43f5e', 0.1), CANCELLED: alpha('#94a3b8', 0.1),
 };
 
 // ─── Dashboard Page ────────────────────────────────────────────────────────────
@@ -349,7 +349,16 @@ export default function Dashboard() {
           const minutes = checkOutAt ? Math.max(0, Math.round((new Date(checkOutAt).getTime() - new Date(checkInAt).getTime()) / 60000)) : 0;
           return { id: String(log.id), member: String(log.memberName ?? ''), memberId: String(log.memberId ?? ''), date: String(log.date ?? ''), checkIn: String(log.checkIn ?? ''), checkOut: log.checkOut ? String(log.checkOut) : null, duration: checkOutAt ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : 'Inside', method: String(log.method ?? 'MANUAL'), branch: '' };
         }));
-        setRecentPayments((data.recentPayments ?? []).map((payment: Record<string, unknown>) => ({ id: String(payment.id), member: String(payment.memberName ?? ''), memberId: String(payment.memberId ?? ''), amount: Number(payment.amount ?? 0), method: String(payment.method ?? ''), status: String(payment.status ?? ''), date: String(payment.date ?? ''), refId: String(payment.refId ?? ''), plan: String(payment.plan ?? '') })));
+        setRecentPayments((data.recentPayments ?? data.payments ?? []).map((payment: Record<string, unknown>) => {
+          const createdAt = String(payment.createdAt ?? payment.date ?? '');
+          const parsed = new Date(createdAt);
+          const date = Number.isNaN(parsed.getTime()) ? String(payment.date ?? '') : new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(parsed);
+          return {
+            id: String(payment.id), member: String(payment.memberName ?? payment.member ?? 'Unknown member'), memberId: String(payment.memberId ?? ''),
+            amount: Number(payment.totalAmount ?? payment.amount ?? 0), method: String(payment.paymentMethod ?? payment.method ?? '—'),
+            status: String(payment.status ?? 'UNKNOWN'), date, refId: String(payment.referenceId ?? payment.refId ?? ''), plan: String(payment.description ?? payment.plan ?? ''),
+          };
+        }));
       } catch {
         // Fallback gracefully — leave state as null/empty arrays
       } finally {
@@ -357,7 +366,14 @@ export default function Dashboard() {
       }
     }
     load();
-    return () => { cancelled = true; };
+    const refreshOnFocus = () => { if (document.visibilityState === 'visible') load(); };
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', refreshOnFocus);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+    };
   }, []);
 
   const s = stats ?? { 
@@ -541,7 +557,7 @@ export default function Dashboard() {
               }
             />
             <Grid container spacing={1.5}>
-              {paymentsData.map(pay => (
+              {paymentsData.length === 0 ? <Grid size={12}><Typography color="text.secondary" sx={{ py: 2, textAlign: 'center', fontSize: '0.78rem' }}>No recent payments</Typography></Grid> : paymentsData.map(pay => (
                 <Grid size={12} key={pay.id}>
                   <Box sx={{
                     p: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider',
@@ -749,7 +765,7 @@ export default function Dashboard() {
             }
           />
           <Grid container spacing={1.5}>
-            {paymentsData.map(pay => (
+            {paymentsData.length === 0 ? <Grid size={12}><Typography color="text.secondary" sx={{ py: 2, textAlign: 'center', fontSize: '0.78rem' }}>No recent payments</Typography></Grid> : paymentsData.map(pay => (
               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={pay.id}>
                 <Box sx={{
                   p: 1.5, borderRadius: 2,

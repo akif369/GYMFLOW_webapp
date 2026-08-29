@@ -23,7 +23,7 @@ type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'succe
 
 const statusColor: Record<string, ChipColor> = {
   PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning',
-  FAILED: 'error', REFUNDED: 'default', CANCELLED: 'default', PROCESSING: 'info',
+  FAILED: 'error', REFUNDED: 'default', PARTIALLY_REFUNDED: 'warning', CANCELLED: 'default', PROCESSING: 'info',
 };
 
 type Payment = {
@@ -34,6 +34,7 @@ type Payment = {
   method: string;
   status: string;
   date: string;
+  createdAt: string;
   refId: string;
   description: string;
 };
@@ -49,6 +50,8 @@ function PaymentsPageContent() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [dateFromInput, setDateFromInput] = useState('');
+  const [dateToInput, setDateToInput] = useState('');
 
   // Form state
   const [memberIdInput, setMemberIdInput] = useState(memberIdParam);
@@ -62,9 +65,12 @@ function PaymentsPageContent() {
   // Refund state
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [refundError, setRefundError] = useState('');
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsPayment, setDetailsPayment] = useState<Payment | null>(null);
 
   // Invoice state
   const [generateInvoiceOpen, setGenerateInvoiceOpen] = useState(false);
@@ -110,7 +116,8 @@ function PaymentsPageContent() {
     amount: Number(p.totalAmount ?? p.amount ?? 0),
     method: String(p.paymentMethod ?? p.method ?? ''),
     status: String(p.status ?? ''),
-    date: String(p.createdAt ?? p.date ?? '').split('T')[0],
+    createdAt: String(p.createdAt ?? p.date ?? ''),
+    date: String(p.createdAt ?? p.date ?? ''),
     refId: String(p.referenceId ?? p.refId ?? ''),
     description: String(p.description ?? ''),
   }));
@@ -168,7 +175,16 @@ function PaymentsPageContent() {
   const filtered = payments.filter((p: Payment) => statusFilter === 'ALL' || p.status === statusFilter);
   const totalRevenue = filtered.filter((p: Payment) => p.status === 'PAID').reduce((sum: number, p: Payment) => sum + p.amount, 0);
   const totalPending = filtered.filter((p: Payment) => p.status === 'PENDING').reduce((sum: number, p: Payment) => sum + p.amount, 0);
-  const totalRefunded = filtered.filter((p: Payment) => p.status === 'REFUNDED').reduce((sum: number, p: Payment) => sum + p.amount, 0);
+  const totalRefunded = filtered.filter((p: Payment) => ['REFUNDED', 'PARTIALLY_REFUNDED'].includes(p.status)).reduce((sum: number, p: Payment) => sum + p.amount, 0);
+
+  const formatDateTime = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '—' : new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(parsed);
+  };
+  const resetPaymentFilters = () => {
+    setDateFrom(''); setDateTo(''); setDateFromInput(''); setDateToInput('');
+    setPage(0); setPaymentCursors(['']);
+  };
 
   const memberName = payments.find((p: Payment) => p.memberId === memberIdParam)?.member ?? '';
   const visibleInvoices = memberIdParam
@@ -227,7 +243,7 @@ function PaymentsPageContent() {
 
       {/* Filters */}
       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-        {['ALL', 'PAID', 'PENDING', 'PARTIALLY_PAID', 'FAILED', 'REFUNDED'].map(f => (
+        {['ALL', 'PAID', 'PENDING', 'PARTIALLY_PAID', 'FAILED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map(f => (
           <Chip
             key={f}
             label={f}
@@ -241,19 +257,20 @@ function PaymentsPageContent() {
         <Box sx={{ flex: 1 }} />
         <TextField
           size="small" label="From" type="date" value={dateFrom}
-          onChange={e => { setDateFrom(e.target.value); setPage(0); setPaymentCursors(['']); }}
+          onChange={e => setDateFromInput(e.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
         <TextField
           size="small" label="To" type="date" value={dateTo}
-          onChange={e => { setDateTo(e.target.value); setPage(0); setPaymentCursors(['']); }}
+          onChange={e => setDateToInput(e.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ width: 140 }}
         />
-        {(dateFrom || dateTo) && (
-          <Button size="small" variant="text" onClick={() => { setDateFrom(''); setDateTo(''); setPage(0); setPaymentCursors(['']); }}>Clear dates</Button>
-        )}
+        <Button size="small" variant="contained" disabled={dateFromInput > dateToInput && Boolean(dateToInput)} onClick={() => {
+          setDateFrom(dateFromInput); setDateTo(dateToInput); setPage(0); setPaymentCursors(['']);
+        }}>Apply dates</Button>
+        {(dateFrom || dateTo || dateFromInput || dateToInput) && <Button size="small" variant="text" onClick={resetPaymentFilters}>Clear</Button>}
       </Box>
 
       {/* Payments Table */}
@@ -287,7 +304,10 @@ function PaymentsPageContent() {
               </TableRow>
             ) : filtered.map((p: Payment) => (
               <TableRow key={p.id} sx={{ '&:hover': { bgcolor: 'rgba(16,185,129,0.04)' } }}>
-                <TableCell><Typography variant="caption">{p.date}</Typography></TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatDateTime(p.createdAt)}</Typography>
+                  <Typography variant="caption" color="text.secondary">Transaction time</Typography>
+                </TableCell>
                 <TableCell>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>{p.member || '—'}</Typography>
                 </TableCell>
@@ -301,13 +321,14 @@ function PaymentsPageContent() {
                   <Chip label={p.status} size="small" color={statusColor[p.status] || 'default'} />
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    {p.status === 'PAID' && (
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                    <Button size="small" variant="text" onClick={() => { setDetailsPayment(p); setDetailsOpen(true); }}>View</Button>
+                    {['PAID', 'PARTIALLY_REFUNDED'].includes(p.status) && (
                       <Button
                         size="small" variant="text" color="error"
-                        onClick={() => { setRefundPayment(p); setRefundReason(''); setRefundError(''); setRefundOpen(true); }}
+                        onClick={() => { setRefundPayment(p); setRefundAmount(p.status === 'PARTIALLY_REFUNDED' ? '' : String(p.amount)); setRefundReason(''); setRefundError(''); setRefundOpen(true); }}
                       >
-                        Refund
+                        {p.status === 'PARTIALLY_REFUNDED' ? 'Refund remaining' : 'Refund'}
                       </Button>
                     )}
                   </Box>
@@ -410,6 +431,24 @@ function PaymentsPageContent() {
           sx={{ borderTop: 1, borderColor: 'divider', '.MuiTablePagination-toolbar': { px: { xs: 1, sm: 2 } } }}
         />
       </Card>
+
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Payment details</DialogTitle>
+        <DialogContent dividers>
+          {detailsPayment && <Grid container spacing={2}>
+            {[
+              ['Member', detailsPayment.member || '—'], ['Status', detailsPayment.status || '—'],
+              ['Amount', `₹${detailsPayment.amount.toLocaleString()}`], ['Payment method', detailsPayment.method || '—'],
+              ['Recorded at', formatDateTime(detailsPayment.createdAt)], ['Reference ID', detailsPayment.refId || '—'],
+              ['Description', detailsPayment.description || '—'], ['Ledger ID', detailsPayment.id],
+            ].map(([label, value]) => <Grid size={{ xs: 12, sm: 6 }} key={label}>
+              <Typography variant="caption" color="text.secondary">{label}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>{value}</Typography>
+            </Grid>)}
+          </Grid>}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setDetailsOpen(false)}>Close</Button></DialogActions>
+      </Dialog>
 
       <Dialog open={generateInvoiceOpen} onClose={() => setGenerateInvoiceOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { bgcolor: 'background.paper' } } }}>
         <DialogTitle>Generate Invoice</DialogTitle>
@@ -535,6 +574,10 @@ function PaymentsPageContent() {
             </Alert>
           )}
           <TextField
+            label="Refund amount (₹)" type="number" fullWidth size="small" value={refundAmount}
+            onChange={e => setRefundAmount(e.target.value)} slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }} sx={{ mb: 2 }}
+          />
+          <TextField
             label="Reason for Refund"
             fullWidth size="small"
             multiline rows={2}
@@ -547,12 +590,12 @@ function PaymentsPageContent() {
           <Button onClick={() => setRefundOpen(false)}>Cancel</Button>
           <Button
             variant="contained" color="error"
-            disabled={refundSubmitting}
+            disabled={refundSubmitting || !refundAmount || Number(refundAmount) <= 0 || !refundReason.trim()}
             onClick={async () => {
               if (!refundPayment) return;
               setRefundSubmitting(true); setRefundError('');
               try {
-                await refundMutation.mutateAsync({ id: refundPayment.id, reason: refundReason });
+                await refundMutation.mutateAsync({ id: refundPayment.id, amount: Number(refundAmount), reason: refundReason || 'Administrative refund' });
                 setRefundOpen(false);
               } catch (err: unknown) {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
