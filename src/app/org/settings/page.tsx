@@ -2,6 +2,7 @@
 import { toast } from 'react-hot-toast';
 import { Box, Typography, Card, CardContent, Grid, Button, TextField } from '@mui/material';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import BiometricDeviceManager from '@/components/BiometricDeviceManager';
 
 export default function SettingsPage() {
   return (
@@ -61,6 +62,11 @@ export default function SettingsPage() {
               </Grid>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Hardware */}
+        <Grid size={{ xs: 12 }}>
+          <BiometricDeviceManager />
         </Grid>
 
         {/* Save Button */}

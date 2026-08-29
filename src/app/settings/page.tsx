@@ -17,6 +17,8 @@ import { useSettings, useOrg, useSettingMutations } from '@/hooks/queries/settin
 import { useBranches, useBranchMutations } from '@/hooks/queries/branches';
 import { useBiometricDevices, useBiometricIdentities, useRegisterBiometricDevice, useDeleteBiometricDevice, useSyncMemberToDevice, useSyncMemberAccess, useDeleteBiometricIdentity } from '@/hooks/queries/biometrics';
 import { useMembers } from '@/hooks/queries/members';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useAppStore } from '@/store/useAppStore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
@@ -111,7 +113,8 @@ function gymNumberToPin(memberNumber: string | undefined) {
 
 function errorMessage(error: unknown, fallback: string) {
   if (error && typeof error === 'object' && 'response' in error) {
-    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    const response = (error as { response?: { data?: { message?: string; error?: { message?: string } } } }).response;
+    const message = response?.data?.error?.message ?? response?.data?.message;
     if (message) return message;
   }
   return fallback;
@@ -126,6 +129,8 @@ export default function SettingsPage() {
   const { data: orgData, isLoading: orgLoading } = useOrg();
   const { data: branchesData, isLoading: branchesLoading } = useBranches();
   const { data: settingsData, isLoading: settingsLoading } = useSettings();
+  const user = useAuthStore((state) => state.user);
+  const activeBranchId = useAppStore((state) => state.branchId);
   const { updateSetting, updateOrg } = useSettingMutations();
   const { addBranch, updateBranch } = useBranchMutations();
 
@@ -166,7 +171,13 @@ export default function SettingsPage() {
     }
 
     if (branchesData?.branches?.length) {
-      const branch = branchesData.branches[0];
+      const branches = branchesData.branches;
+      const isOrganizationOwner = user?.role === 'OWNER' || user?.role === 'ORGANIZATION_OWNER';
+      const preferredBranchId = activeBranchId || user?.branchId;
+      const branch = (isOrganizationOwner
+        ? branches.find((candidate: { id: string }) => candidate.id === preferredBranchId)
+        : branches.find((candidate: { id: string }) => candidate.id === user?.branchId))
+        ?? branches[0];
       const settingMap = settingsData?.settings ?? {};
       const branchSetting = settingMap.branch && typeof settingMap.branch === 'object' ? settingMap.branch as Record<string, unknown> : {};
       setBranchForm({
@@ -202,7 +213,7 @@ export default function SettingsPage() {
       const bioSetting = settingMap.biometrics && typeof settingMap.biometrics === 'object' ? settingMap.biometrics as Record<string, unknown> : {};
       setBiometricsForm({ autoSync: bioSetting.autoSync !== false });
     }
-  }, [orgData, branchesData, settingsData]);
+  }, [orgData, branchesData, settingsData, user, activeBranchId]);
 
   const save = async (section: string, action: () => Promise<unknown>, fallback: string) => {
     setSavingSection(section);
