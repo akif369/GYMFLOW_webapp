@@ -607,16 +607,28 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
   return (
     <AppLayout>
       {/* Back + Header */}
-      <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1, mb: 3, width: '100%', flexDirection: 'row' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, width: '100%' }}>
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="small" variant="outlined">Back</Button>
         <Box sx={{ flex: 1 }} />
-        <Button startIcon={<AutorenewIcon />} variant="contained" size="medium"
-          sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 'auto', minWidth: 145, fontWeight: 700 }}
+        {/* Mobile: expiry chip */}
+        {member.latestMembership && (
+          <Chip
+            label={`Expire: ${member.latestMembership.endDate}`}
+            size="small"
+            color={daysRemainingColor}
+            variant="outlined"
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, fontSize: '0.7rem', height: 24 }}
+          />
+        )}
+        {/* Mobile: Renew only */}
+        <Button startIcon={<AutorenewIcon />} variant="contained" size="small"
+          sx={{ display: { xs: 'inline-flex', sm: 'none' }, fontWeight: 700 }}
           onClick={() => { setRenewOpen(true); setRenewError(''); }}>
           Renew
         </Button>
+        {/* Desktop: full action row */}
         <Button startIcon={<AutorenewIcon />} variant="outlined" size="small"
-          sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 'auto' }}
+          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           onClick={() => { setRenewOpen(true); setRenewError(''); }}>
           Renew
         </Button>
@@ -626,7 +638,6 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           onClick={handleCheckIn}>
           Check in
         </Button>
-  
         <Button startIcon={<EditIcon />} variant="contained" size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' } }} onClick={() => {
           setEditForm({
             firstName: member.firstName,
@@ -643,30 +654,64 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
         }}>Edit</Button>
       </Box>
 
-      {/* Profile Card */}
-      <Card elevation={0} sx={{ mb: 3 }}>
-        <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 3 }}>
-          <Avatar
-            src={resolvedPhotoUrl ?? undefined}
-            sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}
-          >
-            {member.firstName[0]}{member.lastName[0]}
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{member.firstName} {member.lastName}</Typography>
-              <Chip label={member.memberNumber} size="small" variant="outlined" />
-              <Chip label={`${memberStatusLabel}`} size="medium" color={membershipStatusColor[memberStatusLabel] ?? 'default'} />
-              <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
+      {/* Profile Card — mobile: compact stacked, desktop: side-by-side */}
+      <Card elevation={0} sx={{ mb: 2.5 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 }, '&:last-child': { pb: { xs: 2, sm: 3 } } }}>
+          {/* ── Mobile layout ── */}
+          <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', gap: 1.5 }}>
+            <Avatar
+              src={resolvedPhotoUrl ?? undefined}
+              sx={{ width: 52, height: 52, bgcolor: 'primary.dark', fontSize: '1.2rem', flexShrink: 0 }}
+            >
+              {member.firstName[0]}{member.lastName[0]}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, mb: 0.5, fontSize: '1.05rem' }}>
+                {member.firstName} {member.lastName}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Chip label={member.memberNumber} size="small" variant="outlined" sx={{ fontSize: '0.68rem', height: 20 }} />
+                <Chip label={memberStatusLabel} size="small" color={membershipStatusColor[memberStatusLabel] ?? 'default'} sx={{ fontSize: '0.68rem', height: 20 }} />
+                <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" sx={{ fontSize: '0.68rem', height: 20 }} />
+              </Box>
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {member.email} · {member.phone}{member.gender ? ` · ${member.gender}` : ''}
+          </Box>
+          {/* Mobile meta row */}
+          <Box sx={{ display: { xs: 'block', sm: 'none' }, mt: 1.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.6 }}>
+              {member.phone}
+              {member.gender ? ` · ${member.gender}` : ''}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Plan: <strong style={{ color: '#f8fafc' }}>{member.latestMembership?.planName || 'None'}</strong>
-              {member.latestMembership && <> · Expires: <strong style={{ color: '#f8fafc' }}>{member.latestMembership.endDate}</strong></>}
-              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}> · Trainer: <strong style={{ color: '#f8fafc' }}>{trainerName}</strong></Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.6 }}>
+              Plan: <strong style={{ color: '#e8eaf0' }}>{member.latestMembership?.planName || 'None'}</strong>
+              {member.latestMembership && <>&nbsp;&nbsp;·&nbsp;&nbsp;Expires: <strong style={{ color: '#e8eaf0' }}>{member.latestMembership.endDate}</strong></>}
             </Typography>
+          </Box>
+
+          {/* ── Desktop layout ── */}
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 3, alignItems: 'center' }}>
+            <Avatar
+              src={resolvedPhotoUrl ?? undefined}
+              sx={{ width: 80, height: 80, bgcolor: 'primary.dark', fontSize: '2rem', flexShrink: 0 }}
+            >
+              {member.firstName[0]}{member.lastName[0]}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{member.firstName} {member.lastName}</Typography>
+                <Chip label={member.memberNumber} size="small" variant="outlined" />
+                <Chip label={memberStatusLabel} size="medium" color={membershipStatusColor[memberStatusLabel] ?? 'default'} />
+                <Chip label={daysRemainingLabel} size="small" color={daysRemainingColor} variant="outlined" />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {member.email} · {member.phone}{member.gender ? ` · ${member.gender}` : ''}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Plan: <strong style={{ color: '#f8fafc' }}>{member.latestMembership?.planName || 'None'}</strong>
+                {member.latestMembership && <> · Expires: <strong style={{ color: '#f8fafc' }}>{member.latestMembership.endDate}</strong></>}
+                <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}> · Trainer: <strong style={{ color: '#f8fafc' }}>{trainerName}</strong></Box>
+              </Typography>
+            </Box>
           </Box>
         </CardContent>
       </Card>
