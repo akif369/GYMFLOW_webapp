@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 import { prefetchPresignedUrls } from '@/hooks/usePresignedUrl';
+import { formatDateOnly } from '@/lib/date';
 
 export function useMembers(params: Record<string, any>) {
   return useQuery({
@@ -14,14 +15,14 @@ export function useMembers(params: Record<string, any>) {
       const formattedItems = items.map((m: Record<string, any>) => {
         const latestMembership = (m.latestMembership ?? {}) as Record<string, any>;
         const membershipPlan = m.membershipPlan ?? latestMembership.planName ?? m.plan;
-        const membershipStart = m.membershipStart ?? latestMembership.startDate;
-        const membershipExpiry = m.membershipExpiry ?? latestMembership.endDate;
+        const membershipStart = m.membershipStart ?? latestMembership.startAt ?? latestMembership.startDate;
+        const membershipExpiry = m.membershipExpiry ?? latestMembership.expiresAt ?? latestMembership.endDate;
         const membershipStatus = m.membershipStatus ?? latestMembership.status ?? m.status;
 
         const planName = membershipPlan ? String(membershipPlan) : '-';
-        const startDate = membershipStart ? String(membershipStart).split('T')[0] : '-';
-        const expiryDate = membershipExpiry ? String(membershipExpiry).split('T')[0] : '-';
-        const lastVisit = (m.lastVisit ?? m.lastCheckIn) ? String(m.lastVisit ?? m.lastCheckIn).split('T')[0] : '-';
+        const startDate = formatDateOnly(membershipStart, String(m.membershipTimezone ?? latestMembership.timezone ?? 'Asia/Kolkata'));
+        const expiryDate = formatDateOnly(membershipExpiry, String(m.membershipTimezone ?? latestMembership.timezone ?? 'Asia/Kolkata'));
+        const lastVisit = formatDateOnly(m.lastVisit ?? m.lastCheckIn);
 
         let calculatedMembershipStatus = membershipPlan ? (membershipStatus ? String(membershipStatus) : null) : 'INACTIVE';
         let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;

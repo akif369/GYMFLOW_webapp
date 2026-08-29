@@ -12,6 +12,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { api } from '@/lib/api';
 import PageSkeleton from '@/components/PageSkeleton';
+import { formatDateOnly, toDateInputValue } from '@/lib/date';
 
 interface TabPanelProps { children?: ReactNode; value: number; index: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -195,7 +196,7 @@ export default function MembershipsPage() {
   const [opDialog, setOpDialog] = useState<string | null>(null);
   const [opMemberId, setOpMemberId] = useState('');
   const [opPlanId, setOpPlanId] = useState('');
-  const [opStartDate, setOpStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [opStartDate, setOpStartDate] = useState(() => toDateInputValue(new Date()));
   const [opFreezeStart, setOpFreezeStart] = useState('');
   const [opFreezeEnd, setOpFreezeEnd] = useState('');
   const [opDays, setOpDays] = useState(7);
@@ -211,7 +212,7 @@ export default function MembershipsPage() {
     setOpPlanId('');
     setOpReason('');
     setOpNotes('');
-    setOpStartDate(new Date().toISOString().split('T')[0]);
+    setOpStartDate(toDateInputValue(new Date()));
   };
 
   const executeOperation = async () => {
@@ -379,7 +380,7 @@ export default function MembershipsPage() {
                         <Chip label={event.eventType} size="small" color={eventColor[event.eventType] ?? 'default'} />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="caption">{String(event.createdAt).split('T')[0]}</Typography>
+                        <Typography variant="caption">{formatDateOnly(event.createdAt)}</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="caption" color="text.secondary">{event.actorName || '—'}</Typography>

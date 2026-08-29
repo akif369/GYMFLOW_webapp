@@ -29,6 +29,7 @@ import { api } from '@/lib/api';
 import RenewMembershipDialog from '@/components/RenewMembershipDialog';
 import AvatarUpload from '@/components/AvatarUpload';
 import { usePresignedUrl } from '@/hooks/usePresignedUrl';
+import { formatDateOnly } from '@/lib/date';
 
 interface TabPanelProps { children?: React.ReactNode; index: number; value: number; }
 function TabPanel({ children, value, index }: TabPanelProps) {
@@ -82,8 +83,7 @@ function toISTTime(utcIso: string): string {
 
 /** Convert a UTC ISO string to YYYY-MM-DD in Asia/Kolkata */
 function toISTDate(utcIso: string): string {
-  if (!utcIso) return '';
-  return new Date(utcIso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  return formatDateOnly(utcIso);
 }
 
 function getDaysRemaining(endDate?: string) {
@@ -119,6 +119,9 @@ type MemberData = {
     planName: string;
     startDate: string;
     endDate: string;
+    startAt: string;
+    expiresAt: string;
+    timezone: string;
     status: string;
     ptSessionsTotal: number;
     ptSessionsUsed: number;
@@ -279,8 +282,11 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
           latestMembership: m.latestMembership ? {
             id: String(m.latestMembership.id),
             planName: String(m.latestMembership.planName ?? ''),
-            startDate: String(m.latestMembership.startDate ?? ''),
-            endDate: String(m.latestMembership.endDate ?? ''),
+            startAt: String(m.latestMembership.startAt ?? m.latestMembership.startDate ?? ''),
+            expiresAt: String(m.latestMembership.expiresAt ?? m.latestMembership.endDate ?? ''),
+            timezone: String(m.latestMembership.timezone ?? 'Asia/Kolkata'),
+            startDate: formatDateOnly(m.latestMembership.startAt ?? m.latestMembership.startDate, String(m.latestMembership.timezone ?? 'Asia/Kolkata')),
+            endDate: formatDateOnly(m.latestMembership.expiresAt ?? m.latestMembership.endDate, String(m.latestMembership.timezone ?? 'Asia/Kolkata')),
             status: String(m.latestMembership.status ?? ''),
             ptSessionsTotal: Number(m.latestMembership.ptSessionsTotal ?? 0),
             ptSessionsUsed: Number(m.latestMembership.ptSessionsUsed ?? 0),
@@ -408,7 +414,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
     ? `${member.trainer.firstName} ${member.trainer.lastName}`
     : 'Unassigned';
 
-  const daysRemaining = getDaysRemaining(member?.latestMembership?.endDate);
+  const daysRemaining = getDaysRemaining(member?.latestMembership?.expiresAt);
   const membershipStatus = member?.latestMembership?.status ?? 'INACTIVE';
   const daysRemainingLabel = daysRemaining === null
     ? 'No expiry date'
@@ -794,8 +800,8 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                       {membershipHistory.map((m: any) => (
                         <TableRow key={m.id}>
                           <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{m.planName}</Typography></TableCell>
-                          <TableCell><Typography variant="caption">{m.startDate}</Typography></TableCell>
-                          <TableCell><Typography variant="caption">{m.endDate}</Typography></TableCell>
+                          <TableCell><Typography variant="caption">{formatDateOnly(m.startAt ?? m.startDate, m.timezone ?? 'Asia/Kolkata')}</Typography></TableCell>
+                          <TableCell><Typography variant="caption">{formatDateOnly(m.expiresAt ?? m.endDate, m.timezone ?? 'Asia/Kolkata')}</Typography></TableCell>
                           <TableCell><Chip label={m.status} size="small" color={membershipStatusColor[m.status] ?? 'default'} /></TableCell>
                           <TableCell><Typography variant="caption" color="text.secondary">{m.notes || '—'}</Typography></TableCell>
                         </TableRow>

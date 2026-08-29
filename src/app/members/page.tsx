@@ -26,6 +26,7 @@ import AddMemberDialog from '@/components/AddMemberDialog';
 import { useResponsivePageSize } from '@/hooks/useResponsivePageSize';
 import { useMembers, useMembershipPlans } from '@/hooks/queries/members';
 import { useBranches } from '@/hooks/queries/branches';
+import { formatDateOnly } from '@/lib/date';
 
 // ── MemberAvatar — resolves an S3 key to a presigned URL and renders avatar ──
 function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; firstName: string; lastName: string }) {
@@ -254,16 +255,16 @@ function MembersPageContent() {
       ),
     },
     { field: 'plan', headerName: 'Plan', width: 150, renderCell: p => <Typography sx={{ fontSize: '0.8rem', color: 'text.primary' }}>{p.value}</Typography> },
-    { field: 'startDate', headerName: 'Start', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{p.value}</Typography> },
+    { field: 'startDate', headerName: 'Start', width: 116, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{formatDateOnly(p.value)}</Typography> },
     {
       field: 'expiryDate',
       headerName: 'Expiry',
-      width: 100,
+      width: 116,
       renderCell: (p) => {
         const isExpiring = p.row.membershipStatus === 'EXPIRING';
         return (
           <Typography sx={{ fontSize: '0.78rem', color: isExpiring ? '#fbbf24' : 'text.secondary', fontWeight: isExpiring ? 600 : 400 }}>
-            {p.value}
+            {formatDateOnly(p.value)}
           </Typography>
         );
       },
@@ -276,7 +277,7 @@ function MembersPageContent() {
         ? <Typography sx={{ fontSize: '0.78rem', color: 'text.primary' }}>{p.value}</Typography>
         : <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontStyle: 'italic' }}>Unassigned</Typography>,
     },
-    { field: 'lastVisit', headerName: 'Last Visit', width: 100, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{p.value}</Typography> },
+    { field: 'lastVisit', headerName: 'Last Visit', width: 116, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{formatDateOnly(p.value)}</Typography> },
     ...(strictPaymentPolicy ? [paymentColumn] : []),
     {
       field: 'membershipStatus',
