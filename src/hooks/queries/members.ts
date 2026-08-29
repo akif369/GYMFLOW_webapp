@@ -17,38 +17,29 @@ export function useMembers(params: Record<string, any>) {
         const membershipPlan = m.membershipPlan ?? latestMembership.planName ?? m.plan;
         const membershipStart = m.membershipStart ?? latestMembership.startAt ?? latestMembership.startDate;
         const membershipExpiry = m.membershipExpiry ?? latestMembership.expiresAt ?? latestMembership.endDate;
-        const membershipStatus = m.membershipStatus ?? latestMembership.status ?? m.status;
+        const rawMembershipStatus = String(m.membershipStatus ?? latestMembership.status ?? 'INACTIVE');
 
         const planName = membershipPlan ? String(membershipPlan) : '-';
         const startDate = formatDateOnly(membershipStart, String(m.membershipTimezone ?? latestMembership.timezone ?? 'Asia/Kolkata'));
         const expiryDate = formatDateOnly(membershipExpiry, String(m.membershipTimezone ?? latestMembership.timezone ?? 'Asia/Kolkata'));
         const lastVisit = formatDateOnly(m.lastVisit ?? m.lastCheckIn);
 
-        let calculatedMembershipStatus = membershipPlan ? (membershipStatus ? String(membershipStatus) : null) : 'INACTIVE';
-        let calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : null;
+        const memberIsInactive = ['INACTIVE', 'ARCHIVED'].includes(String(m.status ?? ''));
+        const calculatedMembershipStatus = memberIsInactive || !membershipPlan
+          ? 'INACTIVE'
+          : ['EXPIRED', 'CANCELLED'].includes(rawMembershipStatus)
+            ? 'EXPIRED'
+            : rawMembershipStatus;
+        const isExpiringSoon = calculatedMembershipStatus === 'ACTIVE' && m.membershipExpiringSoon === true;
+        const calculatedPaymentStatus = m.paymentStatus ? String(m.paymentStatus) : '-';
 
-        if (!membershipPlan || planName === '-') {
-          calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
-        } else {
-          if ((!calculatedMembershipStatus || calculatedMembershipStatus === 'ACTIVE') && expiryDate !== '-') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const exp = new Date(expiryDate as string);
-            if (exp < today) calculatedMembershipStatus = 'EXPIRED';
-            else {
-              const diffTime = exp.getTime() - today.getTime();
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-              calculatedMembershipStatus = diffDays <= 7 ? 'EXPIRING' : 'ACTIVE';
-            }
-          } else if (!calculatedMembershipStatus) {
-            calculatedMembershipStatus = 'ACTIVE';
-          }
-          calculatedPaymentStatus = calculatedPaymentStatus ?? '-';
-        }
-
-        if (policyEnabled && calculatedMembershipStatus === 'ACTIVE' && calculatedPaymentStatus !== 'PAID') {
-          calculatedMembershipStatus = 'PAYMENT_PENDING';
-        }
+        const displayMembershipStatus = policyEnabled && calculatedMembershipStatus === 'ACTIVE' && calculatedPaymentStatus !== 'PAID'
+          ? 'PAYMENT_PENDING'
+          : isExpiringSoon
+            ? 'EXPIRING'
+            : rawMembershipStatus === 'CANCELLED' && !memberIsInactive
+              ? 'CANCELLED'
+            : calculatedMembershipStatus;
 
         return {
           id: String(m.id),
@@ -69,6 +60,8 @@ export function useMembers(params: Record<string, any>) {
           lastVisit,
           paymentStatus: calculatedPaymentStatus,
           membershipStatus: calculatedMembershipStatus,
+          displayMembershipStatus,
+          isExpiringSoon,
           goal: String(m.goal ?? ''),
           experience: String(m.experience ?? ''),
           branchId: m.branchId ? String(m.branchId) : '',
@@ -85,7 +78,8 @@ export function useMembers(params: Record<string, any>) {
 
       return {
         items: formattedItems,
-        total: res.data?.total ?? formattedItems.length,
+        total: res.data?.pagination?.total ?? res.data?.total ?? formattedItems.length,
+        summary: res.data?.summary ?? null,
         strictPaymentPolicy: policyEnabled,
       };
     },

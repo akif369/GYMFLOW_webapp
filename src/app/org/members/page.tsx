@@ -53,6 +53,7 @@ function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; fi
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
+  CANCELLED: 'error', INACTIVE: 'default',
   PAYMENT_PENDING: 'warning',
   PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning',
 };
@@ -62,6 +63,7 @@ const FILTERS = [
   { label: 'Active', value: 'ACTIVE', icon: '✅' },
   { label: 'Expiring Soon', value: 'EXPIRING', icon: '⏳' },
   { label: 'Expired', value: 'EXPIRED', icon: '❌' },
+  { label: 'Inactive', value: 'INACTIVE', icon: '😴' },
   { label: 'Payment Pending', value: 'PAYMENT_PENDING', icon: '💳' },
   { label: 'No Trainer', value: 'NO_TRAINER', icon: '🏃' },
 ];
@@ -105,8 +107,8 @@ function MembersPageContent() {
   if (activeFilter !== 'ALL') {
     if (activeFilter === 'PAYMENT_PENDING') {
       queryParams.paymentStatus = 'PENDING';
-    } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
-      queryParams.membershipStatus = activeFilter;
+    } else if (['ACTIVE', 'EXPIRING', 'EXPIRED', 'INACTIVE'].includes(activeFilter)) {
+      queryParams.lifecycle = activeFilter;
     }
   }
   if (selectedBranchId !== 'ALL') {
@@ -116,6 +118,7 @@ function MembersPageContent() {
   const { data: membersData, isLoading: apiLoading, refetch: refetchMembers } = useMembers(queryParams);
   const members = membersData?.items ?? [];
   const totalCount = membersData?.total ?? 0;
+  const lifecycleSummary = membersData?.summary;
   const strictPaymentPolicy = membersData?.strictPaymentPolicy ?? false;
 
   const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
@@ -196,12 +199,13 @@ function MembersPageContent() {
 
 
 
-  // Always apply local filter because the backend doesn't natively support all compound statuses yet (like EXPIRING)
+  // The lifecycle filter is enforced by the API; retain local checks for the
+  // presentation-only filters and as a safe guard while a request is loading.
   const filtered = members.filter((m: any) => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
     let matchFilter = true;
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
-    if (activeFilter === 'EXPIRING') matchFilter = m.membershipStatus === 'EXPIRING';
+    if (activeFilter === 'EXPIRING') matchFilter = m.isExpiringSoon === true;
     if (activeFilter === 'EXPIRED') matchFilter = m.membershipStatus === 'EXPIRED';
     if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.paymentStatus !== 'PAID';
     if (activeFilter === 'NO_TRAINER') matchFilter = !m.trainer;
@@ -210,9 +214,10 @@ function MembersPageContent() {
 
   const counts = {
     ALL: totalCount,
-    ACTIVE: members.filter((m: any) => m.membershipStatus === 'ACTIVE').length,
-    EXPIRING: members.filter((m: any) => m.membershipStatus === 'EXPIRING').length,
-    EXPIRED: members.filter((m: any) => m.membershipStatus === 'EXPIRED').length,
+    ACTIVE: lifecycleSummary?.active ?? members.filter((m: any) => m.membershipStatus === 'ACTIVE').length,
+    EXPIRING: lifecycleSummary?.expiring ?? members.filter((m: any) => m.isExpiringSoon === true).length,
+    EXPIRED: lifecycleSummary?.expired ?? members.filter((m: any) => m.membershipStatus === 'EXPIRED').length,
+    INACTIVE: lifecycleSummary?.inactive ?? members.filter((m: any) => m.membershipStatus === 'INACTIVE').length,
     PAYMENT_PENDING: members.filter((m: any) => m.paymentStatus !== 'PAID').length,
     NO_TRAINER: members.filter((m: any) => !m.trainer).length,
   };
@@ -266,7 +271,7 @@ function MembersPageContent() {
       renderCell: (p) => {
         const isExpired = p.row.membershipStatus === 'EXPIRED';
         const isActive = p.row.membershipStatus === 'ACTIVE';
-        const isExpiring = p.row.membershipStatus === 'EXPIRING';
+        const isExpiring = p.row.isExpiringSoon === true;
         return (
           <Typography sx={{
             fontSize: '0.78rem',
@@ -290,7 +295,7 @@ function MembersPageContent() {
     { field: 'lastVisit', headerName: 'Last Visit', width: 116, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{formatDateOnly(p.value)}</Typography> },
     ...(strictPaymentPolicy ? [paymentColumn] : []),
     {
-      field: 'membershipStatus',
+      field: 'displayMembershipStatus',
       headerName: 'Status',
       width: 110,
       renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
@@ -370,6 +375,7 @@ function MembersPageContent() {
           { label: 'Active', value: counts.ACTIVE, filter: 'ACTIVE', color: '#10b981', icon: PeopleRoundedIcon },
           { label: 'Expiring (7d)', value: counts.EXPIRING, filter: 'EXPIRING', color: '#f59e0b', icon: AutorenewRoundedIcon },
           { label: 'Expired', value: counts.EXPIRED, filter: 'EXPIRED', color: '#f43f5e', icon: PersonOffRoundedIcon },
+          { label: 'Inactive', value: counts.INACTIVE, filter: 'INACTIVE', color: '#64748b', icon: PersonOffRoundedIcon },
         ].map(s => (
           <Grid size={{ xs: 6, sm: 3 }} key={s.label}>
             <Card

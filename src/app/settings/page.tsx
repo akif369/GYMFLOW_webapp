@@ -297,8 +297,8 @@ export default function SettingsPage() {
             <SettingRow label="Capacity" desc="Maximum members allowed simultaneously">
               <TextField size="small" type="number" value={branchForm.capacity} onChange={e => setBranchForm({ ...branchForm, capacity: e.target.value })} disabled={loading} sx={{ width: 100 }} />
             </SettingRow>
-            <SettingRow label="Days Before Inactive" desc="Number of days after membership expiry before member is marked INACTIVE">
-              <TextField size="small" type="number" value={memberForm.daysBeforeInactive} onChange={e => setMemberForm({ ...memberForm, daysBeforeInactive: e.target.value })} disabled={loading} sx={{ width: 100 }} />
+            <SettingRow label="Expired / cancelled grace days" desc="Keep expired or cancelled members visible before automatically marking them INACTIVE. Default: 30 days.">
+              <TextField size="small" type="number" value={memberForm.daysBeforeInactive} onChange={e => setMemberForm({ ...memberForm, daysBeforeInactive: e.target.value })} disabled={loading} sx={{ width: 100 }} slotProps={{ htmlInput: { min: 0, max: 365, step: 1 } }} />
             </SettingRow>
             <Box sx={{ mt: 2 }}>
               <Button variant="contained" startIcon={<SaveIcon />} disabled={loading || savingSection !== null || !branchForm.name.trim()} onClick={() => {

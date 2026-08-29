@@ -53,6 +53,7 @@ function MemberAvatar({ photoKey, firstName, lastName }: { photoKey: unknown; fi
 
 const statusColor: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success', EXPIRING: 'warning', EXPIRED: 'error',
+  CANCELLED: 'error',
   PAYMENT_PENDING: 'warning',
   PAID: 'success', PENDING: 'warning', PARTIALLY_PAID: 'warning', INACTIVE: 'default',
 };
@@ -106,14 +107,15 @@ function MembersPageContent() {
   if (activeFilter !== 'ALL') {
     if (activeFilter === 'PAYMENT_PENDING') {
       queryParams.paymentStatus = 'PENDING';
-    } else if (activeFilter === 'ACTIVE' || activeFilter === 'EXPIRED') {
-      queryParams.membershipStatus = activeFilter;
+    } else if (['ACTIVE', 'EXPIRING', 'EXPIRED', 'INACTIVE'].includes(activeFilter)) {
+      queryParams.lifecycle = activeFilter;
     }
   }
 
   const { data: membersData, isLoading: apiLoading, refetch: refetchMembers } = useMembers(queryParams);
   const members = membersData?.items ?? [];
   const totalCount = membersData?.total ?? 0;
+  const lifecycleSummary = membersData?.summary;
   const strictPaymentPolicy = membersData?.strictPaymentPolicy ?? false;
 
   const openActions = (event: MouseEvent<HTMLElement>, memberId: string) => {
@@ -194,25 +196,26 @@ function MembersPageContent() {
     }
   };
 
-  // Always apply local filter because the backend doesn't natively support all compound statuses yet (like EXPIRING)
+  // The lifecycle filter is enforced by the API; retain local checks for the
+  // presentation-only filters and as a safe guard while a request is loading.
   const filtered = members.filter((m: any) => {
     const matchSearch = `${m.firstName} ${m.lastName} ${m.phone} ${m.memberId}`.toLowerCase().includes(search.toLowerCase());
     let matchFilter = true;
     if (activeFilter === 'ACTIVE') matchFilter = m.membershipStatus === 'ACTIVE';
-    if (activeFilter === 'EXPIRING') matchFilter = m.membershipStatus === 'EXPIRING';
+    if (activeFilter === 'EXPIRING') matchFilter = m.isExpiringSoon === true;
     if (activeFilter === 'EXPIRED') matchFilter = m.membershipStatus === 'EXPIRED';
     if (activeFilter === 'INACTIVE') matchFilter = m.membershipStatus === 'INACTIVE';
-    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.membershipStatus === 'PAYMENT_PENDING';
+    if (activeFilter === 'PAYMENT_PENDING') matchFilter = m.paymentStatus !== 'PAID';
     if (activeFilter === 'NO_TRAINER') matchFilter = !m.trainer;
     return matchSearch && matchFilter;
   });
 
   const counts = {
     ALL: totalCount,
-    ACTIVE: members.filter((m: any) => m.membershipStatus === 'ACTIVE').length,
-    EXPIRING: members.filter((m: any) => m.membershipStatus === 'EXPIRING').length,
-    EXPIRED: members.filter((m: any) => m.membershipStatus === 'EXPIRED').length,
-    INACTIVE: members.filter((m: any) => m.membershipStatus === 'INACTIVE').length,
+    ACTIVE: lifecycleSummary?.active ?? members.filter((m: any) => m.membershipStatus === 'ACTIVE').length,
+    EXPIRING: lifecycleSummary?.expiring ?? members.filter((m: any) => m.isExpiringSoon === true).length,
+    EXPIRED: lifecycleSummary?.expired ?? members.filter((m: any) => m.membershipStatus === 'EXPIRED').length,
+    INACTIVE: lifecycleSummary?.inactive ?? members.filter((m: any) => m.membershipStatus === 'INACTIVE').length,
     PAYMENT_PENDING: members.filter((m: any) => m.membershipStatus === 'PAYMENT_PENDING').length,
     NO_TRAINER: members.filter((m: any) => !m.trainer).length,
   };
@@ -266,7 +269,7 @@ function MembersPageContent() {
       renderCell: (p) => {
         const isExpired = p.row.membershipStatus === 'EXPIRED';
         const isActive = p.row.membershipStatus === 'ACTIVE';
-        const isExpiring = p.row.membershipStatus === 'EXPIRING';
+        const isExpiring = p.row.isExpiringSoon === true;
         return (
           <Typography sx={{
             fontSize: '0.78rem',
@@ -290,7 +293,7 @@ function MembersPageContent() {
     { field: 'lastVisit', headerName: 'Last Visit', width: 116, renderCell: p => <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{formatDateOnly(p.value)}</Typography> },
     ...(strictPaymentPolicy ? [paymentColumn] : []),
     {
-      field: 'membershipStatus',
+      field: 'displayMembershipStatus',
       headerName: 'Status',
       width: 110,
       renderCell: p => <Chip label={p.value} size="small" color={statusColor[p.value] || 'default'} />,
