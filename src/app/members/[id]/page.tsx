@@ -665,7 +665,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
             <Typography variant="body2" color="text.secondary">
               Plan: <strong style={{ color: '#f8fafc' }}>{member.latestMembership?.planName || 'None'}</strong>
               {member.latestMembership && <> · Expires: <strong style={{ color: '#f8fafc' }}>{member.latestMembership.endDate}</strong></>}
-              {' '}· Trainer: <strong style={{ color: '#f8fafc' }}>{trainerName}</strong>
+              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}> · Trainer: <strong style={{ color: '#f8fafc' }}>{trainerName}</strong></Box>
             </Typography>
           </Box>
         </CardContent>
@@ -1107,6 +1107,24 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
 
       {/* Tab 6: PT Sessions */}
       <TabPanel value={tab} index={6}>
+        {/* PT Sessions quota summary */}
+        {member.latestMembership && (
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            {([
+              { label: 'Total Sessions', value: member.latestMembership.ptSessionsTotal, color: 'text.primary' },
+              { label: 'Sessions Used', value: member.latestMembership.ptSessionsUsed, color: 'warning.main' },
+              { label: 'Remaining', value: member.latestMembership.ptSessionsTotal - member.latestMembership.ptSessionsUsed, color: 'success.main' },
+            ] as { label: string; value: number; color: string }[]).map(({ label, value, color }) => (
+              <Grid key={label} size={{ xs: 4 }}>
+                <Card elevation={0} sx={{ textAlign: 'center', py: 1.5 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color }}>{value}</Typography>
+                  <Typography variant="caption" color="text.secondary">{label}</Typography>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
         <Card elevation={0}>
           <CardContent>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>PT Sessions</Typography>
@@ -1128,7 +1146,7 @@ export default function MemberProfile({ params }: { params: Promise<{ id: string
                   <TableRow key={s.id ?? i}>
                     <TableCell>{s.date}</TableCell>
                     <TableCell>{s.time}</TableCell>
-                    <TableCell>{s.trainer}</TableCell>
+                    <TableCell>{s.trainer || 'Unassigned'}</TableCell>
                     <TableCell>{s.duration}min</TableCell>
                     <TableCell>
                       <Chip label={s.status} size="small"
