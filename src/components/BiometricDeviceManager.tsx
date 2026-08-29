@@ -105,11 +105,11 @@ export default function BiometricDeviceManager() {
 
   return (
     <Card elevation={0}>
-      <CardContent sx={{ p: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Box>
+      <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: 'hidden' }}>
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 1.5, mb: 1 }}>
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>Biometric Devices</Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, overflowWrap: 'anywhere' }}>
               Register ZKTeco terminals for each gym branch and monitor their connection status.
             </Typography>
           </Box>
@@ -159,7 +159,7 @@ export default function BiometricDeviceManager() {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <Button variant="contained" onClick={registerDevice} disabled={branchesLoading || registerMutation.isPending || !selectedBranchId || !form.serialNumber.trim() || !form.deviceName.trim()}>
+            <Button variant="contained" sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={registerDevice} disabled={branchesLoading || registerMutation.isPending || !selectedBranchId || !form.serialNumber.trim() || !form.deviceName.trim()}>
               {registerMutation.isPending ? 'Registering…' : 'Register Device'}
             </Button>
           </Grid>
@@ -168,38 +168,40 @@ export default function BiometricDeviceManager() {
         {devicesLoading ? (
           <Typography variant="body2" color="text.secondary">Loading devices…</Typography>
         ) : devices && devices.length > 0 ? (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Branch</TableCell>
-                <TableCell>Serial Number</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Purpose</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Last Seen</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {devices.map((device) => (
-                <TableRow key={device.id}>
-                  <TableCell>{device.deviceName}</TableCell>
-                  <TableCell>{branches.find((branch: { id: string }) => branch.id === device.branchId)?.name ?? 'Branch'}</TableCell>
-                  <TableCell>{device.serialNumber}</TableCell>
-                  <TableCell>{device.deviceType || '—'}</TableCell>
-                  <TableCell><Chip size="small" label={device.purpose} variant="outlined" /></TableCell>
-                  <TableCell><Chip size="small" label={device.status} color={device.status === 'ONLINE' ? 'success' : 'default'} /></TableCell>
-                  <TableCell>{device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : 'Never'}</TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" color="error" onClick={() => deleteDevice(device.id)} disabled={deleteMutation.isPending}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
+          <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Table size="small" sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Branch</TableCell>
+                  <TableCell>Serial Number</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Purpose</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Last Seen</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {devices.map((device) => (
+                  <TableRow key={device.id}>
+                    <TableCell>{device.deviceName}</TableCell>
+                    <TableCell>{branches.find((branch: { id: string }) => branch.id === device.branchId)?.name ?? 'Branch'}</TableCell>
+                    <TableCell>{device.serialNumber}</TableCell>
+                    <TableCell>{device.deviceType || '—'}</TableCell>
+                    <TableCell><Chip size="small" label={device.purpose} variant="outlined" /></TableCell>
+                    <TableCell><Chip size="small" label={device.status} color={device.status === 'ONLINE' ? 'success' : 'default'} /></TableCell>
+                    <TableCell>{device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : 'Never'}</TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" color="error" onClick={() => deleteDevice(device.id)} disabled={deleteMutation.isPending}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
         ) : (
           <Alert severity="info">No biometric devices registered.</Alert>
         )}

@@ -653,8 +653,8 @@ export default function SettingsPage() {
         </Card>
 
         <Card elevation={0}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: 'hidden' }}>
+            <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 1.5, mb: 2 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Biometric Devices</Typography>
               <Tooltip title="Refresh Device Status">
                 <IconButton size="small" onClick={() => refetchDevices()} disabled={devicesLoading}>
@@ -696,14 +696,15 @@ export default function SettingsPage() {
                   } catch (err) {
                     setSettingsError(errorMessage(err, 'Failed to register device'));
                   }
-                }}>Register Device</Button>
+                }} sx={{ width: { xs: '100%', sm: 'auto' } }}>Register Device</Button>
               </Grid>
             </Grid>
 
             {devicesLoading ? (
               <Typography variant="body2" color="text.secondary">Loading devices...</Typography>
             ) : devices && devices.length > 0 ? (
-              <Table size="small">
+              <Box sx={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <Table size="small" sx={{ minWidth: 900 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Name</TableCell>
@@ -747,6 +748,7 @@ export default function SettingsPage() {
                   ))}
                 </TableBody>
               </Table>
+              </Box>
             ) : (
               <Alert severity="info">No biometric devices registered.</Alert>
             )}
