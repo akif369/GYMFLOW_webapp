@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import ThemeRegistry from '@/components/ThemeRegistry';
 import GlobalNetworkError from '@/components/GlobalNetworkError';
 import QueryProvider from '@/providers/QueryProvider';
@@ -37,6 +38,7 @@ export default function RootLayout({
             <Toaster position="bottom-right" />
           </ThemeRegistry>
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );
